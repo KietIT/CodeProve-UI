@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0&display=block');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Geist powers the display/body type (loaded via @import). */
+  --font-geist: "Geist", "Inter", system-ui, sans-serif;
+}
+
+/* ── Dark = Obsidian Refraction (default) ── */
+:root,
+.dark {
+  /* Landing semantic aliases */
+  --bg: 16 20 21; /* #101415 */
+  --bg-soft: 25 28 30; /* #191c1e */
+  --surface: 29 32 34; /* #1d2022 */
+  --border: 67 70 86; /* outline-variant */
+  --text: 224 227 229; /* on-surface */
+  --muted: 195 197 217; /* on-surface-variant */
+
+  /* Material tokens */
+  --background: 16 20 21;
+  --surface-dim: 16 20 21;
+  --surface-bright: 54 58 59;
+  --surface-container-lowest: 11 15 16;
+  --surface-container-low: 25 28 30;
+  --surface-container: 29 32 34;
+  --surface-container-high: 39 42 44;
+  --surface-container-highest: 50 53 55;
+  --surface-variant: 50 53 55;
+  --on-surface: 224 227 229;
+  --on-surface-variant: 195 197 217;
+  --outline: 141 144 162;
+  --outline-variant: 67 70 86;
+  --primary: 182 196 255; /* #b6c4ff */
+  --on-primary: 0 39 128;
+  --primary-container: 0 85 255; /* #0055ff */
+  --on-primary-container: 227 230 255;
+  --inverse-primary: 0 77 234;
+  --secondary: 221 252 255;
+  --on-secondary: 0 54 58;
+  --secondary-container: 0 241 254; /* cyan */
+  --on-secondary-container: 0 106 112;
+  --tertiary: 194 199 206;
+  --on-tertiary: 44 49 55;
+  --tertiary-container: 99 104 110;
+  --error: 255 180 171;
+  --on-error: 105 0 5;
+  --error-container: 147 0 10;
+  --on-error-container: 255 218 214;
+  --inverse-surface: 224 227 229;
+  --inverse-on-surface: 45 49 51;
+}
+
+/* ── Light = Iceberg Protocol ── */
+.light {
+  --bg: 250 248 255; /* #faf8ff */
+  --bg-soft: 242 243 255; /* #f2f3ff */
+  --surface: 234 237 255; /* #eaedff */
+  --border: 195 197 217; /* #c3c5d9 */
+  --text: 21 27 45; /* #151b2d */
+  --muted: 67 70 86; /* #434656 */
+
+  --background: 250 248 255;
+  --surface-dim: 212 217 242;
+  --surface-bright: 250 248 255;
+  --surface-container-lowest: 255 255 255;
+  --surface-container-low: 242 243 255;
+  --surface-container: 234 237 255;
+  --surface-container-high: 227 231 255;
+  --surface-container-highest: 220 225 251;
+  --surface-variant: 220 225 251;
+  --on-surface: 21 27 45;
+  --on-surface-variant: 67 70 86;
+  --outline: 115 118 136;
+  --outline-variant: 195 197 217;
+  --primary: 0 65 200; /* #0041c8 */
+  --on-primary: 255 255 255;
+  --primary-container: 0 85 255; /* #0055ff */
+  --on-primary-container: 227 230 255;
+  --inverse-primary: 182 196 255;
+  --secondary: 46 99 133;
+  --on-secondary: 255 255 255;
+  --secondary-container: 165 216 255;
+  --on-secondary-container: 40 95 128;
+  --tertiary: 72 81 86;
+  --on-tertiary: 255 255 255;
+  --tertiary-container: 96 105 110;
+  --error: 186 26 26;
+  --on-error: 255 255 255;
+  --error-container: 255 218 214;
+  --on-error-container: 147 0 10;
+  --inverse-surface: 42 48 67;
+  --inverse-on-surface: 238 240 255;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: rgb(var(--bg));
+  color: rgb(var(--text));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Selection */
+::selection {
+  background: rgb(var(--primary) / 0.22);
+  color: rgb(var(--text));
+}
+
+/* Custom scrollbar (dark-first) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--primary));
+}
+
+@layer components {
+  .container-site {
+    @apply mx-auto w-full max-w-site px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-pill border border-border bg-surface/60 px-3 py-1 font-mono text-xs uppercase tracking-[0.18em] text-teal;
+  }
+
+  .glass-card {
+    @apply rounded-card border border-border bg-surface/70 backdrop-blur-xl;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 22px 48px -30px rgba(0, 0, 0, 0.85);
+  }
+
+  /* Gradient text — blue, theme-aware (readable on both light and dark) */
+  .text-gradient {
+    background: linear-gradient(
+      120deg,
+      rgb(var(--primary)) 0%,
+      rgb(var(--primary-container)) 55%,
+      rgb(var(--secondary)) 120%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-glow {
+    background: radial-gradient(
+      closest-side,
+      rgb(var(--primary-container) / 0.26),
+      rgb(var(--primary) / 0.12) 55%,
+      transparent 100%
+    );
+  }
+
+  /* Soft radial aura dropped behind a section to echo the hero's glow. */
+  .section-aura {
+    @apply pointer-events-none absolute rounded-full opacity-60 blur-3xl;
+    background: radial-gradient(
+      closest-side,
+      rgb(var(--primary) / 0.16),
+      rgb(var(--secondary-container) / 0.08) 55%,
+      transparent 80%
+    );
+  }
+}
+
+/* Aurora blobs used by the page-wide ambient backdrop. We animate opacity only
+   (composited cheaply on the cached blurred layer) — never transform, which
+   would force the heavy blur to re-rasterise every frame. */
+@keyframes aurora-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  animation: aurora-breathe 14s ease-in-out infinite;
+}
+
+/* Labels for the 6 rubric-axis nodes orbiting the AI Neural Core. */
+.rubric-label {
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--primary));
+  text-shadow: 0 0 8px rgb(var(--background) / 0.95), 0 0 2px rgb(var(--background));
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Iceberg (light) / Obsidian (dark) — shared app utilities
+   ───────────────────────────────────────────────────────────── */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.material-symbols-outlined.fill {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+/* Glassmorphic card with a refracted top-left edge highlight */
+.ice-card {
+  background: rgb(var(--surface-container-lowest) / 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgb(var(--outline-variant) / 0.6);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 0.1);
+}
+.ice-panel {
+  background: rgb(var(--surface-container-low));
+  border: 1px solid rgb(var(--outline-variant) / 0.6);
+}
+
+.ring-glow {
+  filter: drop-shadow(0 0 12px rgb(var(--primary) / 0.4));
+}
+
+@keyframes progress-load {
+  from { width: 0; }
+  to { width: var(--final-width); }
+}
+.animate-progress {
+  animation: progress-load 1.2s ease-out forwards;
+}
+
+/* Subtle scanline for the code editor */
+.scanline {
+  width: 100%;
+  height: 2px;
+  background: rgb(var(--primary) / 0.08);
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  animation: moveScanline 8s linear infinite;
+}
+@keyframes moveScanline {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Thin themed scrollbar, scoped to elements that opt in */
+.ice-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.ice-scroll::-webkit-scrollbar-track { background: transparent; }
+.ice-scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--primary) / 0.45);
+  border-radius: 9999px;
+}
+
+/* Honor reduced-motion globally for CSS animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Grid backdrop used behind dark sections */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(48, 57, 70, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(48, 57, 70, 0.25) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+}
