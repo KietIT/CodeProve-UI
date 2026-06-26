@@ -207,17 +207,19 @@ export function AuthPanel({ mode }: { mode: Mode }) {
         {/* ── Left: brand panel ── */}
         <aside className="relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
           {/* Blue brand gradient + aura */}
+          {/* Brand panel stays a saturated dark-blue in BOTH themes so the white
+              copy always reads cleanly (theme vars turned pale in light mode). */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(150deg, rgb(var(--primary-container)) 0%, rgb(var(--inverse-primary)) 55%, rgb(var(--secondary-container)) 130%)",
+                "linear-gradient(150deg, #0055ff 0%, #004dea 55%, #00b6d4 130%)",
             }}
             aria-hidden="true"
           />
           <div
             className="absolute -left-24 top-1/3 h-72 w-72 rounded-full opacity-50 blur-3xl"
-            style={{ background: "rgb(var(--secondary-container) / 0.5)" }}
+            style={{ background: "rgb(0 241 254 / 0.45)" }}
             aria-hidden="true"
           />
           <div className="bg-grid absolute inset-0 opacity-20" aria-hidden="true" />
@@ -228,8 +230,8 @@ export function AuthPanel({ mode }: { mode: Mode }) {
             </span>
           </div>
 
-          <div className="relative -my-4 grid place-items-center">
-            <div className="w-64 opacity-95 mix-blend-screen">
+          <div className="relative -my-6 grid place-items-center">
+            <div className="w-[22rem] max-w-full opacity-95 mix-blend-screen">
               <HeroPoster />
             </div>
           </div>

@@ -36,7 +36,7 @@ export function About() {
           {a.pillars.map((p, i) => {
             const Icon = icons[i];
             return (
-              <StaggerItem key={p.title}>
+              <StaggerItem key={i}>
                 <div className="glass-card h-full p-6 transition-colors duration-200 hover:border-teal/40">
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-pill bg-teal/12 text-teal">
                     <Icon className="h-5 w-5" />

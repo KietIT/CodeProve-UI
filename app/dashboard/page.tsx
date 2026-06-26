@@ -69,9 +69,6 @@ export default function DashboardPage() {
               Your AI-fluency is trending up - <span className="text-primary">+8 points</span> over the last 4 weeks.
             </p>
           </div>
-          <div className="flex items-center gap-2 border border-primary/30 bg-primary/5 px-3 py-1.5 font-label-mono text-label-mono text-primary">
-            <span className="h-2 w-2 animate-pulse bg-primary" /> ACTIVE SESSION
-          </div>
         </header>
 
         {/* KPI cards */}

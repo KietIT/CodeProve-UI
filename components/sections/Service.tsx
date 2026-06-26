@@ -50,7 +50,7 @@ export function Service() {
           {s.offerings.map((o, i) => {
             const Icon = offerIcons[i];
             return (
-              <StaggerItem key={o.name}>
+              <StaggerItem key={i}>
                 <div
                   className={`glass-card h-full p-6 transition-colors duration-200 hover:border-teal/40 ${
                     o.soon ? "opacity-90" : ""
@@ -114,7 +114,7 @@ export function Service() {
             {ig.cards.map((c, i) => {
               const Icon = integrityIcons[i];
               return (
-                <StaggerItem key={c.title}>
+                <StaggerItem key={i}>
                   <div className="glass-card h-full p-6 transition-colors duration-200 hover:border-teal/40">
                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-pill bg-teal/12 text-teal">
                       <Icon className="h-5 w-5" />
