@@ -62,6 +62,15 @@ export async function apiFetch<T>(path: string, opts: Opts = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ── Account helpers ───────────────────────────────────────────────────────────
+
+export type Me = { id: number; full_name: string; email: string };
+
+export const getMe = (): Promise<Me> => apiFetch<Me>("/auth/me");
+
+export const updateMe = (full_name: string): Promise<Me> =>
+  apiFetch<Me>("/auth/me", { method: "PATCH", body: { full_name } });
+
 // ── Exercise helpers ──────────────────────────────────────────────────────────
 
 export const getExercises = (level?: string): Promise<LevelGroup[]> =>
@@ -124,10 +133,10 @@ export const runTests = (id: number, source_code: string) =>
     body: { source_code, run_tests: true },
   });
 
-export const sendMentor = (id: number, message: string) =>
+export const sendMentor = (id: number, message: string, code?: string) =>
   apiFetch<{ reply: string; injected_error: boolean }>(`/attempts/${id}/mentor`, {
     method: "POST",
-    body: { message },
+    body: { message, code },
   });
 
 export const logHypothesis = (id: number, text: string) =>

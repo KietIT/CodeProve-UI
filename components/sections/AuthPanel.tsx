@@ -66,7 +66,12 @@ const copy = {
       forgot: "Quên mật khẩu?",
       remember: "Ghi nhớ đăng nhập",
     },
-    social: { divider: "hoặc tiếp tục với", google: "Google", github: "GitHub" },
+    social: {
+      divider: "hoặc tiếp tục với",
+      google: "Google",
+      github: "GitHub",
+      comingSoon: "Đăng nhập bằng {provider} sắp ra mắt — hiện hãy dùng email nhé.",
+    },
     errors: {
       email: "Vui lòng nhập email hợp lệ.",
       password: "Mật khẩu cần tối thiểu 8 ký tự.",
@@ -120,7 +125,12 @@ const copy = {
       forgot: "Forgot password?",
       remember: "Remember me",
     },
-    social: { divider: "or continue with", google: "Google", github: "GitHub" },
+    social: {
+      divider: "or continue with",
+      google: "Google",
+      github: "GitHub",
+      comingSoon: "{provider} sign-in is coming soon — please use email for now.",
+    },
     errors: {
       email: "Please enter a valid email.",
       password: "Password must be at least 8 characters.",
@@ -176,7 +186,14 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [ssoNotice, setSsoNotice] = useState("");
   const { login, signup } = useAuth();
+
+  // Social sign-in UI is in place; the OAuth backend flow is not wired yet, so
+  // for now clicking a provider surfaces a friendly "coming soon" notice.
+  function handleSso(provider: string) {
+    setSsoNotice(c.social.comingSoon.replace("{provider}", provider));
+  }
 
   function validate() {
     const next: Record<string, string> = {};
@@ -432,12 +449,11 @@ export function AuthPanel({ mode }: { mode: Mode }) {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            {/* SSO — not yet implemented; visible but non-interactive */}
+            {/* SSO — interactive; OAuth backend not wired yet so clicks show a notice */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                disabled
-                title="Coming soon"
+                onClick={() => handleSso(c.social.google)}
                 className={ssoCls}
               >
                 <GoogleIcon className="h-4 w-4" />
@@ -445,14 +461,18 @@ export function AuthPanel({ mode }: { mode: Mode }) {
               </button>
               <button
                 type="button"
-                disabled
-                title="Coming soon"
+                onClick={() => handleSso(c.social.github)}
                 className={ssoCls}
               >
                 <Github className="h-4 w-4" />
                 {c.social.github}
               </button>
             </div>
+            {ssoNotice && (
+              <p role="status" className="mt-3 text-center text-xs text-muted">
+                {ssoNotice}
+              </p>
+            )}
 
             {/* Switch + back */}
             <p className="mt-7 text-center text-sm text-muted">

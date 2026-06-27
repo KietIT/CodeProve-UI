@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AppTopNav, Sym } from "@/components/app/AppChrome";
 import {
   tokenizeLine,
@@ -23,6 +24,8 @@ import {
 } from "@/lib/api";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
+import { useI18n } from "@/lib/i18n";
+import { appContent } from "@/lib/appContent";
 
 // ── Token -> Tailwind class map (mirrors the original page) ──────────────────
 const TOKEN_CLASS: Record<string, string> = {
@@ -66,6 +69,31 @@ const EDITOR_LINE_STYLE: React.CSSProperties = {
   lineHeight: `${EDITOR_LINE_HEIGHT}px`,
 };
 
+// ── Responsive helper ─────────────────────────────────────────────────────────
+// Mirrors the old Tailwind breakpoints (lg/xl) that gated the side panels.
+// Initialises to `false` on both server and first client render to avoid a
+// hydration mismatch, then corrects after mount.
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
+}
+
+/** Vertical drag handle between two horizontal panels. */
+function ColResizeHandle() {
+  return (
+    <PanelResizeHandle className="group relative w-px flex-none bg-outline-variant/60 outline-none transition-colors data-[resize-handle-state=drag]:bg-primary data-[resize-handle-state=hover]:bg-primary/60">
+      <span className="absolute inset-y-0 -left-1 -right-1 z-10" aria-hidden="true" />
+    </PanelResizeHandle>
+  );
+}
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 export type SolveWorkspaceProps = {
@@ -91,6 +119,13 @@ export function SolveWorkspace({
   onSubmit,
 }: SolveWorkspaceProps) {
   const router = useRouter();
+  const { locale } = useI18n();
+  const t = appContent[locale].solve;
+
+  // Side panels are resizable on wide screens and hidden on narrow ones,
+  // matching the previous lg/xl Tailwind gates.
+  const showLeft = useMediaQuery("(min-width: 1024px)");
+  const showRight = useMediaQuery("(min-width: 1280px)");
 
   // ── Exercise state (starts with static data; hydrates from API) ───────────
   const [exercise, setExercise] = useState<Exercise>(initialExercise);
@@ -98,6 +133,10 @@ export function SolveWorkspace({
 
   // ── Editor state ──────────────────────────────────────────────────────────
   const [editorCode, setEditorCode] = useState<string>(initialExercise.starter);
+  // Mirror editorCode in a ref so callbacks (e.g. chat send) read the latest
+  // value without needing it in their dependency array.
+  const editorCodeRef = useRef<string>(initialExercise.starter);
+  editorCodeRef.current = editorCode;
 
   // ── Telemetry + attempt ───────────────────────────────────────────────────
   const attemptIdRef = useRef<number | null>(null);
@@ -264,7 +303,7 @@ export function SolveWorkspace({
   const handleRunTests = useCallback(async () => {
     const id = attemptIdRef.current;
     if (!id) {
-      setRunError("No active attempt. Please reload the page.");
+      setRunError(t.noActiveAttempt);
       return;
     }
     setRunning(true);
@@ -306,7 +345,9 @@ export function SolveWorkspace({
     setChatSending(true);
 
     try {
-      const res = await sendMentor(id, msg);
+      // Send the student's current editor code so Ciel can reason about
+      // "this exercise" and what they have written so far.
+      const res = await sendMentor(id, msg, editorCodeRef.current);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", text: res.reply, verifyHint: res.injected_error },
@@ -347,7 +388,7 @@ export function SolveWorkspace({
   const handleSubmit = useCallback(async () => {
     const id = attemptIdRef.current;
     if (!id) {
-      setSubmitError("No active attempt. Please reload the page.");
+      setSubmitError(t.noActiveAttempt);
       return;
     }
     setSubmitting(true);
@@ -379,15 +420,22 @@ export function SolveWorkspace({
     <div className="flex h-screen flex-col overflow-hidden bg-background font-body-md text-on-surface">
       <AppTopNav />
 
-      <main className="flex flex-1 overflow-hidden">
-        {/* Left — brief */}
-        <aside className="hidden w-80 flex-none flex-col border-r border-outline-variant/60 bg-surface-container-low lg:flex">
+      <PanelGroup
+        direction="horizontal"
+        autoSaveId="codeprove-workspace"
+        className="flex flex-1 overflow-hidden"
+      >
+        {/* Left — brief (resizable, hidden on < lg) */}
+        {showLeft && (
+        <>
+        <Panel id="brief" order={1} defaultSize={24} minSize={15} collapsible className="flex flex-col">
+          <aside className="flex h-full flex-col bg-surface-container-low">
           <div className="border-b border-outline-variant/60 p-5">
             <Link
               href={`/workspace/${backSlug}`}
               className="mb-3 inline-flex items-center gap-1 font-label-mono text-label-mono text-on-surface-variant/70 transition-colors hover:text-primary"
             >
-              <Sym name="arrow_back" className="text-[15px]" /> {levelConfig.name} exercises
+              <Sym name="arrow_back" className="text-[15px]" /> {levelConfig.name} {t.exercisesSuffix}
             </Link>
             <span className="inline-block bg-primary px-2 py-0.5 font-label-mono text-label-mono text-on-primary">
               {exercise.id} · {exercise.difficulty.toUpperCase()}
@@ -407,13 +455,13 @@ export function SolveWorkspace({
           <div className="ice-scroll flex-1 space-y-6 overflow-y-auto p-5">
             <section>
               <h3 className="mb-2 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
-                <Sym name="description" className="text-[16px]" /> Problem
+                <Sym name="description" className="text-[16px]" /> {t.problem}
               </h3>
               <p className="text-sm leading-relaxed text-on-surface-variant">{exercise.summary}</p>
             </section>
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
-                <Sym name="analytics" className="text-[16px]" /> Scoring rubric
+                <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}
               </h3>
               <div className="space-y-2 font-label-mono text-label-mono">
                 {RUBRIC.map(([k, v]) => (
@@ -426,12 +474,12 @@ export function SolveWorkspace({
             </section>
             {/* Hypothesis box */}
             <section className="ice-card p-4">
-              <h3 className="mb-2 font-label-caps text-label-caps uppercase tracking-widest">Initial hypothesis</h3>
+              <h3 className="mb-2 font-label-caps text-label-caps uppercase tracking-widest">{t.initialHypothesis}</h3>
               <textarea
                 value={hypothesis}
                 onChange={(e) => setHypothesis(e.target.value)}
                 className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
-                placeholder="Describe your approach before coding…"
+                placeholder={t.hypothesisPlaceholder}
               />
               {hypothesisResult && (
                 <div className={`mt-2 p-2 font-label-mono text-label-mono text-sm ${hypothesisResult.correct ? "text-primary" : "text-error"}`}>
@@ -443,14 +491,19 @@ export function SolveWorkspace({
                 disabled={hypothesisSending || !hypothesis.trim()}
                 className="mt-2 w-full cursor-pointer bg-primary py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                {hypothesisSending ? "Logging…" : "Log hypothesis"}
+                {hypothesisSending ? t.logging : t.logHypothesis}
               </button>
             </section>
           </div>
-        </aside>
+          </aside>
+        </Panel>
+        <ColResizeHandle />
+        </>
+        )}
 
         {/* Center — editor + terminal */}
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <Panel id="editor" order={2} minSize={30}>
+        <div className="flex h-full flex-col overflow-hidden">
           <div className="flex flex-none items-center justify-between border-b border-outline-variant/60 bg-surface-container-low pr-4">
             <div className="flex">
               <div className="flex items-center gap-2 border-r border-outline-variant/60 bg-background px-5 py-2.5">
@@ -468,7 +521,7 @@ export function SolveWorkspace({
               disabled={submitting}
               className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {submitting ? "Submitting…" : "Submit"}{" "}
+              {submitting ? t.submitting : t.submit}{" "}
               {!submitting && <Sym name="send" className="text-[16px]" />}
             </button>
           </div>
@@ -543,7 +596,7 @@ export function SolveWorkspace({
             <div className="flex items-center justify-between border-b border-outline-variant/60 bg-surface-container-low px-4 py-2">
               <div className="flex items-center gap-2">
                 <Sym name="terminal" className="text-[16px]" />
-                <span className="font-label-mono text-label-mono uppercase">Test runner</span>
+                <span className="font-label-mono text-label-mono uppercase">{t.testRunner}</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -551,29 +604,29 @@ export function SolveWorkspace({
                   disabled={running}
                   className="cursor-pointer bg-primary px-3 py-1 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {running ? "Running…" : "Run tests"}
+                  {running ? t.running : t.runTests}
                 </button>
                 <button
                   onClick={handleClear}
                   className="cursor-pointer border border-outline-variant/60 px-3 py-1 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
                 >
-                  Clear
+                  {t.clear}
                 </button>
               </div>
             </div>
 
             <div className="ice-scroll flex-1 space-y-1.5 overflow-y-auto p-4 font-label-mono text-label-mono">
-              <div className="text-on-surface-variant/70">CodeProve runner v1.0 · python 3.12</div>
+              <div className="text-on-surface-variant/70">{t.runtimeVersion}</div>
 
               {/* Idle / no results yet */}
               {!runResult && !runError && !running && (
                 <>
                   <div className="text-on-surface-variant/70">
-                    Collecting tests… {exercise.tests.length} found
+                    {t.collecting} {exercise.tests.length} {t.found}
                   </div>
-                  {exercise.tests.map((t) => (
-                    <div key={t} className="text-on-surface-variant/50">
-                      · {t} (pending)
+                  {exercise.tests.map((tc) => (
+                    <div key={tc} className="text-on-surface-variant/50">
+                      · {tc} {t.pending}
                     </div>
                   ))}
                   <div className="text-on-surface-variant/70">&gt; _</div>
@@ -582,7 +635,7 @@ export function SolveWorkspace({
 
               {/* Running spinner text */}
               {running && (
-                <div className="text-primary animate-pulse">Running tests…</div>
+                <div className="text-primary animate-pulse">{t.runningTests}</div>
               )}
 
               {/* Error */}
@@ -604,7 +657,7 @@ export function SolveWorkspace({
                     </div>
                   ))}
                   <div className="mt-1 text-on-surface-variant/70">
-                    {runResult.passed}/{runResult.total} passed · coverage {Math.round(runResult.coverage * 100)}%
+                    {runResult.passed}/{runResult.total} {t.passed} · {t.coverage} {Math.round(runResult.coverage * 100)}%
                   </div>
                   <div className="text-on-surface-variant/70">&gt; _</div>
                 </>
@@ -613,8 +666,14 @@ export function SolveWorkspace({
           </div>
         </div>
 
-        {/* Right — AI mentor */}
-        <aside className="hidden w-80 flex-none flex-col border-l border-outline-variant/60 bg-surface-container-low xl:flex">
+        </Panel>
+
+        {/* Right — AI mentor (resizable, hidden on < xl) */}
+        {showRight && (
+        <>
+        <ColResizeHandle />
+        <Panel id="ciel" order={3} defaultSize={24} minSize={16} collapsible className="flex flex-col">
+          <aside className="flex h-full flex-col border-l border-outline-variant/60 bg-surface-container-low">
           <div className="flex flex-1 flex-col overflow-hidden border-b border-outline-variant/60">
             <div className="flex items-center justify-between border-b border-outline-variant/60 p-4">
               <div className="flex items-center gap-2">
@@ -631,7 +690,7 @@ export function SolveWorkspace({
               {messages.length === 0 && (
                 <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
                   <p className="text-sm leading-relaxed text-on-surface-variant">
-                    Ciel guides your reasoning; it never writes the solution for you.
+                    {t.cielIntro}
                   </p>
                 </div>
               )}
@@ -644,14 +703,14 @@ export function SolveWorkspace({
                   <p className="text-sm leading-relaxed text-on-surface">{m.text}</p>
                   {m.verifyHint && (
                     <p className="mt-1 text-xs text-on-surface-variant/60 italic">
-                      Verify this carefully before trusting it.
+                      {t.verifyHint}
                     </p>
                   )}
                 </div>
               ))}
               {chatSending && (
                 <div className="border-l-2 border-primary bg-primary/5 p-3">
-                  <p className="animate-pulse text-sm text-on-surface-variant/60">Ciel is thinking…</p>
+                  <p className="animate-pulse text-sm text-on-surface-variant/60">{t.cielThinking}</p>
                 </div>
               )}
               <div ref={chatEndRef} />
@@ -664,7 +723,7 @@ export function SolveWorkspace({
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleChatSend(); } }}
                   disabled={chatSending}
                   className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
-                  placeholder="Ask Ciel…"
+                  placeholder={t.askCiel}
                   type="text"
                 />
                 <button
@@ -680,7 +739,7 @@ export function SolveWorkspace({
           </div>
           <div className="flex h-1/3 flex-col">
             <div className="border-b border-outline-variant/60 p-4">
-              <h3 className="font-label-mono text-label-mono uppercase">Prompt suggestions</h3>
+              <h3 className="font-label-mono text-label-mono uppercase">{t.promptSuggestions}</h3>
             </div>
             <div className="ice-scroll flex-1 space-y-2 overflow-y-auto p-3">
               {PROMPT_SUGGESTIONS.map((p) => (
@@ -695,8 +754,11 @@ export function SolveWorkspace({
               ))}
             </div>
           </div>
-        </aside>
-      </main>
+          </aside>
+        </Panel>
+        </>
+        )}
+      </PanelGroup>
 
       {/* Explain-back modal — mounted after submit API returns questions */}
       {explainQuestions !== null && attemptIdRef.current !== null && (
