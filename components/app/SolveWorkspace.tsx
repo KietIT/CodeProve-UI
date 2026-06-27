@@ -604,7 +604,7 @@ export function SolveWorkspace({
                     </div>
                   ))}
                   <div className="mt-1 text-on-surface-variant/70">
-                    {runResult.passed}/{runResult.total} passed · coverage {runResult.coverage}%
+                    {runResult.passed}/{runResult.total} passed · coverage {Math.round(runResult.coverage * 100)}%
                   </div>
                   <div className="text-on-surface-variant/70">&gt; _</div>
                 </>
