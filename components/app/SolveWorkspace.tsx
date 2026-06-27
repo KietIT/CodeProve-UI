@@ -14,8 +14,10 @@ import {
 import {
   createAttempt,
   getExerciseDetail,
+  logHypothesis,
   runTests,
   saveSnapshot,
+  sendMentor,
   type RunResult,
 } from "@/lib/api";
 import { createTelemetry } from "@/lib/telemetry";
@@ -104,6 +106,18 @@ export function SolveWorkspace({
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+
+  // ── Chat state ────────────────────────────────────────────────────────────
+  type ChatMessage = { role: "user" | "assistant"; text: string; verifyHint?: boolean };
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [chatSending, setChatSending] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // ── Hypothesis state ──────────────────────────────────────────────────────
+  const [hypothesis, setHypothesis] = useState<string>("");
+  const [hypothesisSending, setHypothesisSending] = useState(false);
+  const [hypothesisResult, setHypothesisResult] = useState<{ correct: boolean; note: string } | null>(null);
 
   // ── Debounce + delta accumulator for CODE_EDIT telemetry ──────────────────
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -268,6 +282,60 @@ export function SolveWorkspace({
     setRunError(null);
   }, []);
 
+  // ── Auto-scroll chat to bottom ────────────────────────────────────────────
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ── Chat send ─────────────────────────────────────────────────────────────
+  const handleChatSend = useCallback(async (text?: string) => {
+    const msg = (text ?? chatInput).trim();
+    if (!msg || chatSending) return;
+    const id = attemptIdRef.current;
+    if (!id) return;
+
+    setChatInput("");
+    setMessages((prev) => [...prev, { role: "user", text: msg }]);
+    setChatSending(true);
+
+    try {
+      const res = await sendMentor(id, msg);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: res.reply, verifyHint: res.injected_error },
+      ]);
+    } catch (err) {
+      const errText = err instanceof Error ? err.message : "Failed to reach Ciel.";
+      setMessages((prev) => [...prev, { role: "assistant", text: `[Error] ${errText}` }]);
+    } finally {
+      setChatSending(false);
+    }
+  }, [chatInput, chatSending]);
+
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    void handleChatSend(suggestion);
+  }, [handleChatSend]);
+
+  // ── Hypothesis log ────────────────────────────────────────────────────────
+  const handleLogHypothesis = useCallback(async () => {
+    if (!hypothesis.trim() || hypothesisSending) return;
+    const id = attemptIdRef.current;
+    if (!id) return;
+
+    setHypothesisSending(true);
+    setHypothesisResult(null);
+
+    try {
+      const res = await logHypothesis(id, hypothesis);
+      setHypothesisResult(res);
+    } catch {
+      // Show a neutral error without crashing.
+      setHypothesisResult({ correct: false, note: "Failed to log hypothesis. Try again." });
+    } finally {
+      setHypothesisSending(false);
+    }
+  }, [hypothesis, hypothesisSending]);
+
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(() => {
     // Task 17 will replace this with the explain-back modal flow.
@@ -332,16 +400,26 @@ export function SolveWorkspace({
                 ))}
               </div>
             </section>
-            {/* Hypothesis box — wired in Task 12 (readOnly until then) */}
+            {/* Hypothesis box */}
             <section className="ice-card p-4">
               <h3 className="mb-2 font-label-caps text-label-caps uppercase tracking-widest">Initial hypothesis</h3>
               <textarea
-                readOnly
+                value={hypothesis}
+                onChange={(e) => setHypothesis(e.target.value)}
                 className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
                 placeholder="Describe your approach before coding…"
               />
-              <button className="mt-2 w-full cursor-pointer bg-primary py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90">
-                Log hypothesis
+              {hypothesisResult && (
+                <div className={`mt-2 p-2 font-label-mono text-label-mono text-sm ${hypothesisResult.correct ? "text-primary" : "text-error"}`}>
+                  {hypothesisResult.correct ? "✓" : "✗"} {hypothesisResult.note}
+                </div>
+              )}
+              <button
+                onClick={() => void handleLogHypothesis()}
+                disabled={hypothesisSending || !hypothesis.trim()}
+                className="mt-2 w-full cursor-pointer bg-primary py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {hypothesisSending ? "Logging…" : "Log hypothesis"}
               </button>
             </section>
           </div>
@@ -504,7 +582,7 @@ export function SolveWorkspace({
           </div>
         </div>
 
-        {/* Right — AI mentor (static UI; wired in Task 12) */}
+        {/* Right — AI mentor */}
         <aside className="hidden w-80 flex-none flex-col border-l border-outline-variant/60 bg-surface-container-low xl:flex">
           <div className="flex flex-1 flex-col overflow-hidden border-b border-outline-variant/60">
             <div className="flex items-center justify-between border-b border-outline-variant/60 p-4">
@@ -515,23 +593,55 @@ export function SolveWorkspace({
               <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             </div>
             <div className="ice-scroll flex-1 space-y-4 overflow-y-auto p-4">
+              {/* Initial hint bubble */}
               <div className="border-l-2 border-primary bg-primary/5 p-3">
                 <p className="text-sm leading-relaxed text-on-surface">{exercise.hint}</p>
               </div>
-              <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
-                <p className="text-sm leading-relaxed text-on-surface-variant">
-                  Ciel guides your reasoning; it never writes the solution for you.
-                </p>
-              </div>
+              {messages.length === 0 && (
+                <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
+                  <p className="text-sm leading-relaxed text-on-surface-variant">
+                    Ciel guides your reasoning; it never writes the solution for you.
+                  </p>
+                </div>
+              )}
+              {/* Chat message history */}
+              {messages.map((m, i) => (
+                <div key={i} className={m.role === "user"
+                  ? "border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3"
+                  : "border-l-2 border-primary bg-primary/5 p-3"
+                }>
+                  <p className="text-sm leading-relaxed text-on-surface">{m.text}</p>
+                  {m.verifyHint && (
+                    <p className="mt-1 text-xs text-on-surface-variant/60 italic">
+                      Verify this carefully before trusting it.
+                    </p>
+                  )}
+                </div>
+              ))}
+              {chatSending && (
+                <div className="border-l-2 border-primary bg-primary/5 p-3">
+                  <p className="animate-pulse text-sm text-on-surface-variant/60">Ciel is thinking…</p>
+                </div>
+              )}
+              <div ref={chatEndRef} />
             </div>
             <div className="border-t border-outline-variant/60 p-4">
               <div className="relative">
                 <input
-                  className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleChatSend(); } }}
+                  disabled={chatSending}
+                  className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
                   placeholder="Ask Ciel…"
                   type="text"
                 />
-                <button aria-label="Send" className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-primary">
+                <button
+                  aria-label="Send"
+                  onClick={() => void handleChatSend()}
+                  disabled={chatSending || !chatInput.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-primary disabled:opacity-40"
+                >
                   <Sym name="send" className="text-[18px]" />
                 </button>
               </div>
@@ -545,7 +655,9 @@ export function SolveWorkspace({
               {PROMPT_SUGGESTIONS.map((p) => (
                 <button
                   key={p}
-                  className="w-full cursor-pointer border border-outline-variant/50 p-2 text-left font-label-mono text-label-mono text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+                  onClick={() => handleSuggestionClick(p)}
+                  disabled={chatSending}
+                  className="w-full cursor-pointer border border-outline-variant/50 p-2 text-left font-label-mono text-label-mono text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
                 >
                   {p}
                 </button>

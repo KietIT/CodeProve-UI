@@ -123,3 +123,15 @@ export const runTests = (id: number, source_code: string) =>
     method: "POST",
     body: { source_code, run_tests: true },
   });
+
+export const sendMentor = (id: number, message: string) =>
+  apiFetch<{ reply: string; injected_error: boolean }>(`/attempts/${id}/mentor`, {
+    method: "POST",
+    body: { message },
+  });
+
+export const logHypothesis = (id: number, text: string) =>
+  apiFetch<{ correct: boolean; note: string }>(`/attempts/${id}/hypothesis`, {
+    method: "POST",
+    body: { text },
+  });
