@@ -353,12 +353,12 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 error={errors.password}
                 action={
                   mode === "login" ? (
-                    <Link
-                      href="#"
-                      className="text-xs font-medium text-teal transition-colors hover:opacity-80"
+                    <span
+                      title="Coming soon"
+                      className="cursor-not-allowed text-xs font-medium text-teal/40 select-none"
                     >
                       {c.fields.forgot}
-                    </Link>
+                    </span>
                   ) : undefined
                 }
               >
@@ -432,13 +432,23 @@ export function AuthPanel({ mode }: { mode: Mode }) {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            {/* SSO */}
+            {/* SSO — not yet implemented; visible but non-interactive */}
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" className={ssoCls}>
+              <button
+                type="button"
+                disabled
+                title="Coming soon"
+                className={ssoCls}
+              >
                 <GoogleIcon className="h-4 w-4" />
                 {c.social.google}
               </button>
-              <button type="button" className={ssoCls}>
+              <button
+                type="button"
+                disabled
+                title="Coming soon"
+                className={ssoCls}
+              >
                 <Github className="h-4 w-4" />
                 {c.social.github}
               </button>
@@ -483,7 +493,9 @@ const inputCls =
   "h-12 w-full rounded-pill border border-border bg-bg/60 pl-11 pr-4 text-sm text-content placeholder:text-muted/60 outline-none transition-all focus:border-primary/70 focus:ring-2 focus:ring-primary/25";
 
 const ssoCls =
-  "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-border bg-surface/60 text-sm font-medium text-content transition-all hover:border-primary/50 hover:bg-surface";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-pill border border-border bg-surface/60 text-sm font-medium text-content transition-all " +
+  "disabled:cursor-not-allowed disabled:opacity-40 disabled:pointer-events-none " +
+  "enabled:cursor-pointer enabled:hover:border-primary/50 enabled:hover:bg-surface";
 
 /** Labeled input shell with a leading icon, optional right action and error row. */
 function Field({
