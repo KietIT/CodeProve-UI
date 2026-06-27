@@ -353,8 +353,12 @@ export function SolveWorkspace({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // Flush telemetry before submitting.
-      await telemetryRef.current?.stop();
+      // Flush telemetry before submitting — non-critical, so never let it block submit.
+      try {
+        await telemetryRef.current?.stop();
+      } catch {
+        /* telemetry flush is best-effort; ignore failures */
+      }
       const { questions } = await submitAttempt(id);
       setExplainQuestions(questions);
     } catch (err) {
