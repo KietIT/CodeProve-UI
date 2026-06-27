@@ -135,3 +135,37 @@ export const logHypothesis = (id: number, text: string) =>
     method: "POST",
     body: { text },
   });
+
+// ── Report API types ──────────────────────────────────────────────────────────
+
+export type ReportOut = {
+  overall: number;
+  tier: string;
+  axes: Record<string, number | null>;
+  axes_pct: Record<string, number | null>;
+  feedback: {
+    strengths: { axis: string; note: string }[];
+    risks: { axis: string; note: string }[];
+    per_axis: Record<string, { score: number; notes: string[] }>;
+    timeline?: { step: string; title: string; desc: string; active: boolean }[];
+  };
+  integrity_status: "green" | "yellow" | "red";
+  timeline: { step: string; title: string; desc: string; active: boolean }[];
+};
+
+// ── Report API helpers ────────────────────────────────────────────────────────
+
+export const submitAttempt = (id: number) =>
+  apiFetch<{ questions: string[] }>(`/attempts/${id}/submit`, { method: "POST" });
+
+export const explainBack = (
+  id: number,
+  answers: { question: string; answer: string }[],
+) =>
+  apiFetch<ReportOut>(`/attempts/${id}/explain-back`, {
+    method: "POST",
+    body: { answers },
+  });
+
+export const getReport = (id: number) =>
+  apiFetch<ReportOut>(`/attempts/${id}/report`);

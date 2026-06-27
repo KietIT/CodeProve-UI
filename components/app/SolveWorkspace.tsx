@@ -18,8 +18,10 @@ import {
   runTests,
   saveSnapshot,
   sendMentor,
+  submitAttempt,
   type RunResult,
 } from "@/lib/api";
+import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
 
 // ── Token -> Tailwind class map (mirrors the original page) ──────────────────
@@ -118,6 +120,11 @@ export function SolveWorkspace({
   const [hypothesis, setHypothesis] = useState<string>("");
   const [hypothesisSending, setHypothesisSending] = useState(false);
   const [hypothesisResult, setHypothesisResult] = useState<{ correct: boolean; note: string } | null>(null);
+
+  // ── Explain-back modal state ───────────────────────────────────────────────
+  const [explainQuestions, setExplainQuestions] = useState<string[] | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // ── Debounce + delta accumulator for CODE_EDIT telemetry ──────────────────
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -336,15 +343,28 @@ export function SolveWorkspace({
     }
   }, [hypothesis, hypothesisSending]);
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = useCallback(() => {
-    // Task 17 will replace this with the explain-back modal flow.
-    if (onSubmit) {
-      onSubmit();
-    } else {
-      router.push("/feedback");
+  // ── Submit → explain-back modal ───────────────────────────────────────────
+  const handleSubmit = useCallback(async () => {
+    const id = attemptIdRef.current;
+    if (!id) {
+      setSubmitError("No active attempt. Please reload the page.");
+      return;
     }
-  }, [onSubmit, router]);
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // Flush telemetry before submitting.
+      await telemetryRef.current?.stop();
+      const { questions } = await submitAttempt(id);
+      setExplainQuestions(questions);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+    // Invoke optional external callback (used in tests / storybook).
+    onSubmit?.();
+  }, [onSubmit]);
 
   // ── Derived display values ────────────────────────────────────────────────
   const codeLines = editorCode.split("\n");
@@ -434,11 +454,18 @@ export function SolveWorkspace({
                 <span className="font-label-mono text-label-mono">{exercise.filename}</span>
               </div>
             </div>
+            {submitError && (
+              <span className="mr-3 font-label-mono text-label-mono text-error text-sm">
+                {submitError}
+              </span>
+            )}
             <button
-              onClick={handleSubmit}
-              className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+              onClick={() => void handleSubmit()}
+              disabled={submitting}
+              className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              Submit <Sym name="send" className="text-[16px]" />
+              {submitting ? "Submitting…" : "Submit"}{" "}
+              {!submitting && <Sym name="send" className="text-[16px]" />}
             </button>
           </div>
 
@@ -666,6 +693,15 @@ export function SolveWorkspace({
           </div>
         </aside>
       </main>
+
+      {/* Explain-back modal — mounted after submit API returns questions */}
+      {explainQuestions !== null && attemptIdRef.current !== null && (
+        <ExplainBackModal
+          attemptId={attemptIdRef.current}
+          questions={explainQuestions}
+          onClose={() => setExplainQuestions(null)}
+        />
+      )}
     </div>
   );
 }
