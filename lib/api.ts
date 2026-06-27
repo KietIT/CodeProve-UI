@@ -169,3 +169,16 @@ export const explainBack = (
 
 export const getReport = (id: number) =>
   apiFetch<ReportOut>(`/attempts/${id}/report`);
+
+// ── Dashboard API types ───────────────────────────────────────────────────────
+
+export type DashboardOut = {
+  kpis: { completed: number; streak: number; avg_score: number };
+  radar: { name: string; value: number }[];
+  trend: number[];
+  recent: { title: string; meta: string; status: string; score: number | null; ok: boolean }[];
+};
+
+// ── Dashboard API helpers ─────────────────────────────────────────────────────
+
+export const getDashboard = () => apiFetch<DashboardOut>("/dashboard");
