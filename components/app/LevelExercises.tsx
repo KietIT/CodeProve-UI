@@ -43,6 +43,8 @@ const STATUS_ICON: Record<
 
 type SortKey = "default" | "acceptance" | "difficulty";
 
+const KNOWN_DIFFS: Difficulty[] = ["Easy", "Medium", "Hard"];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Convert an API ExerciseSummary to a DisplayExercise, defaulting display-only fields. */
@@ -51,7 +53,9 @@ function fromApi(ex: ExerciseSummary): DisplayExercise {
     code: ex.code,
     num: ex.num,
     title: ex.title,
-    difficulty: (ex.difficulty as Difficulty) ?? "Easy",
+    difficulty: KNOWN_DIFFS.includes(ex.difficulty as Difficulty)
+      ? (ex.difficulty as Difficulty)
+      : "Easy",
     acceptance: ex.acceptance,
     topics: ex.topics,
     status: "todo", // API does not include per-user status yet
@@ -77,7 +81,6 @@ function staticFallback(level: string): DisplayExercise[] {
 
 interface LevelExercisesProps {
   level: string;
-  levelSlug: string;
 }
 
 /**
@@ -85,8 +88,8 @@ interface LevelExercisesProps {
  * Falls back to the static LEVELS data from lib/exercises.ts when the
  * backend is unreachable, so the page still renders offline / during dev.
  */
-export default function LevelExercises({ level, levelSlug }: LevelExercisesProps) {
-  const [exercises, setExercises] = useState<DisplayExercise[]>(() => staticFallback(levelSlug));
+export default function LevelExercises({ level }: LevelExercisesProps) {
+  const [exercises, setExercises] = useState<DisplayExercise[]>(() => staticFallback(level));
 
   const [query, setQuery] = useState("");
   const [topic, setTopic] = useState("All Topics");
@@ -309,7 +312,7 @@ export default function LevelExercises({ level, levelSlug }: LevelExercisesProps
                     </div>
                   ) : (
                     <Link
-                      href={{ pathname: "/workspace/solve", query: { id: ex.code, level: levelSlug } }}
+                      href={{ pathname: "/workspace/solve", query: { id: ex.code, level } }}
                       className="group block cursor-pointer"
                     >
                       {Row}

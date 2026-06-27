@@ -66,7 +66,7 @@ export default function LevelPicker({ params }: { params: { level: string } }) {
         </header>
 
         {/* Exercise list — fetches from API with static fallback */}
-        <LevelExercises level={config.slug} levelSlug={config.slug} />
+        <LevelExercises level={config.slug} />
       </main>
 
       <AppFooter />

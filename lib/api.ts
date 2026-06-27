@@ -27,6 +27,7 @@ export type ExerciseDetail = ExerciseSummary & {
   tests: string[];
   rubric: [string, string][];
 };
+
 const TOKEN_KEY = "codeprove_token";
 
 export function getToken(): string | null {
