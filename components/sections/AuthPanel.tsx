@@ -18,6 +18,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { HeroPoster } from "@/components/three/HeroPoster";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 type Mode = "login" | "signup";
 
@@ -174,6 +175,8 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const { login, signup } = useAuth();
 
   function validate() {
     const next: Record<string, string> = {};
@@ -187,13 +190,18 @@ export function AuthPanel({ mode }: { mode: Mode }) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setServerError("");
     if (!validate()) return;
     setSubmitting(true);
-    // Demo flow: this marketing site has no auth backend yet, so we simulate a
-    // request then route into the app. Wire to the real API in production.
-    await new Promise((r) => setTimeout(r, 900));
-    setSubmitting(false);
-    router.push("/dashboard");
+    try {
+      if (mode === "signup") await signup(name.trim(), email, password);
+      else await login(email, password);
+      router.push("/dashboard");
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -404,6 +412,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 </label>
               )}
 
+              {serverError && <p className="text-sm text-error">{serverError}</p>}
               <Button type="submit" size="lg" className="mt-2 w-full" disabled={submitting}>
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
