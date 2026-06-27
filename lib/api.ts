@@ -1,4 +1,32 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+// ── Exercise API types ────────────────────────────────────────────────────────
+
+export type ExerciseSummary = {
+  id: number;
+  num: number;
+  code: string;
+  title: string;
+  difficulty: string;
+  acceptance: number;
+  topics: string[];
+  level: string;
+};
+
+export type LevelGroup = {
+  level: string;
+  name: string;
+  exercises: ExerciseSummary[];
+};
+
+export type ExerciseDetail = ExerciseSummary & {
+  summary: string;
+  language: string;
+  starter: string;
+  hint: string;
+  tests: string[];
+  rubric: [string, string][];
+};
 const TOKEN_KEY = "codeprove_token";
 
 export function getToken(): string | null {
@@ -32,3 +60,11 @@ export async function apiFetch<T>(path: string, opts: Opts = {}): Promise<T> {
   }
   return res.json() as Promise<T>;
 }
+
+// ── Exercise helpers ──────────────────────────────────────────────────────────
+
+export const getExercises = (level?: string): Promise<LevelGroup[]> =>
+  apiFetch<LevelGroup[]>(`/exercises${level ? `?level=${level}` : ""}`);
+
+export const getExerciseDetail = (code: string): Promise<ExerciseDetail> =>
+  apiFetch<ExerciseDetail>(`/exercises/${code}`);
