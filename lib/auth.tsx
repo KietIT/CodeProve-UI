@@ -21,7 +21,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!getToken()) { setLoading(false); return; }
-    apiFetch<User>("/auth/me").then(setUser).catch(clearToken).finally(() => setLoading(false));
+    (async () => {
+      try {
+        setUser(await apiFetch<User>("/auth/me"));
+      } catch {
+        clearToken();
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   async function login(email: string, password: string) {
