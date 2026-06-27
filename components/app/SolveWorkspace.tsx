@@ -20,11 +20,46 @@ import {
 } from "@/lib/api";
 import { createTelemetry } from "@/lib/telemetry";
 
-// ── Token → Tailwind class map (mirrors the original page) ───────────────────
+// ── Token -> Tailwind class map (mirrors the original page) ──────────────────
 const TOKEN_CLASS: Record<string, string> = {
   kw: "text-primary",
   fn: "text-secondary",
   com: "text-on-surface-variant/40 italic",
+};
+
+// ── Shared editor metrics ───────────────────────────────────────────────────
+// The textarea, the highlight overlay, and the line-number gutter MUST share
+// identical font metrics + box padding so glyphs line up 1:1 — including when
+// scrolled. We pin them with inline styles rather than utility classes so the
+// numbers can't drift between the three layered elements.
+const EDITOR_FONT_FAMILY =
+  'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+const EDITOR_FONT_SIZE = 13; // px
+const EDITOR_LINE_HEIGHT = 21; // px
+const EDITOR_PAD_Y = 24; // px (top + bottom padding)
+const EDITOR_PAD_X = 16; // px
+
+const EDITOR_TEXT_STYLE: React.CSSProperties = {
+  fontFamily: EDITOR_FONT_FAMILY,
+  fontSize: EDITOR_FONT_SIZE,
+  lineHeight: `${EDITOR_LINE_HEIGHT}px`,
+  padding: `${EDITOR_PAD_Y}px ${EDITOR_PAD_X}px`,
+  tabSize: 4,
+  margin: 0,
+  border: 0,
+};
+
+const EDITOR_GUTTER_STYLE: React.CSSProperties = {
+  fontFamily: EDITOR_FONT_FAMILY,
+  fontSize: EDITOR_FONT_SIZE,
+  lineHeight: `${EDITOR_LINE_HEIGHT}px`,
+  padding: `${EDITOR_PAD_Y}px 12px`,
+  margin: 0,
+};
+
+const EDITOR_LINE_STYLE: React.CSSProperties = {
+  height: `${EDITOR_LINE_HEIGHT}px`,
+  lineHeight: `${EDITOR_LINE_HEIGHT}px`,
 };
 
 // ── Props ────────────────────────────────────────────────────────────────────
@@ -38,7 +73,7 @@ export type SolveWorkspaceProps = {
   initialExercise: Exercise;
   /** Level config for the back-link label. */
   initialLevel: LevelConfig;
-  /** Optional callback — Task 17 will replace this with the submit/explain-back flow. */
+  /** Optional callback. Task 17 will replace this with the submit/explain-back flow. */
   onSubmit?: () => void;
 };
 
@@ -55,7 +90,7 @@ export function SolveWorkspace({
 
   // ── Exercise state (starts with static data; hydrates from API) ───────────
   const [exercise, setExercise] = useState<Exercise>(initialExercise);
-  const [levelConfig, setLevelConfig] = useState<LevelConfig>(initialLevel);
+  const [levelConfig] = useState<LevelConfig>(initialLevel);
 
   // ── Editor state ──────────────────────────────────────────────────────────
   const [editorCode, setEditorCode] = useState<string>(initialExercise.starter);
@@ -70,11 +105,19 @@ export function SolveWorkspace({
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
 
-  // ── Debounce ref for CODE_EDIT telemetry ──────────────────────────────────
+  // ── Debounce + delta accumulator for CODE_EDIT telemetry ──────────────────
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevCodeLenRef = useRef<number>(initialExercise.starter.length);
+  // Sum of per-keystroke deltas within the current debounce window. Flushing the
+  // debounced log sends this total and resets it, so fast typing isn't lost.
+  const editDeltaAccRef = useRef<number>(0);
 
-  // ── Mount: fetch detail from API (fallback to initialExercise) + create attempt ──
+  // ── Editor scroll-sync refs (overlay + gutter follow the textarea) ────────
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
+
+  // ── Mount: fetch detail from API (fallback to initialExercise) + attempt ──
   useEffect(() => {
     let cancelled = false;
 
@@ -97,10 +140,11 @@ export function SolveWorkspace({
               // Only override starter if the user has not typed anything yet.
               current === initialExercise.starter ? detail.starter : current,
             );
+            prevCodeLenRef.current = detail.starter.length;
           }
         }
       } catch {
-        // Static fallback — continue without live detail.
+        // Static fallback: continue without live detail.
       }
 
       // Create attempt on backend.
@@ -114,7 +158,7 @@ export function SolveWorkspace({
         telemetryRef.current = telem;
         telem.log("OPEN");
       } catch {
-        // Backend not reachable — telemetry will be a no-op via null check below.
+        // Backend not reachable: telemetry stays a no-op via the null checks below.
       }
     }
 
@@ -128,7 +172,11 @@ export function SolveWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
-  // ── visibilitychange / blur → FOCUS_LOST ─────────────────────────────────
+  // ── visibilitychange / blur -> FOCUS_LOST (deduped) ───────────────────────
+  // A tab switch fires BOTH visibilitychange (hidden) and window blur. Gate each
+  // so exactly one FOCUS_LOST is emitted:
+  //   - tab switch -> visibilitychange (document becomes hidden)
+  //   - app switch -> blur while the tab is still visible
   useEffect(() => {
     function handleVisibilityChange() {
       if (document.visibilityState === "hidden") {
@@ -136,7 +184,10 @@ export function SolveWorkspace({
       }
     }
     function handleBlur() {
-      telemetryRef.current?.log("FOCUS_LOST", {}, ["TAB_SWITCH"]);
+      // Window lost focus but the tab is still active = switched to another app.
+      if (document.visibilityState === "visible") {
+        telemetryRef.current?.log("FOCUS_LOST", {}, ["TAB_SWITCH"]);
+      }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
@@ -154,14 +205,31 @@ export function SolveWorkspace({
       prevCodeLenRef.current = newCode.length;
       setEditorCode(newCode);
 
-      // Debounced telemetry log.
+      // Accumulate per-keystroke deltas so fast typing within the debounce
+      // window isn't collapsed to a single keystroke.
+      editDeltaAccRef.current += delta;
+
       if (editDebounceRef.current) clearTimeout(editDebounceRef.current);
       editDebounceRef.current = setTimeout(() => {
-        telemetryRef.current?.log("CODE_EDIT", { charsAdded: delta });
+        const total = editDeltaAccRef.current;
+        editDeltaAccRef.current = 0;
+        telemetryRef.current?.log("CODE_EDIT", { charsAdded: total });
       }, 500);
     },
     [],
   );
+
+  // ── Editor scroll -> sync overlay + gutter ────────────────────────────────
+  const handleEditorScroll = useCallback((e: React.UIEvent<HTMLTextAreaElement>) => {
+    const ta = e.currentTarget;
+    if (overlayRef.current) {
+      overlayRef.current.scrollTop = ta.scrollTop;
+      overlayRef.current.scrollLeft = ta.scrollLeft;
+    }
+    if (gutterRef.current) {
+      gutterRef.current.scrollTop = ta.scrollTop;
+    }
+  }, []);
 
   // ── Editor onPaste ────────────────────────────────────────────────────────
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -264,10 +332,11 @@ export function SolveWorkspace({
                 ))}
               </div>
             </section>
-            {/* Hypothesis box — wired in Task 12 */}
+            {/* Hypothesis box — wired in Task 12 (readOnly until then) */}
             <section className="ice-card p-4">
               <h3 className="mb-2 font-label-caps text-label-caps uppercase tracking-widest">Initial hypothesis</h3>
               <textarea
+                readOnly
                 className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
                 placeholder="Describe your approach before coding…"
               />
@@ -295,30 +364,42 @@ export function SolveWorkspace({
             </button>
           </div>
 
-          {/* Editor — controlled textarea with syntax overlay */}
-          <div className="relative flex-1 overflow-auto bg-surface-container-lowest/60 p-6 font-label-mono text-label-mono ice-scroll">
+          {/* Editor — textarea is the scroll container; gutter + overlay mirror
+              its scroll position via handleEditorScroll. All three share the
+              EDITOR_* metrics so highlighted glyphs and line numbers stay aligned
+              with the real text even when scrolled deep into a long starter. */}
+          <div className="relative flex-1 overflow-hidden bg-surface-container-lowest/60">
             <div className="scanline" />
-            <div className="relative flex gap-5">
-              {/* Line numbers */}
-              <div className="select-none space-y-1 text-right text-on-surface-variant/40 flex-none">
+            <div className="absolute inset-0 flex">
+              {/* Line numbers (vertical scroll mirrored, own overflow clipped) */}
+              <div
+                ref={gutterRef}
+                aria-hidden="true"
+                className="flex-none select-none overflow-hidden border-r border-outline-variant/40 text-right text-on-surface-variant/40"
+                style={EDITOR_GUTTER_STYLE}
+              >
                 {codeLines.map((_, i) => (
-                  <div key={i}>{String(i + 1).padStart(2, "0")}</div>
+                  <div key={i} style={EDITOR_LINE_STYLE}>
+                    {String(i + 1).padStart(2, "0")}
+                  </div>
                 ))}
               </div>
 
-              {/* Syntax-highlighted overlay + transparent textarea stacked */}
+              {/* Overlay + textarea share one box and identical metrics */}
               <div className="relative flex-1">
-                {/* Overlay (pointer-events:none so textarea receives clicks) */}
+                {/* Highlight overlay (scroll mirrored; pointer-events off) */}
                 <div
+                  ref={overlayRef}
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 space-y-1 whitespace-pre"
+                  className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre"
+                  style={EDITOR_TEXT_STYLE}
                 >
                   {codeLines.map((line, i) => {
                     const tokens = tokenizeLine(line, exercise.language);
                     return (
-                      <div key={i}>
+                      <div key={i} style={EDITOR_LINE_STYLE}>
                         {tokens.length === 0 ? (
-                          " "
+                          " "
                         ) : (
                           tokens.map((p, j) => (
                             <span key={j} className={p.c ? TOKEN_CLASS[p.c] : "text-on-surface"}>
@@ -331,18 +412,18 @@ export function SolveWorkspace({
                   })}
                 </div>
 
-                {/* Editable textarea — transparent text so overlay shows through */}
+                {/* Editable textarea: the real scroll container. Transparent text
+                    lets the overlay show through; the caret stays visible. */}
                 <textarea
+                  ref={textareaRef}
                   value={editorCode}
                   onChange={handleEditorChange}
                   onPaste={handlePaste}
+                  onScroll={handleEditorScroll}
                   spellCheck={false}
-                  className="relative w-full resize-none bg-transparent font-label-mono text-label-mono text-transparent caret-on-surface outline-none"
-                  style={{
-                    // Match overlay line height exactly so gutter stays aligned.
-                    lineHeight: "inherit",
-                    minHeight: `${codeLines.length * 1.5}em`,
-                  }}
+                  wrap="off"
+                  className="ice-scroll absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent text-transparent caret-on-surface outline-none"
+                  style={EDITOR_TEXT_STYLE}
                 />
               </div>
             </div>
@@ -396,9 +477,7 @@ export function SolveWorkspace({
               )}
 
               {/* Error */}
-              {runError && (
-                <div className="text-error">[ERROR] {runError}</div>
-              )}
+              {runError && <div className="text-error">[ERROR] {runError}</div>}
 
               {/* Real results */}
               {runResult && (
@@ -412,9 +491,7 @@ export function SolveWorkspace({
                       {c.stdout && (
                         <span className="ml-2 text-on-surface-variant/60">{c.stdout}</span>
                       )}
-                      {c.error && (
-                        <div className="ml-4 text-error/80">{c.error}</div>
-                      )}
+                      {c.error && <div className="ml-4 text-error/80">{c.error}</div>}
                     </div>
                   ))}
                   <div className="mt-1 text-on-surface-variant/70">
