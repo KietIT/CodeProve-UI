@@ -69,3 +69,57 @@ export const getExercises = (level?: string): Promise<LevelGroup[]> =>
 
 export const getExerciseDetail = (code: string): Promise<ExerciseDetail> =>
   apiFetch<ExerciseDetail>(`/exercises/${code}`);
+
+// ── Attempt API types ─────────────────────────────────────────────────────────
+
+export type RunCase = {
+  name: string;
+  passed: boolean;
+  stdout: string;
+  error: string | null;
+};
+
+export type RunResult = {
+  passed: number;
+  total: number;
+  coverage: number;
+  cases: RunCase[];
+  runtime_error: string | null;
+};
+
+export type AttemptState = {
+  id: number;
+  exercise_code: string;
+  status: string;
+  score: number | null;
+  latest_code: string | null;
+};
+
+// ── Attempt API helpers ───────────────────────────────────────────────────────
+
+export const createAttempt = (exercise_code: string) =>
+  apiFetch<{ attempt_id: number; started_at: string }>("/attempts", {
+    method: "POST",
+    body: { exercise_code },
+  });
+
+export const getAttempt = (id: number) =>
+  apiFetch<AttemptState>(`/attempts/${id}`);
+
+export const sendEvents = (id: number, events: unknown[]) =>
+  apiFetch<{ ingested: number }>(`/attempts/${id}/events`, {
+    method: "POST",
+    body: { events },
+  });
+
+export const saveSnapshot = (id: number, version: number, source_code: string) =>
+  apiFetch<{ ok: boolean }>(`/attempts/${id}/snapshots`, {
+    method: "POST",
+    body: { version, source_code },
+  });
+
+export const runTests = (id: number, source_code: string) =>
+  apiFetch<RunResult>(`/attempts/${id}/run`, {
+    method: "POST",
+    body: { source_code, run_tests: true },
+  });
