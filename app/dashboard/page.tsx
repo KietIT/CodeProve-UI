@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
 import { getDashboard, type DashboardOut } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { appContent } from "@/lib/appContent";
 
 // 6-axis radar geometry (center 160,160 · maxR 120)
 // Axes order: Understanding(top), Hypothesis(top-right), Prompting(bottom-right),
@@ -58,6 +60,8 @@ function computeTrendPaths(trend: number[]) {
 }
 
 export default function DashboardPage() {
+  const { locale } = useI18n();
+  const t = appContent[locale].dashboard;
   const [data, setData] = useState<DashboardOut | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,9 +77,9 @@ export default function DashboardPage() {
 
   const kpiCards = data
     ? [
-        { label: "Completed exercises", value: String(data.kpis.completed), delta: "exercises scored", icon: "task_alt" },
-        { label: "Day streak", value: String(data.kpis.streak), delta: "days active", icon: "local_fire_department" },
-        { label: "Avg fluency score", value: data.kpis.avg_score.toFixed(1), delta: "out of 100", icon: "neurology" },
+        { label: t.kpiCompleted, value: String(data.kpis.completed), delta: t.kpiCompletedDelta, icon: "task_alt" },
+        { label: t.kpiStreak, value: String(data.kpis.streak), delta: t.kpiStreakDelta, icon: "local_fire_department" },
+        { label: t.kpiAvg, value: data.kpis.avg_score.toFixed(1), delta: t.kpiAvgDelta, icon: "neurology" },
       ]
     : [];
 
@@ -99,17 +103,13 @@ export default function DashboardPage() {
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">
-              System Overview
+              {t.eyebrow}
             </span>
             <h1 className="mt-2 font-headline-xl text-[40px] leading-none tracking-tight sm:text-headline-xl">
-              Welcome back
+              {t.welcome}
             </h1>
             <p className="mt-3 max-w-md text-on-surface-variant">
-              {loading
-                ? "Loading your progress..."
-                : isEmpty
-                ? "Start your first challenge to see your progress here."
-                : "Your AI-fluency dashboard shows real aggregate data from your scored attempts."}
+              {loading ? t.loadingSub : isEmpty ? t.emptySub : t.readySub}
             </p>
           </div>
         </header>
@@ -118,14 +118,14 @@ export default function DashboardPage() {
         {loading && (
           <div className="flex items-center justify-center py-24 text-on-surface-variant">
             <Sym name="progress_activity" className="mr-3 animate-spin text-[28px] text-primary" />
-            Loading dashboard…
+            {t.loading}
           </div>
         )}
 
         {/* Error state */}
         {error && (
           <div className="ice-card p-6 text-error">
-            <p>Failed to load dashboard: {error}</p>
+            <p>{t.loadFailed}: {error}</p>
           </div>
         )}
 
@@ -134,14 +134,14 @@ export default function DashboardPage() {
           <div className="ice-card flex flex-col items-center gap-6 py-20 text-center">
             <Sym name="rocket_launch" className="text-[56px] text-primary/60" />
             <div>
-              <p className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">No attempts yet — start a challenge</p>
-              <p className="mt-2 text-on-surface-variant">Complete a scored exercise to see your fluency metrics here.</p>
+              <p className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">{t.emptyTitle}</p>
+              <p className="mt-2 text-on-surface-variant">{t.emptyDesc}</p>
             </div>
             <Link
               href="/workspace"
               className="flex items-center gap-2 border border-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-primary transition-colors hover:bg-primary/10"
             >
-              Go to Workspace <Sym name="arrow_forward" className="text-[16px]" />
+              {t.goWorkspace} <Sym name="arrow_forward" className="text-[16px]" />
             </Link>
           </div>
         )}
@@ -168,8 +168,8 @@ export default function DashboardPage() {
               <section className="ice-card p-6 xl:col-span-7">
                 <div className="mb-6 flex items-center justify-between border-b border-outline-variant/50 pb-4">
                   <div>
-                    <h2 className="font-headline-lg-mobile text-headline-lg-mobile">Skill competency matrix</h2>
-                    <p className="mt-1 font-label-mono text-label-mono text-on-surface-variant/70">6-axis AI-fluency profile</p>
+                    <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{t.matrixTitle}</h2>
+                    <p className="mt-1 font-label-mono text-label-mono text-on-surface-variant/70">{t.matrixSub}</p>
                   </div>
                   <Sym name="radar" className="text-primary" />
                 </div>
@@ -210,8 +210,8 @@ export default function DashboardPage() {
 
               <section className="ice-card flex flex-col p-6 xl:col-span-5">
                 <div className="mb-4 flex items-center justify-between border-b border-outline-variant/50 pb-4">
-                  <h2 className="font-headline-lg-mobile text-headline-lg-mobile">Recent attempts</h2>
-                  <span className="font-label-mono text-label-mono text-on-surface-variant/60">LAST 6</span>
+                  <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{t.recentTitle}</h2>
+                  <span className="font-label-mono text-label-mono text-on-surface-variant/60">{t.recentLast}</span>
                 </div>
                 <div className="flex flex-col divide-y divide-outline-variant/40">
                   {data.recent.map((a, idx) => (
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                       <div className="text-right">
                         <div className={`font-label-mono text-label-mono ${a.ok ? "text-primary" : "text-error"}`}>{a.status}</div>
                         <div className="font-label-mono text-label-mono text-on-surface-variant/60">
-                          {a.score !== null ? `${a.score.toFixed(0)} pts` : "—"}
+                          {a.score !== null ? `${a.score.toFixed(0)} ${t.pts}` : "—"}
                         </div>
                       </div>
                     </div>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                   href="/workspace"
                   className="mt-auto flex items-center justify-center gap-2 border border-outline-variant/60 py-2.5 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
                 >
-                  View all activity <Sym name="arrow_forward" className="text-[16px]" />
+                  {t.viewAll} <Sym name="arrow_forward" className="text-[16px]" />
                 </Link>
               </section>
             </div>
@@ -248,8 +248,8 @@ export default function DashboardPage() {
               <section className="ice-card p-6 xl:col-span-7">
                 <div className="mb-6 flex items-center justify-between border-b border-outline-variant/50 pb-4">
                   <div>
-                    <h2 className="font-headline-lg-mobile text-headline-lg-mobile">Fluency trend</h2>
-                    <p className="mt-1 font-label-mono text-label-mono text-on-surface-variant/70">Score over last attempts</p>
+                    <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{t.trendTitle}</h2>
+                    <p className="mt-1 font-label-mono text-label-mono text-on-surface-variant/70">{t.trendSub}</p>
                   </div>
                   <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">{trendDelta}</span>
                 </div>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
 
               <section className="ice-card p-6 xl:col-span-5">
                 <div className="mb-6 flex items-center justify-between border-b border-outline-variant/50 pb-4">
-                  <h2 className="font-headline-lg-mobile text-headline-lg-mobile">Performance by axis</h2>
+                  <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{t.byAxisTitle}</h2>
                   <Sym name="bar_chart" className="text-primary" />
                 </div>
                 <div className="space-y-4">

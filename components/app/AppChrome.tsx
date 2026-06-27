@@ -3,9 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ThemeToggle } from "@/components/ui/Toggles";
+import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { useAuth } from "@/lib/auth";
+import { appContent } from "@/lib/appContent";
+
+/** Build up-to-2-char initials from a full name (fallback "CP"). */
+function initialsOf(name: string | undefined): string {
+  if (!name) return "CP";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "CP";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 /** Material Symbols icon shortcut. */
 export function Sym({
@@ -30,15 +41,16 @@ export function Sym({
   );
 }
 
-const topLinks = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Workspace", href: "/workspace" },
-  { label: "Analytics", href: "#" },
-];
-
 /** Horizontal top navigation — the only nav across all app pages. */
 export function AppTopNav() {
   const pathname = usePathname();
+  const { locale } = useI18n();
+  const nav = appContent[locale].nav;
+  const topLinks = [
+    { label: nav.dashboard, href: "/dashboard" },
+    { label: nav.workspace, href: "/workspace" },
+    { label: nav.analytics, href: "#" },
+  ];
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
       <div className="flex items-center gap-8">
@@ -74,6 +86,7 @@ export function AppTopNav() {
         >
           <Sym name="search" className="text-[20px]" />
         </button>
+        <LanguageToggle />
         <ThemeToggle />
         <button
           aria-label="Notifications"
@@ -92,12 +105,17 @@ export function AppTopNav() {
 export function UserMenu() {
   const { locale } = useI18n();
   const { theme, toggleTheme } = useTheme();
+  const { user: authUser, logout } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Demo session — swap for the real authenticated user in production.
-  const user = { name: "Codeprove User", email: "you@school.edu", initials: "CP" };
+  // Real authenticated user (falls back to placeholders before /auth/me resolves).
+  const user = {
+    name: authUser?.full_name ?? "CodeProve User",
+    email: authUser?.email ?? "—",
+    initials: initialsOf(authUser?.full_name),
+  };
 
   const tx = {
     vi: {
@@ -123,7 +141,7 @@ export function UserMenu() {
   }[locale];
 
   const links = [
-    { icon: "account_circle", label: tx.profile, href: "/dashboard" },
+    { icon: "account_circle", label: tx.profile, href: "/profile" },
     { icon: "extension", label: tx.integrations, href: "#" },
     { icon: "settings", label: tx.settings, href: "#" },
   ];
@@ -148,7 +166,7 @@ export function UserMenu() {
 
   function signOut() {
     setOpen(false);
-    // Clear demo session here, then return to the auth screen.
+    logout();
     router.push("/login");
   }
 

@@ -22,7 +22,7 @@ export const content = {
       titleB: "kiểm tra bạn biết dùng AI đúng cách không.",
       sub: "Đo cách bạn tư duy cùng AI - không chỉ dòng code cuối cùng.",
       ctaPrimary: "Get started",
-      ctaSecondary: "Dành cho trường học",
+      ctaSecondary: "Dành cho nhà tuyển dụng",
       badge: "6 TRỤC NĂNG LỰC",
       score: "94/120",
       coreLabel: "AI Fluency Core",
@@ -38,7 +38,7 @@ export const content = {
       pillars: [
         { title: "Sứ mệnh", desc: "Đo năng lực dùng AI đúng cách, không phải khả năng AI giải bài thay bạn." },
         { title: "Cách tiếp cận", desc: "Quan sát toàn bộ quá trình tư duy và chấm trên 6 trục năng lực rõ ràng." },
-        { title: "Dành cho", desc: "Sinh viên, trường học và nhà tuyển dụng trong kỷ nguyên AI." },
+        { title: "Dành cho", desc: "Nhà tuyển dụng và đội ngũ kỹ thuật cần đánh giá năng lực ứng viên thật trong kỷ nguyên AI." },
       ],
     },
     service: {
@@ -275,10 +275,10 @@ export const content = {
       business: {
         name: "Doanh nghiệp",
         tagline:
-          "Giải pháp đánh giá năng lực lập trình cùng AI cho trường học & nhà tuyển dụng, tuỳ chỉnh theo quy mô.",
+          "Giải pháp đánh giá năng lực lập trình cùng AI cho nhà tuyển dụng & đội ngũ tuyển dụng kỹ thuật, tuỳ chỉnh theo quy mô.",
         priceNote: "Báo giá theo quy mô",
         features: [
-          "Dashboard giảng viên + radar lớp học",
+          "Dashboard nhà tuyển dụng + radar ứng viên",
           "Rubric tuỳ chỉnh theo môn / vị trí",
           "Integrity badge & báo cáo toàn vẹn",
           "Quản lý người dùng, SSO & phân quyền",
@@ -478,7 +478,7 @@ export const content = {
       titleB: "test whether you can use AI the right way.",
       sub: "We measure how you think with AI - not just the final lines of code.",
       ctaPrimary: "Get started",
-      ctaSecondary: "For universities",
+      ctaSecondary: "For employers",
       badge: "6 COMPETENCY AXES",
       score: "94/120",
       coreLabel: "AI Fluency Core",
@@ -494,7 +494,7 @@ export const content = {
       pillars: [
         { title: "Mission", desc: "Measure how well you use AI - not whether AI can solve the task for you." },
         { title: "Approach", desc: "Observe the whole thinking process and score it across 6 clear competency axes." },
-        { title: "Built for", desc: "Students, universities and employers in the age of AI." },
+        { title: "Built for", desc: "Recruiters and engineering teams who need real candidate competency signals in the age of AI." },
       ],
     },
     service: {
@@ -731,10 +731,10 @@ export const content = {
       business: {
         name: "Business",
         tagline:
-          "AI-native code assessment for universities & employers, tailored to your scale.",
+          "AI-native code assessment for recruiters & technical hiring teams, tailored to your scale.",
         priceNote: "Custom pricing by scale",
         features: [
-          "Instructor dashboard + class radar",
+          "Recruiter dashboard + candidate radar",
           "Rubric tunable per course / role",
           "Integrity badge & integrity reports",
           "User management, SSO & roles",
