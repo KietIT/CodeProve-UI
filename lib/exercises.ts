@@ -518,6 +518,58 @@ export function getExercise(id: string | undefined): { exercise: Exercise; level
   return undefined;
 }
 
+/** Convert reference-like seed code into a student-facing scaffold. */
+export function studentStarterFromCode(source: string): string {
+  const lines = source.replace(/\r\n/g, "\n").split("\n");
+  const out: string[] = [];
+  let skipBodyIndent: number | null = null;
+  let sawCallable = false;
+
+  for (const line of lines) {
+    const stripped = line.trim();
+    const indent = line.length - line.trimStart().length;
+
+    if (skipBodyIndent !== null) {
+      if (stripped && indent > skipBodyIndent) continue;
+      skipBodyIndent = null;
+    }
+
+    if (!stripped) {
+      if (out.length > 0 && out[out.length - 1] !== "") out.push("");
+      continue;
+    }
+
+    if (/^(import|from)\s/.test(stripped)) {
+      out.push(line);
+      continue;
+    }
+
+    if (
+      indent === 0 &&
+      /^[A-Za-z_]\w*\s*=\s*(\{\}|\[\]|0|None|False|True)$/.test(stripped)
+    ) {
+      out.push(line);
+      continue;
+    }
+
+    if (/^class\s+.+:\s*$/.test(stripped)) {
+      out.push(line);
+      out.push(`${" ".repeat(indent + 4)}pass`);
+      sawCallable = true;
+      continue;
+    }
+
+    if (/^def\s+.+:\s*$/.test(stripped)) {
+      out.push(line);
+      out.push(`${" ".repeat(indent + 4)}pass`);
+      skipBodyIndent = indent;
+      sawCallable = true;
+    }
+  }
+
+  return sawCallable ? out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() : source;
+}
+
 // ── Lightweight syntax highlighting ─────────────────────────────────────────
 export type CodeToken = { t: string; c?: "kw" | "fn" | "com" };
 
