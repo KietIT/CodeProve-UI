@@ -296,7 +296,7 @@ export const content = {
           a: "Không. Đây là ranh giới cứng: Ciel không bao giờ trả về một lời giải hoàn chỉnh chạy được, kể cả khi bị prompt mồi. Nó gợi ý, giải thích và hướng dẫn từng bước - nếu làm hộ, toàn bộ cơ chế chấm Prompting/Verification sẽ sụp đổ.",
         },
         {
-          q: "Trường có thấy được prompt của sinh viên không?",
+          q: "Nhà tuyển dụng có thấy được prompt của sinh viên không?",
           a: "Có - prompt và dấu vết tư duy là dữ liệu chấm điểm, hiển thị trong dashboard giảng viên một cách minh bạch. Telemetry hành vi được công khai với người học theo nguyên tắc quyền riêng tư (NFR-5).",
         },
         {
@@ -752,8 +752,8 @@ export const content = {
           a: "No. This is a hard boundary: the Ciel never returns a complete, runnable solution, even under prompt injection. It hints, explains and guides step by step - if it solved problems for you, the entire Prompting/Verification scoring would collapse.",
         },
         {
-          q: "Can universities see student prompts?",
-          a: "Yes - prompts and reasoning traces are scoring data, shown transparently in the instructor dashboard. Behavioral telemetry is disclosed to learners under our privacy principle (NFR-5).",
+          q: "Can recruiters see the students' prompts?",
+          a: "Yes - prompts and reasoning traces are scoring data, shown transparently in the instructor dashboard. Behavioral telemetry is disclosed to learners under our privacy principle.",
         },
         {
           q: "Are languages other than Python supported?",
