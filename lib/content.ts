@@ -62,7 +62,7 @@ export const content = {
       messageLabel: "Nội dung",
       messagePlaceholder: "Bạn cần chúng tôi hỗ trợ điều gì?",
       send: "Gửi tin nhắn",
-      email: "hello@codeprove.vn",
+      email: "flux@codeprove.vn",
       faqTitle: "Câu hỏi thường gặp",
     },
     problem: {
@@ -301,7 +301,7 @@ export const content = {
         },
         {
           q: "Có hỗ trợ ngôn ngữ nào ngoài Python không?",
-          a: "MVP tập trung Python. Kiến trúc Rule Engine tách rời ngôn ngữ nên thêm ngôn ngữ/SQL mới không cần sửa lõi (Phase 2).",
+          a: "MVP tập trung Python. Kiến trúc Rule Engine tách rời ngôn ngữ nên thêm ngôn ngữ/SQL mới không cần sửa lõi.",
         },
         {
           q: "Integrity Score có tự đánh trượt sinh viên không?",
@@ -518,7 +518,7 @@ export const content = {
       messageLabel: "Message",
       messagePlaceholder: "How can we help you?",
       send: "Send message",
-      email: "hello@codeprove.vn",
+      email: "flux@codeprove.vn",
       faqTitle: "Frequently asked questions",
     },
     problem: {
@@ -757,7 +757,7 @@ export const content = {
         },
         {
           q: "Are languages other than Python supported?",
-          a: "The MVP focuses on Python. The Rule Engine is language-agnostic, so adding new languages/SQL requires no core changes (Phase 2).",
+          a: "The MVP focuses on Python. The Rule Engine is language-agnostic, so adding new languages/SQL requires no core changes.",
         },
         {
           q: "Does the Integrity Score auto-fail students?",
