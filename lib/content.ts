@@ -297,7 +297,7 @@ export const content = {
         },
         {
           q: "Nhà tuyển dụng có thấy được prompt của sinh viên không?",
-          a: "Có - prompt và dấu vết tư duy là dữ liệu chấm điểm, hiển thị trong dashboard giảng viên một cách minh bạch. Telemetry hành vi được công khai với người học theo nguyên tắc quyền riêng tư (NFR-5).",
+          a: "Có - prompt và dấu vết tư duy là dữ liệu chấm điểm, hiển thị trong dashboard giảng viên một cách minh bạch. Telemetry hành vi được công khai với người học theo nguyên tắc quyền riêng tư.",
         },
         {
           q: "Có hỗ trợ ngôn ngữ nào ngoài Python không?",
