@@ -244,7 +244,7 @@ export const content = {
           cta: "Bắt đầu miễn phí",
         },
         {
-          name: "Pro",
+          name: "Plus",
           price: "99.000đ",
           period: "/tháng",
           featured: true,
@@ -255,21 +255,21 @@ export const content = {
             "Chứng chỉ năng lực AI Fluency",
             "Ciel nâng cao",
           ],
-          cta: "Nâng cấp Pro",
+          cta: "Nâng cấp Plus",
         },
         {
-          name: "Plus",
+          name: "Pro",
           price: "199.000đ",
           period: "/tháng",
           featured: false,
           features: [
-            "Mọi tính năng gói Pro",
+            "Mọi tính năng gói Plus",
             "Lộ trình học cá nhân hoá theo AI",
             "Mô phỏng phỏng vấn & tình huống thực chiến",
             "Báo cáo năng lực chuyên sâu",
             "Hỗ trợ ưu tiên",
           ],
-          cta: "Nâng cấp Plus",
+          cta: "Nâng cấp Pro",
         },
       ],
       business: {
@@ -296,7 +296,7 @@ export const content = {
           a: "Không. Đây là ranh giới cứng: Ciel không bao giờ trả về một lời giải hoàn chỉnh chạy được, kể cả khi bị prompt mồi. Nó gợi ý, giải thích và hướng dẫn từng bước - nếu làm hộ, toàn bộ cơ chế chấm Prompting/Verification sẽ sụp đổ.",
         },
         {
-          q: "Trường có thấy được prompt của sinh viên không?",
+          q: "Nhà tuyển dụng có thấy được prompt của sinh viên không?",
           a: "Có - prompt và dấu vết tư duy là dữ liệu chấm điểm, hiển thị trong dashboard giảng viên một cách minh bạch. Telemetry hành vi được công khai với người học theo nguyên tắc quyền riêng tư (NFR-5).",
         },
         {
@@ -700,7 +700,7 @@ export const content = {
           cta: "Start free",
         },
         {
-          name: "Pro",
+          name: "Plus",
           price: "$3.99",
           period: "/month",
           featured: true,
@@ -711,21 +711,21 @@ export const content = {
             "AI Fluency certificate",
             "Advanced Ciel",
           ],
-          cta: "Get Pro",
+          cta: "Get Plus",
         },
         {
-          name: "Plus",
+          name: "Pro",
           price: "$7.99",
           period: "/month",
           featured: false,
           features: [
-            "Everything in Pro",
+            "Everything in Plus",
             "AI-personalised learning path",
             "Mock interviews & real-world scenarios",
             "In-depth competency reports",
             "Priority support",
           ],
-          cta: "Get Plus",
+          cta: "Get Pro",
         },
       ],
       business: {
@@ -752,8 +752,8 @@ export const content = {
           a: "No. This is a hard boundary: the Ciel never returns a complete, runnable solution, even under prompt injection. It hints, explains and guides step by step - if it solved problems for you, the entire Prompting/Verification scoring would collapse.",
         },
         {
-          q: "Can universities see student prompts?",
-          a: "Yes - prompts and reasoning traces are scoring data, shown transparently in the instructor dashboard. Behavioral telemetry is disclosed to learners under our privacy principle (NFR-5).",
+          q: "Can recruiters see the students' prompts?",
+          a: "Yes - prompts and reasoning traces are scoring data, shown transparently in the instructor dashboard. Behavioral telemetry is disclosed to learners under our privacy principle.",
         },
         {
           q: "Are languages other than Python supported?",
