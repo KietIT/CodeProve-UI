@@ -7,6 +7,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AppTopNav, Sym } from "@/components/app/AppChrome";
 import {
   tokenizeLine,
+  studentStarterFromCode,
   RUBRIC,
   PROMPT_SUGGESTIONS,
   type Exercise,
@@ -69,6 +70,17 @@ const EDITOR_LINE_STYLE: React.CSSProperties = {
   lineHeight: `${EDITOR_LINE_HEIGHT}px`,
 };
 
+const ATTEMPT_DURATION_MS = 45 * 60 * 1000;
+const AUTOSAVE_INTERVAL_MS = 12 * 1000;
+const BURST_PASTE_THRESHOLD = 80;
+
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 // ── Responsive helper ─────────────────────────────────────────────────────────
 // Mirrors the old Tailwind breakpoints (lg/xl) that gated the side panels.
 // Initialises to `false` on both server and first client render to avoid a
@@ -130,18 +142,20 @@ export function SolveWorkspace({
   // ── Exercise state (starts with static data; hydrates from API) ───────────
   const [exercise, setExercise] = useState<Exercise>(initialExercise);
   const [levelConfig] = useState<LevelConfig>(initialLevel);
+  const initialStarter = studentStarterFromCode(initialExercise.starter);
 
   // ── Editor state ──────────────────────────────────────────────────────────
-  const [editorCode, setEditorCode] = useState<string>(initialExercise.starter);
+  const [editorCode, setEditorCode] = useState<string>(initialStarter);
   // Mirror editorCode in a ref so callbacks (e.g. chat send) read the latest
   // value without needing it in their dependency array.
-  const editorCodeRef = useRef<string>(initialExercise.starter);
+  const editorCodeRef = useRef<string>(initialStarter);
   editorCodeRef.current = editorCode;
 
   // ── Telemetry + attempt ───────────────────────────────────────────────────
   const attemptIdRef = useRef<number | null>(null);
   const telemetryRef = useRef<ReturnType<typeof createTelemetry> | null>(null);
   const snapshotVersionRef = useRef<number>(0);
+  const [attemptId, setAttemptId] = useState<number | null>(null);
 
   // ── Test runner state ─────────────────────────────────────────────────────
   const [runResult, setRunResult] = useState<RunResult | null>(null);
@@ -165,9 +179,24 @@ export function SolveWorkspace({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const [hasStartedFullscreen, setHasStartedFullscreen] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
+  const fullscreenStartedRef = useRef(false);
+  const [timerStartedAtMs, setTimerStartedAtMs] = useState<number | null>(null);
+  const [remainingMs, setRemainingMs] = useState(ATTEMPT_DURATION_MS);
+  const timerStartedAtRef = useRef<number | null>(null);
+  const timerExpiredRef = useRef(false);
+  const [lastAutosaveAt, setLastAutosaveAt] = useState<number | null>(null);
+  const [autosaveState, setAutosaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const autosaveInFlightRef = useRef(false);
+  const lastAutosavedCodeRef = useRef<string | null>(null);
+  const tabHiddenAtRef = useRef<number | null>(null);
+  const windowBlurAtRef = useRef<number | null>(null);
+
   // ── Debounce + delta accumulator for CODE_EDIT telemetry ──────────────────
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevCodeLenRef = useRef<number>(initialExercise.starter.length);
+  const prevCodeLenRef = useRef<number>(initialStarter.length);
   // Sum of per-keystroke deltas within the current debounce window. Flushing the
   // debounced log sends this total and resets it, so fast typing isn't lost.
   const editDeltaAccRef = useRef<number>(0);
@@ -176,6 +205,37 @@ export function SolveWorkspace({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+
+  const performAutosave = useCallback(async (reason: string, force = false) => {
+    const id = attemptIdRef.current;
+    if (!id || autosaveInFlightRef.current) return;
+
+    const source = editorCodeRef.current;
+    if (!force && source === lastAutosavedCodeRef.current) return;
+
+    autosaveInFlightRef.current = true;
+    setAutosaveState("saving");
+    const version = snapshotVersionRef.current + 1;
+    snapshotVersionRef.current = version;
+
+    try {
+      await saveSnapshot(id, version, source);
+      lastAutosavedCodeRef.current = source;
+      const savedAt = Date.now();
+      setLastAutosaveAt(savedAt);
+      setAutosaveState("saved");
+      telemetryRef.current?.log("AUTO_SAVE", {
+        reason,
+        version,
+        length: source.length,
+      });
+    } catch {
+      setAutosaveState("error");
+      telemetryRef.current?.log("AUTO_SAVE_FAILED", { reason, version }, ["AUTO_SAVE_FAILED"]);
+    } finally {
+      autosaveInFlightRef.current = false;
+    }
+  }, []);
 
   // ── Mount: fetch detail from API (fallback to initialExercise) + attempt ──
   useEffect(() => {
@@ -198,7 +258,7 @@ export function SolveWorkspace({
           if (!cancelled && detail.starter) {
             setEditorCode((current) =>
               // Only override starter if the user has not typed anything yet.
-              current === initialExercise.starter ? detail.starter : current,
+              current === initialStarter ? detail.starter : current,
             );
             prevCodeLenRef.current = detail.starter.length;
           }
@@ -213,6 +273,7 @@ export function SolveWorkspace({
         if (cancelled) return;
         const id = resp.attempt_id;
         attemptIdRef.current = id;
+        setAttemptId(id);
 
         const telem = createTelemetry(id);
         telemetryRef.current = telem;
@@ -232,30 +293,127 @@ export function SolveWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
-  // ── visibilitychange / blur -> FOCUS_LOST (deduped) ───────────────────────
-  // A tab switch fires BOTH visibilitychange (hidden) and window blur. Gate each
-  // so exactly one FOCUS_LOST is emitted:
-  //   - tab switch -> visibilitychange (document becomes hidden)
-  //   - app switch -> blur while the tab is still visible
+  useEffect(() => {
+    if (timerStartedAtMs === null) return;
+    const startedAt = timerStartedAtMs;
+
+    function updateRemaining() {
+      const deadline = startedAt + ATTEMPT_DURATION_MS;
+      const left = Math.max(0, deadline - Date.now());
+      setRemainingMs(left);
+
+      if (left === 0 && !timerExpiredRef.current) {
+        timerExpiredRef.current = true;
+        telemetryRef.current?.log("TIMER_EXPIRED");
+        void performAutosave("timer_expired", true);
+      }
+    }
+
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 1000);
+    return () => window.clearInterval(timer);
+  }, [performAutosave, timerStartedAtMs]);
+
+  useEffect(() => {
+    if (!attemptId || !hasStartedFullscreen) return;
+
+    const timer = window.setInterval(() => {
+      void performAutosave("interval");
+    }, AUTOSAVE_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [attemptId, hasStartedFullscreen, performAutosave]);
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      const active = Boolean(document.fullscreenElement);
+      setFullscreenActive(active);
+      setFullscreenError(null);
+
+      if (active) {
+        fullscreenStartedRef.current = true;
+        setHasStartedFullscreen(true);
+        if (timerStartedAtRef.current === null) {
+          const startedAt = Date.now();
+          timerStartedAtRef.current = startedAt;
+          setTimerStartedAtMs(startedAt);
+          setRemainingMs(ATTEMPT_DURATION_MS);
+          telemetryRef.current?.log("TIMER_START", { durationMs: ATTEMPT_DURATION_MS });
+        }
+        telemetryRef.current?.log("FULLSCREEN_ENTER");
+        return;
+      }
+
+      if (fullscreenStartedRef.current) {
+        telemetryRef.current?.log("FULLSCREEN_EXIT", {}, ["FULLSCREEN_EXIT"]);
+      }
+    }
+
+    handleFullscreenChange();
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // ── Visibility / focus integrity telemetry ────────────────────────────────
   useEffect(() => {
     function handleVisibilityChange() {
       if (document.visibilityState === "hidden") {
-        telemetryRef.current?.log("FOCUS_LOST", {}, ["TAB_SWITCH"]);
+        tabHiddenAtRef.current = Date.now();
+        telemetryRef.current?.log("TAB_HIDDEN", {}, ["TAB_HIDDEN"]);
+        void performAutosave("tab_hidden", true);
+        return;
       }
-    }
-    function handleBlur() {
-      // Window lost focus but the tab is still active = switched to another app.
+
       if (document.visibilityState === "visible") {
-        telemetryRef.current?.log("FOCUS_LOST", {}, ["TAB_SWITCH"]);
+        const hiddenAt = tabHiddenAtRef.current;
+        if (hiddenAt === null) return;
+        tabHiddenAtRef.current = null;
+        telemetryRef.current?.log("TAB_VISIBLE", {
+          hiddenMs: Date.now() - hiddenAt,
+        });
       }
     }
+
+    function handleBlur() {
+      if (document.visibilityState === "visible") {
+        windowBlurAtRef.current = Date.now();
+        telemetryRef.current?.log("WINDOW_BLUR", {}, ["WINDOW_BLUR"]);
+        void performAutosave("window_blur", true);
+      }
+    }
+
+    function handleFocus() {
+      const blurredAt = windowBlurAtRef.current;
+      if (blurredAt === null) return;
+      windowBlurAtRef.current = null;
+      telemetryRef.current?.log("WINDOW_FOCUS", {
+        blurredMs: Date.now() - blurredAt,
+      });
+    }
+
+    function handlePageHide() {
+      void performAutosave("pagehide", true);
+    }
+
+    function handleBeforeUnload() {
+      void performAutosave("beforeunload", true);
+    }
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [performAutosave]);
 
   // ── Editor onChange ───────────────────────────────────────────────────────
   const handleEditorChange = useCallback(
@@ -291,11 +449,44 @@ export function SolveWorkspace({
     }
   }, []);
 
+  const getSelectedCodeLength = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return 0;
+    return Math.abs(ta.selectionEnd - ta.selectionStart);
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    telemetryRef.current?.log("COPY", { length: getSelectedCodeLength() });
+  }, [getSelectedCodeLength]);
+
+  const handleCut = useCallback(() => {
+    telemetryRef.current?.log("CUT", { length: getSelectedCodeLength() });
+  }, [getSelectedCodeLength]);
+
   // ── Editor onPaste ────────────────────────────────────────────────────────
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pasted = e.clipboardData.getData("text");
-    if (pasted.length > 80) {
-      telemetryRef.current?.log("PASTE", { length: pasted.length }, ["BURST_PASTE"]);
+    telemetryRef.current?.log("PASTE", { length: pasted.length });
+    if (pasted.length > BURST_PASTE_THRESHOLD) {
+      telemetryRef.current?.log("BURST_PASTE", { length: pasted.length }, ["BURST_PASTE"]);
+    }
+  }, []);
+
+  const handleEnterFullscreen = useCallback(async () => {
+    setFullscreenError(null);
+
+    const root = document.documentElement;
+    if (!root.requestFullscreen) {
+      setFullscreenError("This browser does not support fullscreen mode.");
+      telemetryRef.current?.log("FULLSCREEN_UNSUPPORTED", {}, ["FULLSCREEN_UNSUPPORTED"]);
+      return;
+    }
+
+    try {
+      await root.requestFullscreen();
+    } catch {
+      setFullscreenError("Fullscreen was blocked. Click the button again to continue.");
+      telemetryRef.current?.log("FULLSCREEN_FAILED", {}, ["FULLSCREEN_FAILED"]);
     }
   }, []);
 
@@ -394,6 +585,7 @@ export function SolveWorkspace({
     setSubmitting(true);
     setSubmitError(null);
     try {
+      await performAutosave("submit", true);
       // Flush telemetry before submitting — non-critical, so never let it block submit.
       try {
         await telemetryRef.current?.stop();
@@ -409,11 +601,30 @@ export function SolveWorkspace({
     }
     // Invoke optional external callback (used in tests / storybook).
     onSubmit?.();
-  }, [onSubmit]);
+  }, [onSubmit, performAutosave]);
 
   // ── Derived display values ────────────────────────────────────────────────
   const codeLines = editorCode.split("\n");
   const backSlug = level ?? levelConfig.slug;
+  const fullscreenLocked = !fullscreenActive;
+  const fullscreenTitle = hasStartedFullscreen ? "Fullscreen paused" : "Start Attempt";
+  const fullscreenBody = hasStartedFullscreen
+    ? "You left fullscreen mode. Return to fullscreen to continue this attempt."
+    : "This assessment must run in fullscreen before the editor is available.";
+  const fullscreenAction = hasStartedFullscreen ? "Return to fullscreen" : "Start Attempt";
+  const timeLeft = formatDuration(remainingMs);
+  const timerIsLow = remainingMs <= 60 * 1000;
+  const autosaveLabel =
+    autosaveState === "saving"
+      ? "Saving..."
+      : autosaveState === "error"
+        ? "Autosave failed"
+        : lastAutosaveAt
+          ? `Saved ${new Date(lastAutosaveAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}`
+          : "Autosave ready";
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -423,7 +634,9 @@ export function SolveWorkspace({
       <PanelGroup
         direction="horizontal"
         autoSaveId="codeprove-workspace"
-        className="flex flex-1 overflow-hidden"
+        className={`flex flex-1 overflow-hidden transition duration-200 ${
+          fullscreenLocked ? "pointer-events-none select-none blur-[1px]" : ""
+        }`}
       >
         {/* Left — brief (resizable, hidden on < lg) */}
         {showLeft && (
@@ -511,19 +724,37 @@ export function SolveWorkspace({
                 <span className="font-label-mono text-label-mono">{exercise.filename}</span>
               </div>
             </div>
-            {submitError && (
-              <span className="mr-3 font-label-mono text-label-mono text-error text-sm">
-                {submitError}
-              </span>
-            )}
-            <button
-              onClick={() => void handleSubmit()}
-              disabled={submitting}
-              className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? t.submitting : t.submit}{" "}
-              {!submitting && <Sym name="send" className="text-[16px]" />}
-            </button>
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className={`flex items-center gap-1.5 font-label-mono text-label-mono ${
+                  timerIsLow ? "text-error" : "text-on-surface-variant"
+                }`}
+              >
+                <Sym name="timer" className="text-[16px]" />
+                <span>{timeLeft}</span>
+              </div>
+              <div
+                className={`hidden items-center gap-1.5 font-label-mono text-label-mono md:flex ${
+                  autosaveState === "error" ? "text-error" : "text-on-surface-variant/70"
+                }`}
+              >
+                <Sym name={autosaveState === "saving" ? "sync" : "save"} className="text-[16px]" />
+                <span>{autosaveLabel}</span>
+              </div>
+              {submitError && (
+                <span className="max-w-56 truncate font-label-mono text-label-mono text-sm text-error">
+                  {submitError}
+                </span>
+              )}
+              <button
+                onClick={() => void handleSubmit()}
+                disabled={submitting}
+                className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {submitting ? t.submitting : t.submit}{" "}
+                {!submitting && <Sym name="send" className="text-[16px]" />}
+              </button>
+            </div>
           </div>
 
           {/* Editor — textarea is the scroll container; gutter + overlay mirror
@@ -580,6 +811,8 @@ export function SolveWorkspace({
                   ref={textareaRef}
                   value={editorCode}
                   onChange={handleEditorChange}
+                  onCopy={handleCopy}
+                  onCut={handleCut}
                   onPaste={handlePaste}
                   onScroll={handleEditorScroll}
                   spellCheck={false}
@@ -767,6 +1000,34 @@ export function SolveWorkspace({
           questions={explainQuestions}
           onClose={() => setExplainQuestions(null)}
         />
+      )}
+
+      {fullscreenLocked && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-background/92 px-5 backdrop-blur-md">
+          <div className="w-full max-w-md border border-outline-variant/70 bg-surface-container-low p-6 shadow-card">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
+              <Sym name={hasStartedFullscreen ? "fullscreen_exit" : "fullscreen"} className="text-[24px]" />
+            </div>
+            <h2 className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">
+              {fullscreenTitle}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
+              {fullscreenBody}
+            </p>
+            {fullscreenError && (
+              <div className="mt-4 border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
+                {fullscreenError}
+              </div>
+            )}
+            <button
+              onClick={() => void handleEnterFullscreen()}
+              className="mt-5 inline-flex w-full cursor-pointer items-center justify-center gap-2 bg-primary px-4 py-3 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+            >
+              {fullscreenAction}
+              <Sym name="open_in_full" className="text-[18px]" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

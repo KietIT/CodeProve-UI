@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { HeroPoster } from "@/components/three/HeroPoster";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { API_BASE } from "@/lib/api";
 
 type Mode = "login" | "signup";
 
@@ -190,7 +191,12 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const { login, signup } = useAuth();
 
   // Social sign-in UI is in place; the OAuth backend flow is not wired yet, so
-  // for now clicking a provider surfaces a friendly "coming soon" notice.
+  // GitHub is still pending; Google is wired through the backend OAuth flow.
+  function handleGoogleSignIn() {
+    setSsoNotice("");
+    window.location.href = `${API_BASE}/api/auth/google/start`;
+  }
+
   function handleSso(provider: string) {
     setSsoNotice(c.social.comingSoon.replace("{provider}", provider));
   }
@@ -453,7 +459,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => handleSso(c.social.google)}
+                onClick={handleGoogleSignIn}
                 className={ssoCls}
               >
                 <GoogleIcon className="h-4 w-4" />
