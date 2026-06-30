@@ -184,6 +184,66 @@ body {
   }
 }
 
+/* Light-mode palette for the workspace preview mockup only. */
+.light .workspace-mockup {
+  background-color: #f8fbff;
+  border-color: #cdd8ea;
+}
+.light .workspace-mockup .border-border {
+  border-color: #cdd8ea;
+}
+.light .workspace-mockup .border-teal\/30 {
+  border-color: rgb(15 118 110 / 0.32);
+}
+.light .workspace-mockup .bg-bg-soft {
+  background-color: #eef4ff;
+}
+.light .workspace-mockup .bg-bg-soft\/60 {
+  background-color: rgb(237 244 255 / 0.9);
+}
+.light .workspace-mockup .bg-surface {
+  background-color: #f8fbff;
+}
+.light .workspace-mockup .bg-teal\/10 {
+  background-color: #d9f6f2;
+}
+.light .workspace-mockup .bg-teal {
+  background-color: #0f766e;
+}
+.light .workspace-mockup .text-muted {
+  color: #526178;
+}
+.light .workspace-mockup .text-muted\/50 {
+  color: #8492a8;
+}
+.light .workspace-mockup .text-muted\/60 {
+  color: #718096;
+}
+.light .workspace-mockup .text-content {
+  color: #162033;
+}
+.light .workspace-mockup .text-teal {
+  color: #0f766e;
+}
+.light .workspace-mockup .text-glowviolet {
+  color: #6d28d9;
+}
+.light .workspace-mockup [class*="border-[#febc2e]/30"] {
+  border-color: rgb(180 83 9 / 0.28);
+}
+.light .workspace-mockup [class*="bg-[#febc2e]/10"] {
+  background-color: #fff3d6;
+}
+.light .workspace-mockup [class*="text-[#febc2e]"] {
+  color: #b45309;
+}
+.light .workspace-mockup [class*="text-[#ff7b72]"] {
+  color: #dc2626;
+}
+.light .workspace-mockup [class*="text-[#7ee787]"] {
+  color: #15803d;
+}
+
 /* Aurora blobs used by the page-wide ambient backdrop. We animate opacity only
    (composited cheaply on the cached blurred layer) — never transform, which
    would force the heavy blur to re-rasterise every frame. */

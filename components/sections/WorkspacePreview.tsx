@@ -12,7 +12,7 @@ export function WorkspaceMockup() {
         aria-hidden="true"
       />
       <div className="origin-center transition-transform duration-500 [transform:rotateX(8deg)_rotateY(-16deg)] group-hover:[transform:rotateX(4deg)_rotateY(-8deg)]">
-        <div className="overflow-hidden rounded-card border border-border bg-[#0a0f14] shadow-card">
+        <div className="workspace-mockup overflow-hidden rounded-card border border-border bg-[#0a0f14] shadow-card">
           {/* window chrome */}
           <div className="flex items-center justify-between border-b border-border bg-bg-soft px-4 py-2.5">
             <div className="flex items-center gap-1.5">
