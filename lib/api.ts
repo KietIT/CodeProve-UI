@@ -11,6 +11,8 @@ export type ExerciseSummary = {
   acceptance: number;
   topics: string[];
   level: string;
+  /** Per-user progress from the backend: "solved" | "attempted" | "todo". */
+  status?: string;
 };
 
 export type LevelGroup = {
@@ -64,12 +66,12 @@ export async function apiFetch<T>(path: string, opts: Opts = {}): Promise<T> {
 
 // ── Account helpers ───────────────────────────────────────────────────────────
 
-export type Me = { id: number; full_name: string; email: string };
+export type Me = { id: number; full_name: string; email: string; avatar?: string | null };
 
 export const getMe = (): Promise<Me> => apiFetch<Me>("/auth/me");
 
-export const updateMe = (full_name: string): Promise<Me> =>
-  apiFetch<Me>("/auth/me", { method: "PATCH", body: { full_name } });
+export const updateMe = (data: { full_name?: string; avatar?: string | null }): Promise<Me> =>
+  apiFetch<Me>("/auth/me", { method: "PATCH", body: data });
 
 // ── Exercise helpers ──────────────────────────────────────────────────────────
 

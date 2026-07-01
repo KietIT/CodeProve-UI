@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Sym } from "@/components/app/AppChrome";
 import { LEVELS, TOPICS, type Difficulty, type Status } from "@/lib/exercises";
 import { getExercises, type ExerciseSummary } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { appContent } from "@/lib/appContent";
+
+const KNOWN_STATUSES: Status[] = ["solved", "attempted", "todo", "locked"];
 
 // ── Display types ─────────────────────────────────────────────────────────────
 
@@ -47,7 +51,7 @@ const KNOWN_DIFFS: Difficulty[] = ["Easy", "Medium", "Hard"];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Convert an API ExerciseSummary to a DisplayExercise, defaulting display-only fields. */
+/** Convert an API ExerciseSummary to a DisplayExercise using the real per-user status. */
 function fromApi(ex: ExerciseSummary): DisplayExercise {
   return {
     code: ex.code,
@@ -58,7 +62,7 @@ function fromApi(ex: ExerciseSummary): DisplayExercise {
       : "Easy",
     acceptance: ex.acceptance,
     topics: ex.topics,
-    status: "todo", // API does not include per-user status yet
+    status: KNOWN_STATUSES.includes(ex.status as Status) ? (ex.status as Status) : "todo",
   };
 }
 
@@ -77,6 +81,16 @@ function staticFallback(level: string): DisplayExercise[] {
   }));
 }
 
+/** Initial list shown before the API responds. We neutralise the demo
+ *  solved/attempted markers (keeping only the "locked" gating the API can't
+ *  express) so real progress never flashes in from a fake baseline. */
+function neutralFallback(level: string): DisplayExercise[] {
+  return staticFallback(level).map((e) => ({
+    ...e,
+    status: e.status === "locked" ? "locked" : "todo",
+  }));
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface LevelExercisesProps {
@@ -89,7 +103,17 @@ interface LevelExercisesProps {
  * backend is unreachable, so the page still renders offline / during dev.
  */
 export default function LevelExercises({ level }: LevelExercisesProps) {
-  const [exercises, setExercises] = useState<DisplayExercise[]>(() => staticFallback(level));
+  const { locale } = useI18n();
+  const tl = appContent[locale].level;
+  const te = appContent[locale].exerciseList;
+  const cDiff = appContent[locale].difficulty;
+  const statusLabels: Record<Status, string> = {
+    solved: te.statusSolved,
+    attempted: te.statusAttempted,
+    todo: te.statusTodo,
+    locked: te.statusLocked,
+  };
+  const [exercises, setExercises] = useState<DisplayExercise[]>(() => neutralFallback(level));
 
   const [query, setQuery] = useState("");
   const [topic, setTopic] = useState("All Topics");
@@ -100,11 +124,22 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
       .then((groups) => {
         const group = groups.find((g) => g.level.toLowerCase() === level.toLowerCase());
         if (group) {
-          setExercises(group.exercises.map(fromApi));
+          // Preserve the "locked" gating from static data (the API doesn't model
+          // it) while taking real solved/attempted status from the backend.
+          const lockedByCode = new Map(
+            staticFallback(level).map((e) => [e.code, e.status] as const),
+          );
+          setExercises(
+            group.exercises.map((ex) => {
+              const d = fromApi(ex);
+              if (lockedByCode.get(d.code) === "locked") d.status = "locked";
+              return d;
+            }),
+          );
         }
       })
       .catch(() => {
-        // Network unavailable — keep the static fallback already in state.
+        // Network unavailable — keep the neutral fallback already in state.
       });
   }, [level]);
 
@@ -146,8 +181,32 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
       s === "default" ? "acceptance" : s === "acceptance" ? "difficulty" : "default",
     );
 
+  const progress = total > 0 ? Math.round((solvedCount / total) * 100) : 0;
+
   return (
     <>
+      {/* Progress card — real per-user data, consistent with the dashboard. */}
+      <div className="ice-card mb-6 flex flex-col gap-3 p-5 sm:max-w-sm">
+        <div className="flex items-baseline justify-between">
+          <span className="font-label-mono text-label-mono uppercase text-on-surface-variant/70">
+            {tl.progress}
+          </span>
+          <span className="font-headline-lg-mobile text-headline-lg-mobile text-primary">
+            {solvedCount}
+            <span className="text-on-surface-variant/50">/{total}</span>
+          </span>
+        </div>
+        <div className="h-2 w-full overflow-hidden rounded-pill bg-surface-container-highest">
+          <div
+            className="h-full rounded-pill bg-primary transition-[width] duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <span className="font-label-mono text-label-mono text-on-surface-variant/60">
+          {progress}% {tl.solved}
+        </span>
+      </div>
+
       {/* Topic chips */}
       <div className="ice-scroll -mx-1 mb-5 flex gap-2 overflow-x-auto px-1 pb-2">
         {TOPICS.map((t) => {
@@ -166,7 +225,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                   : "border-outline-variant/70 text-on-surface-variant hover:border-primary/60 hover:text-on-surface"
               }`}
             >
-              {t}
+              {t === "All Topics" ? (locale === "vi" ? "Tất cả chủ đề" : "All Topics") : t}
               <span
                 className={`rounded-pill px-1.5 text-[11px] ${
                   active
@@ -189,19 +248,19 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent font-label-mono text-label-mono text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none"
-            placeholder="Search exercises…"
+            placeholder={te.searchPlaceholder}
             type="text"
-            aria-label="Search exercises"
+            aria-label={te.searchPlaceholder}
           />
         </div>
         <button
           onClick={cycleSort}
-          title={`Sort: ${sort}`}
-          aria-label={`Sort by ${sort}`}
+          title={`${te.sort}: ${sort}`}
+          aria-label={`${te.sort}: ${sort}`}
           className="flex h-10 cursor-pointer items-center gap-2 rounded-pill border border-outline-variant/70 px-3 font-label-mono text-label-mono text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
         >
           <Sym name="swap_vert" className="text-[18px]" />
-          <span className="hidden capitalize sm:inline">{sort === "default" ? "Sort" : sort}</span>
+          <span className="hidden capitalize sm:inline">{sort === "default" ? te.sort : sort}</span>
         </button>
         <button
           onClick={pickRandom}
@@ -212,7 +271,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
         </button>
         <span className="ml-auto flex items-center gap-2 font-label-mono text-label-mono text-on-surface-variant/70">
           <Sym name="trophy" className="text-[16px] text-primary" />
-          {solvedCount}/{total} Solved
+          {solvedCount}/{total} {te.solvedSuffix}
         </span>
       </div>
 
@@ -221,16 +280,16 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
         {/* Column headers */}
         <div className="hidden grid-cols-[40px_1fr_110px_90px_44px] items-center gap-4 border-b border-outline-variant/60 px-5 py-3 font-label-mono text-label-mono uppercase tracking-wider text-on-surface-variant/60 md:grid">
           <span>#</span>
-          <span>Title</span>
-          <span className="text-right">Acceptance</span>
-          <span className="text-right">Level</span>
+          <span>{te.title}</span>
+          <span className="text-right">{te.acceptance}</span>
+          <span className="text-right">{te.level}</span>
           <span />
         </div>
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-2 px-5 py-16 text-center">
             <Sym name="search_off" className="text-[32px] text-on-surface-variant/50" />
-            <p className="text-on-surface-variant">No exercises match your filters.</p>
+            <p className="text-on-surface-variant">{te.noMatch}</p>
           </div>
         ) : (
           <ul>
@@ -244,7 +303,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                   } ${locked ? "opacity-60" : "hover:bg-primary/[0.06]"}`}
                 >
                   {/* Status */}
-                  <span className="flex items-center justify-center" title={st.label}>
+                  <span className="flex items-center justify-center" title={statusLabels[ex.status]}>
                     <Sym name={st.name} fill={st.fill} className={`text-[20px] ${st.className}`} />
                   </span>
                   {/* Title */}
@@ -256,7 +315,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2 md:hidden">
                       <span className={`font-label-mono text-label-mono ${DIFF_STYLE[ex.difficulty]}`}>
-                        {ex.difficulty}
+                        {cDiff[ex.difficulty] ?? ex.difficulty}
                       </span>
                       <span className="font-label-mono text-label-mono text-on-surface-variant/60">
                         {ex.acceptance}%
@@ -281,7 +340,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                   <span
                     className={`hidden text-right font-label-mono text-label-mono md:block ${DIFF_STYLE[ex.difficulty]}`}
                   >
-                    {ex.difficulty}
+                    {cDiff[ex.difficulty] ?? ex.difficulty}
                   </span>
                   {/* Trailing */}
                   <span className="flex items-center justify-end">
@@ -306,7 +365,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                   {locked ? (
                     <div
                       className="group cursor-not-allowed"
-                      title="Unlock by completing earlier exercises"
+                      title={te.unlockHint}
                     >
                       {Row}
                     </div>
@@ -326,7 +385,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
       </section>
 
       <p className="mt-4 text-center font-label-mono text-label-mono text-on-surface-variant/50">
-        Showing {filtered.length} of {total} exercises · more sets being curated
+        {te.showing} {filtered.length} {te.of} {total} {te.moreCurated}
       </p>
     </>
   );

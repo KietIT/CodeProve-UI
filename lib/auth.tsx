@@ -3,14 +3,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch, clearToken, getToken, setToken, updateMe } from "@/lib/api";
 
-type User = { id: number; full_name: string; email: string };
+type User = { id: number; full_name: string; email: string; avatar?: string | null };
 type AuthOut = { user: User; access_token: string };
 type AuthCtx = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (full_name: string, email: string, password: string) => Promise<void>;
-  updateProfile: (full_name: string) => Promise<void>;
+  updateProfile: (data: { full_name?: string; avatar?: string | null }) => Promise<void>;
   logout: () => void;
 };
 
@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const out = await apiFetch<AuthOut>("/auth/signup", { method: "POST", body: { full_name, email, password }, auth: false });
     setToken(out.access_token); setUser(out.user);
   }
-  async function updateProfile(full_name: string) {
-    const updated = await updateMe(full_name);
+  async function updateProfile(data: { full_name?: string; avatar?: string | null }) {
+    const updated = await updateMe(data);
     setUser(updated);
   }
   function logout() { clearToken(); setUser(null); }

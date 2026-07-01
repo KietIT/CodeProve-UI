@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { explainBack } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
+import { useI18n } from "@/lib/i18n";
+import { appContent } from "@/lib/appContent";
 
 type Props = {
   attemptId: number;
@@ -13,9 +15,21 @@ type Props = {
 
 export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
   const router = useRouter();
+  const { locale } = useI18n();
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pasteBlocked, setPasteBlocked] = useState(false);
+  const pasteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Anti-cheat: the explain-back is where genuine understanding is measured, so
+  // pasting an answer from another AI is blocked outright.
+  const handleBlockedPaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    setPasteBlocked(true);
+    if (pasteTimerRef.current) clearTimeout(pasteTimerRef.current);
+    pasteTimerRef.current = setTimeout(() => setPasteBlocked(false), 3500);
+  }, []);
 
   function handleAnswerChange(index: number, value: string) {
     setAnswers((prev) => {
@@ -77,6 +91,8 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
               <textarea
                 value={answers[i]}
                 onChange={(e) => handleAnswerChange(i, e.target.value)}
+                onPaste={handleBlockedPaste}
+                onDrop={(e) => e.preventDefault()}
                 disabled={submitting}
                 rows={4}
                 className="w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-3 font-label-mono text-label-mono text-on-surface outline-none transition-colors focus:border-primary disabled:opacity-50"
@@ -85,6 +101,14 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Paste-blocked notice */}
+        {pasteBlocked && (
+          <div className="flex items-center gap-2 border border-amber-500/40 bg-amber-500/10 p-3 font-label-mono text-label-mono text-amber-300">
+            <Sym name="content_paste_off" className="text-[16px]" />
+            {appContent[locale].solve.pasteDisabled}
+          </div>
+        )}
 
         {/* Error */}
         {error && (

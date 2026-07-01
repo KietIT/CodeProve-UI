@@ -62,6 +62,8 @@ function computeTrendPaths(trend: number[]) {
 export default function DashboardPage() {
   const { locale } = useI18n();
   const t = appContent[locale].dashboard;
+  const axesL = appContent[locale].axes as Record<string, string>;
+  const recentStatusL = appContent[locale].recentStatus as Record<string, string>;
   const [data, setData] = useState<DashboardOut | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,7 +203,7 @@ export default function DashboardPage() {
                     })}
                     {radarLabels.map((l) => (
                       <text key={l.name} x={l.x} y={l.y} textAnchor={l.anchor as "start" | "middle" | "end"} className="fill-on-surface-variant font-label-mono" fontSize="10">
-                        {l.name}
+                        {axesL[l.name] ?? l.name}
                       </text>
                     ))}
                   </svg>
@@ -226,7 +228,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`font-label-mono text-label-mono ${a.ok ? "text-primary" : "text-error"}`}>{a.status}</div>
+                        <div className={`font-label-mono text-label-mono ${a.ok ? "text-primary" : "text-error"}`}>{recentStatusL[a.status] ?? a.status}</div>
                         <div className="font-label-mono text-label-mono text-on-surface-variant/60">
                           {a.score !== null ? `${a.score.toFixed(0)} ${t.pts}` : "—"}
                         </div>
@@ -280,7 +282,7 @@ export default function DashboardPage() {
                   {data.radar.map((a) => (
                     <div key={a.name}>
                       <div className="mb-1.5 flex justify-between font-label-mono text-label-mono">
-                        <span className="text-on-surface-variant">{a.name}</span>
+                        <span className="text-on-surface-variant">{axesL[a.name] ?? a.name}</span>
                         <span className="text-primary">{a.value.toFixed(0)}%</span>
                       </div>
                       <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">

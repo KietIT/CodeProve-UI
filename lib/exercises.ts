@@ -67,12 +67,8 @@ export const LEVELS: Record<string, LevelConfig> = {
         summary: "Given an array of integers and a target, return the indices of the two numbers that add up to the target. Explain your approach before and after writing code.",
         filename: "solution.py", language: "python",
         starter: `def two_sum(nums, target):
-    seen = {}
-    for i, n in enumerate(nums):
-        if target - n in seen:
-            return [seen[target - n], i]
-        seen[n] = i
-    return []`,
+    # TODO: return the indices of the two numbers that add up to target
+    pass`,
         hint: "Before you code — what's your hypothesis for reaching O(n)? A hash map lets you check the complement in constant time.",
         tests: ["test_basic_case", "test_duplicates", "test_no_solution", "test_negatives"],
       },
@@ -81,13 +77,8 @@ export const LEVELS: Record<string, LevelConfig> = {
         summary: "Reverse a singly linked list in place and return the new head. Walk through the pointer reassignment before coding.",
         filename: "solution.py", language: "python",
         starter: `def reverse_list(head):
-    prev = None
-    while head:
-        nxt = head.next
-        head.next = prev
-        prev = head
-        head = nxt
-    return prev`,
+    # TODO: reverse the singly linked list in place and return the new head
+    pass`,
         hint: "Can you reverse it without extra space? Track three pointers: prev, current, and next.",
         tests: ["test_empty", "test_single_node", "test_many_nodes"],
       },
@@ -96,8 +87,8 @@ export const LEVELS: Record<string, LevelConfig> = {
         summary: "Return True if a string is a palindrome, ignoring case and non-alphanumeric characters. State your two-pointer plan first.",
         filename: "solution.py", language: "python",
         starter: `def is_palindrome(s):
-    cleaned = [c.lower() for c in s if c.isalnum()]
-    return cleaned == cleaned[::-1]`,
+    # TODO: return True if s is a palindrome, ignoring case and non-alphanumerics
+    pass`,
         hint: "Two pointers from both ends can avoid building a second list. Which characters should you skip?",
         tests: ["test_simple", "test_mixed_case", "test_punctuation", "test_empty"],
       },
@@ -120,8 +111,8 @@ export const LEVELS: Record<string, LevelConfig> = {
         starter: `import re
 
 def sanitize_username(raw):
-    raw = raw.strip()
-    return re.sub(r"[^a-zA-Z0-9_]", "", raw)`,
+    # TODO: strip dangerous characters with an allow-list before returning
+    pass`,
         hint: "What injection class are you preventing here? Prefer an allow-list over a block-list.",
         tests: ["test_strips_html", "test_keeps_underscore", "test_trims_space"],
       },
@@ -130,10 +121,8 @@ def sanitize_username(raw):
         summary: "Return a dict mapping each word to its count, case-insensitive. Then explain what collections.Counter would do under the hood.",
         filename: "solution.py", language: "python",
         starter: `def word_count(text):
-    counts = {}
-    for word in text.lower().split():
-        counts[word] = counts.get(word, 0) + 1
-    return counts`,
+    # TODO: return a dict mapping each lowercased word to its count
+    pass`,
         hint: "collections.Counter exists — but can you explain the dict-accumulation pattern it replaces?",
         tests: ["test_basic", "test_case_insensitive", "test_empty"],
       },
@@ -142,14 +131,8 @@ def sanitize_username(raw):
         summary: "Merge two ascending arrays into one sorted array without calling the built-in sort. Justify your complexity.",
         filename: "solution.py", language: "python",
         starter: `def merge(a, b):
-    i = j = 0
-    out = []
-    while i < len(a) and j < len(b):
-        if a[i] <= b[j]:
-            out.append(a[i]); i += 1
-        else:
-            out.append(b[j]); j += 1
-    return out + a[i:] + b[j:]`,
+    # TODO: merge two ascending arrays into one sorted array (no built-in sort)
+    pass`,
         hint: "Two pointers keep this O(n + m). Why is calling sort() on the concatenation a worse answer?",
         tests: ["test_equal_len", "test_one_empty", "test_interleaved"],
       },
@@ -168,11 +151,8 @@ def sanitize_username(raw):
         summary: "Allow at most N requests per client per minute. Discuss the trade-offs of a fixed window vs a sliding window.",
         filename: "limiter.py", language: "python",
         starter: `def is_allowed(client_id, store, limit=60):
-    count = store.get(client_id, 0)
-    if count >= limit:
-        return False
-    store[client_id] = count + 1
-    return True`,
+    # TODO: allow at most \`limit\` requests per client per window
+    pass`,
         hint: "What happens right at the window boundary? Consider a sliding log or a token bucket.",
         tests: ["test_under_limit", "test_over_limit", "test_window_reset"],
       },
@@ -181,17 +161,8 @@ def sanitize_username(raw):
         summary: "Return Fizz, Buzz, or FizzBuzz for 1..n. Then explain why the order of the conditionals matters.",
         filename: "solution.py", language: "python",
         starter: `def fizzbuzz(n):
-    out = []
-    for i in range(1, n + 1):
-        if i % 15 == 0:
-            out.append("FizzBuzz")
-        elif i % 3 == 0:
-            out.append("Fizz")
-        elif i % 5 == 0:
-            out.append("Buzz")
-        else:
-            out.append(str(i))
-    return out`,
+    # TODO: return a list of Fizz / Buzz / FizzBuzz / the number for 1..n
+    pass`,
         hint: "Why must the % 15 check come first? Reorder it and predict what breaks.",
         tests: ["test_fizzbuzz", "test_fizz", "test_buzz", "test_plain"],
       },
@@ -200,12 +171,8 @@ def sanitize_username(raw):
         summary: "An array of n+1 integers in the range 1..n contains exactly one duplicate. Find it and discuss the space trade-off.",
         filename: "solution.py", language: "python",
         starter: `def find_duplicate(nums):
-    seen = set()
-    for n in nums:
-        if n in seen:
-            return n
-        seen.add(n)
-    return -1`,
+    # TODO: return the single duplicated value in nums (range 1..n)
+    pass`,
         hint: "The set answer is O(n) space. Could Floyd's cycle detection get you to O(1)?",
         tests: ["test_basic", "test_dup_at_end", "test_min_size"],
       },
@@ -234,18 +201,18 @@ def increment():
         id: "CP-101", num: 1, title: "LRU Cache Design", difficulty: "Medium", acceptance: 42.3, status: "solved", topics: ["Algorithms"],
         summary: "Implement an LRU cache with O(1) get and put. Describe your data-structure choice before writing code.",
         filename: "lru_cache.py", language: "python",
-        starter: `from collections import OrderedDict
-
-class LRUCache:
+        starter: `class LRUCache:
     def __init__(self, capacity):
-        self.cap = capacity
-        self.data = OrderedDict()
+        # TODO: choose your data structure(s) for O(1) get/put
+        pass
 
     def get(self, key):
-        if key not in self.data:
-            return -1
-        self.data.move_to_end(key)
-        return self.data[key]`,
+        # TODO: return the value and mark it most-recently used (-1 if absent)
+        pass
+
+    def put(self, key, value):
+        # TODO: insert/update; evict the least-recently used when over capacity
+        pass`,
         hint: "Why pair a hash map with a doubly linked list? What does move_to_end cost you?",
         tests: ["test_get_hit", "test_evict_lru", "test_update_existing"],
       },
@@ -269,10 +236,8 @@ def memoize(key, compute):
         starter: `import jwt
 
 def verify_token(token, secret):
-    try:
-        return jwt.decode(token, secret, algorithms=["HS256"])
-    except jwt.InvalidTokenError:
-        return None`,
+    # TODO: verify signature + expiry, pin the algorithm; return claims or None
+    pass`,
         hint: "Why pin the algorithm explicitly? What attack does accepting 'alg: none' open up?",
         tests: ["test_valid", "test_expired", "test_bad_signature", "test_alg_none"],
       },
@@ -284,10 +249,8 @@ def verify_token(token, secret):
 from threading import Thread
 
 def consumer(q):
-    while True:
-        item = q.get()
-        process(item)
-        q.task_done()`,
+    # TODO: consume items from the blocking queue without busy-waiting
+    pass`,
         hint: "How does a blocking queue replace your while-True polling? What signals that work is done?",
         tests: ["test_single", "test_many_items", "test_graceful_stop"],
       },
@@ -296,14 +259,8 @@ def consumer(q):
         summary: "Return the length of the longest substring without repeating characters. Explain the window invariant.",
         filename: "solution.py", language: "python",
         starter: `def length_of_longest(s):
-    seen = {}
-    start = best = 0
-    for i, c in enumerate(s):
-        if c in seen and seen[c] >= start:
-            start = seen[c] + 1
-        seen[c] = i
-        best = max(best, i - start + 1)
-    return best`,
+    # TODO: length of the longest substring with no repeating characters
+    pass`,
         hint: "A sliding window with a last-seen map keeps this O(n). When exactly do you move 'start'?",
         tests: ["test_basic", "test_all_same", "test_empty"],
       },
@@ -324,20 +281,8 @@ def consumer(q):
         summary: "Return True if a directed graph contains a cycle. Choose and justify a traversal strategy.",
         filename: "solution.py", language: "python",
         starter: `def has_cycle(graph):
-    state = {}  # 0 = visiting, 1 = done
-
-    def dfs(node):
-        if state.get(node) == 0:
-            return True
-        if state.get(node) == 1:
-            return False
-        state[node] = 0
-        if any(dfs(n) for n in graph[node]):
-            return True
-        state[node] = 1
-        return False
-
-    return any(dfs(n) for n in graph)`,
+    # TODO: return True if the directed graph contains a cycle
+    pass`,
         hint: "Why do you need three states, not just visited/unvisited? What is a back edge?",
         tests: ["test_acyclic", "test_self_loop", "test_back_edge"],
       },
@@ -373,16 +318,8 @@ class Counter:
         starter: `from collections import deque
 
 def max_sliding_window(nums, k):
-    dq, out = deque(), []
-    for i, n in enumerate(nums):
-        while dq and nums[dq[-1]] < n:
-            dq.pop()
-        dq.append(i)
-        if dq[0] <= i - k:
-            dq.popleft()
-        if i >= k - 1:
-            out.append(nums[dq[0]])
-    return out`,
+    # TODO: return the maximum of every window of size k (aim for O(n))
+    pass`,
         hint: "Why a monotonic deque of indices instead of recomputing the max for each window?",
         tests: ["test_basic", "test_k_1", "test_decreasing"],
       },
@@ -400,10 +337,8 @@ def max_sliding_window(nums, k):
         summary: "Design a rate limiter that holds across multiple app servers. Discuss the consistency vs latency trade-off.",
         filename: "limiter.py", language: "python",
         starter: `def is_allowed(redis, key, limit, window):
-    count = redis.incr(key)
-    if count == 1:
-        redis.expire(key, window)
-    return count <= limit`,
+    # TODO: enforce the limit across servers via redis; mind the INCR/EXPIRE race
+    pass`,
         hint: "Why centralise state in Redis? What race exists between INCR and EXPIRE, and how do you close it?",
         tests: ["test_first_request", "test_over_limit", "test_window_expiry"],
       },
@@ -475,14 +410,8 @@ def max_sliding_window(nums, k):
         summary: "Serialize a binary tree to a string and deserialize it back, preserving structure exactly.",
         filename: "solution.py", language: "python",
         starter: `def serialize(root):
-    out = []
-    def dfs(node):
-        if not node:
-            out.append("#"); return
-        out.append(str(node.val))
-        dfs(node.left); dfs(node.right)
-    dfs(root)
-    return ",".join(out)`,
+    # TODO: serialize the binary tree to a string using null markers
+    pass`,
         hint: "How do null markers let a preorder walk alone rebuild the tree unambiguously?",
         tests: ["test_roundtrip", "test_single", "test_empty", "test_skewed"],
       },

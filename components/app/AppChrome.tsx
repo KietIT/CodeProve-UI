@@ -54,12 +54,15 @@ export function AppTopNav() {
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
       <div className="flex items-center gap-8">
-        <Link
-          href="/"
-          className="font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface"
+        {/* Brand mark — intentionally NOT a link inside the app. Clicking it used
+            to jump back to the marketing landing page, which felt jarring once
+            signed in. (The landing-page navbar keeps its home link.) */}
+        <span
+          className="select-none font-headline-lg-mobile text-headline-lg-mobile font-bold tracking-tighter text-on-surface"
+          aria-label="CodeProve"
         >
           Code<span className="text-primary">Prove</span>
-        </Link>
+        </span>
         <nav className="hidden items-center gap-6 md:flex">
           {topLinks.map((l) => {
             const active = l.href !== "#" && pathname.startsWith(l.href);
@@ -115,6 +118,7 @@ export function UserMenu() {
     name: authUser?.full_name ?? "CodeProve User",
     email: authUser?.email ?? "—",
     initials: initialsOf(authUser?.full_name),
+    avatar: authUser?.avatar ?? null,
   };
 
   const tx = {
@@ -146,7 +150,7 @@ export function UserMenu() {
     { icon: "settings", label: tx.settings, href: "#" },
   ];
   const links2 = [
-    { icon: "groups", label: tx.community, href: "#" },
+    { icon: "groups", label: tx.community, href: "/community" },
     { icon: "help", label: tx.help, href: "#" },
   ];
 
@@ -180,11 +184,16 @@ export function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className={`flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-on-primary transition-shadow ${
+        className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-bold text-on-primary transition-shadow ${
           open ? "ring-2 ring-primary/40 ring-offset-2 ring-offset-background" : ""
         }`}
       >
-        {user.initials}
+        {user.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+        ) : (
+          user.initials
+        )}
       </button>
 
       {open && (
@@ -194,8 +203,13 @@ export function UserMenu() {
         >
           {/* Profile header */}
           <div className="flex items-center gap-3 px-2 pb-3 pt-2">
-            <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary-container text-sm font-bold text-on-primary">
-              {user.initials}
+            <div className="flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary-container text-sm font-bold text-on-primary">
+              {user.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+              ) : (
+                user.initials
+              )}
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-on-surface">{user.name}</p>

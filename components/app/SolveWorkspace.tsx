@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -8,7 +8,6 @@ import { AppTopNav, Sym } from "@/components/app/AppChrome";
 import {
   tokenizeLine,
   RUBRIC,
-  PROMPT_SUGGESTIONS,
   type Exercise,
   type LevelConfig,
 } from "@/lib/exercises";
@@ -26,6 +25,7 @@ import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
+import { exerciseContentVi } from "@/lib/exerciseContentVi";
 
 // ── Token -> Tailwind class map (mirrors the original page) ──────────────────
 const TOKEN_CLASS: Record<string, string> = {
@@ -138,6 +138,22 @@ export function SolveWorkspace({
   const editorCodeRef = useRef<string>(initialExercise.starter);
   editorCodeRef.current = editorCode;
 
+  // Anti-cheat: paste is blocked in the editor (and hypothesis / explain-back).
+  // Show a short-lived banner when the user attempts a paste so the block is
+  // explained rather than feeling broken.
+  const [pasteBlocked, setPasteBlocked] = useState(false);
+  const pasteWarnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashPasteBlocked = useCallback(() => {
+    setPasteBlocked(true);
+    if (pasteWarnTimerRef.current) clearTimeout(pasteWarnTimerRef.current);
+    pasteWarnTimerRef.current = setTimeout(() => setPasteBlocked(false), 3500);
+  }, []);
+
+  // One indent level. Auto-indent inserts these on Enter after a block opener and
+  // Tab inserts one, so the caret behaves like a real IDE instead of jumping to
+  // column 0 on every newline.
+  const INDENT = "    ";
+
   // ── Telemetry + attempt ───────────────────────────────────────────────────
   const attemptIdRef = useRef<number | null>(null);
   const telemetryRef = useRef<ReturnType<typeof createTelemetry> | null>(null);
@@ -177,31 +193,39 @@ export function SolveWorkspace({
   const overlayRef = useRef<HTMLDivElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
 
+  // When a keydown handler rewrites the code (auto-indent, Tab), React re-renders
+  // the controlled textarea and resets the caret to the end. We stash the desired
+  // caret position here and restore it in a layout effect before the browser paints.
+  const pendingSelRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (pendingSelRef.current !== null && textareaRef.current) {
+      const pos = pendingSelRef.current;
+      textareaRef.current.selectionStart = pos;
+      textareaRef.current.selectionEnd = pos;
+      pendingSelRef.current = null;
+    }
+  });
+
   // ── Mount: fetch detail from API (fallback to initialExercise) + attempt ──
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
-      // Try to enrich exercise data from the API (best-effort).
+      // Enrich the *briefing* (summary / hint / tests / language) from the API,
+      // but NOT the editor's starter code. The static starter is already the
+      // correct stub; swapping in the API's copy after mount caused the editor to
+      // flash the old content for a few ms before settling. We keep the local
+      // stub as the single source of truth for what the student sees.
       try {
         const detail = await getExerciseDetail(code);
         if (!cancelled) {
-          // Merge API detail into the local Exercise shape.
           setExercise((prev) => ({
             ...prev,
             summary: detail.summary ?? prev.summary,
             hint: detail.hint ?? prev.hint,
             tests: detail.tests ?? prev.tests,
-            starter: detail.starter ?? prev.starter,
             language: (detail.language as Exercise["language"]) ?? prev.language,
           }));
-          if (!cancelled && detail.starter) {
-            setEditorCode((current) =>
-              // Only override starter if the user has not typed anything yet.
-              current === initialExercise.starter ? detail.starter : current,
-            );
-            prevCodeLenRef.current = detail.starter.length;
-          }
         }
       } catch {
         // Static fallback: continue without live detail.
@@ -257,26 +281,90 @@ export function SolveWorkspace({
     };
   }, []);
 
+  // ── Editor value commit (shared by onChange + auto-indent keydown) ────────
+  // Updates React state, accumulates a debounced CODE_EDIT delta, and (optionally)
+  // schedules a caret restore for programmatic edits.
+  const commitEditorValue = useCallback((newCode: string, caret?: number) => {
+    const delta = newCode.length - prevCodeLenRef.current;
+    prevCodeLenRef.current = newCode.length;
+    if (caret !== undefined) pendingSelRef.current = caret;
+    setEditorCode(newCode);
+
+    // Accumulate per-keystroke deltas so fast typing within the debounce
+    // window isn't collapsed to a single keystroke.
+    editDeltaAccRef.current += delta;
+
+    if (editDebounceRef.current) clearTimeout(editDebounceRef.current);
+    editDebounceRef.current = setTimeout(() => {
+      const total = editDeltaAccRef.current;
+      editDeltaAccRef.current = 0;
+      telemetryRef.current?.log("CODE_EDIT", { charsAdded: total });
+    }, 500);
+  }, []);
+
   // ── Editor onChange ───────────────────────────────────────────────────────
   const handleEditorChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newCode = e.target.value;
-      const delta = newCode.length - prevCodeLenRef.current;
-      prevCodeLenRef.current = newCode.length;
-      setEditorCode(newCode);
-
-      // Accumulate per-keystroke deltas so fast typing within the debounce
-      // window isn't collapsed to a single keystroke.
-      editDeltaAccRef.current += delta;
-
-      if (editDebounceRef.current) clearTimeout(editDebounceRef.current);
-      editDebounceRef.current = setTimeout(() => {
-        const total = editDeltaAccRef.current;
-        editDeltaAccRef.current = 0;
-        telemetryRef.current?.log("CODE_EDIT", { charsAdded: total });
-      }, 500);
+      commitEditorValue(e.target.value);
     },
-    [],
+    [commitEditorValue],
+  );
+
+  // ── Editor onKeyDown — IDE-like auto-indent (Enter/Tab/Backspace) ─────────
+  const handleEditorKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const ta = e.currentTarget;
+      const { selectionStart: s, selectionEnd: en, value } = ta;
+
+      // Enter → keep the current line's indent, and add one level after a block
+      // opener (`:` for Python, `{` for JS) so `for …:` ⏎ lands indented.
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+        const leading = value.slice(lineStart).match(/^[ \t]*/)?.[0] ?? "";
+        const beforeCaret = value.slice(lineStart, s).trimEnd();
+        const opensBlock = beforeCaret.endsWith(":") || beforeCaret.endsWith("{");
+        const indent = leading + (opensBlock ? INDENT : "");
+        const insert = "\n" + indent;
+        const newValue = value.slice(0, s) + insert + value.slice(en);
+        commitEditorValue(newValue, s + insert.length);
+        return;
+      }
+
+      // Tab / Shift+Tab → insert or strip one indent level (whole selection aware).
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (s === en && !e.shiftKey) {
+          const newValue = value.slice(0, s) + INDENT + value.slice(en);
+          commitEditorValue(newValue, s + INDENT.length);
+          return;
+        }
+        const from = value.lastIndexOf("\n", s - 1) + 1;
+        const block = value.slice(from, en);
+        if (e.shiftKey) {
+          const dedented = block.replace(/^( {1,4}|\t)/gm, "");
+          const newValue = value.slice(0, from) + dedented + value.slice(en);
+          commitEditorValue(newValue, Math.max(from, en - (block.length - dedented.length)));
+        } else {
+          const indented = block.replace(/^/gm, INDENT);
+          const newValue = value.slice(0, from) + indented + value.slice(en);
+          commitEditorValue(newValue, en + (indented.length - block.length));
+        }
+        return;
+      }
+
+      // Backspace inside pure leading whitespace → delete a whole indent level.
+      if (e.key === "Backspace" && s === en) {
+        const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+        const before = value.slice(lineStart, s);
+        if (before.length >= INDENT.length && /^ +$/.test(before) && before.length % INDENT.length === 0) {
+          e.preventDefault();
+          const newValue = value.slice(0, s - INDENT.length) + value.slice(en);
+          commitEditorValue(newValue, s - INDENT.length);
+        }
+      }
+    },
+    [commitEditorValue, INDENT],
   );
 
   // ── Editor scroll -> sync overlay + gutter ────────────────────────────────
@@ -291,13 +379,22 @@ export function SolveWorkspace({
     }
   }, []);
 
-  // ── Editor onPaste ────────────────────────────────────────────────────────
-  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  // ── Anti-cheat: block paste + drop everywhere the student writes ──────────
+  // Pasting is how someone drops in an answer from another AI without engaging.
+  // We prevent it outright, surface a short banner, and log a flagged event so
+  // the scoring engine can penalise the attempt.
+  const handleBlockedPaste = useCallback((e: React.ClipboardEvent<HTMLElement>) => {
+    e.preventDefault();
     const pasted = e.clipboardData.getData("text");
-    if (pasted.length > 80) {
-      telemetryRef.current?.log("PASTE", { length: pasted.length }, ["BURST_PASTE"]);
-    }
-  }, []);
+    telemetryRef.current?.log("PASTE_BLOCKED", { length: pasted.length }, ["PASTE_BLOCKED"]);
+    flashPasteBlocked();
+  }, [flashPasteBlocked]);
+
+  const handleBlockedDrop = useCallback((e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    telemetryRef.current?.log("PASTE_BLOCKED", { via: "drop" }, ["PASTE_BLOCKED"]);
+    flashPasteBlocked();
+  }, [flashPasteBlocked]);
 
   // ── Run tests ─────────────────────────────────────────────────────────────
   const handleRunTests = useCallback(async () => {
@@ -415,6 +512,12 @@ export function SolveWorkspace({
   const codeLines = editorCode.split("\n");
   const backSlug = level ?? levelConfig.slug;
 
+  // Localised briefing: prefer the Vietnamese overlay, falling back to the
+  // English canonical data so the problem statement + hint follow the language.
+  const viCopy = locale === "vi" ? exerciseContentVi[exercise.id] : undefined;
+  const problemSummary = viCopy?.summary ?? exercise.summary;
+  const problemHint = viCopy?.hint ?? exercise.hint;
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background font-body-md text-on-surface">
@@ -457,16 +560,16 @@ export function SolveWorkspace({
               <h3 className="mb-2 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="description" className="text-[16px]" /> {t.problem}
               </h3>
-              <p className="text-sm leading-relaxed text-on-surface-variant">{exercise.summary}</p>
+              <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}
               </h3>
               <div className="space-y-2 font-label-mono text-label-mono">
-                {RUBRIC.map(([k, v]) => (
+                {RUBRIC.map(([k, v], i) => (
                   <div key={k} className="flex justify-between border-b border-outline-variant/40 pb-1.5">
-                    <span className="text-on-surface-variant">{k}</span>
+                    <span className="text-on-surface-variant">{t.rubricLabels[i] ?? k}</span>
                     <span className="text-primary">{v}</span>
                   </div>
                 ))}
@@ -478,6 +581,8 @@ export function SolveWorkspace({
               <textarea
                 value={hypothesis}
                 onChange={(e) => setHypothesis(e.target.value)}
+                onPaste={handleBlockedPaste}
+                onDrop={handleBlockedDrop}
                 className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
                 placeholder={t.hypothesisPlaceholder}
               />
@@ -580,13 +685,22 @@ export function SolveWorkspace({
                   ref={textareaRef}
                   value={editorCode}
                   onChange={handleEditorChange}
-                  onPaste={handlePaste}
+                  onKeyDown={handleEditorKeyDown}
+                  onPaste={handleBlockedPaste}
+                  onDrop={handleBlockedDrop}
                   onScroll={handleEditorScroll}
                   spellCheck={false}
                   wrap="off"
                   className="ice-scroll absolute inset-0 h-full w-full resize-none overflow-auto whitespace-pre bg-transparent text-transparent caret-on-surface outline-none"
                   style={EDITOR_TEXT_STYLE}
                 />
+                {/* Paste-blocked banner (auto-dismisses) */}
+                {pasteBlocked && (
+                  <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 font-label-mono text-label-mono text-amber-300 shadow-lg backdrop-blur-sm">
+                    <Sym name="content_paste_off" className="mr-1 align-middle text-[15px]" />
+                    {t.pasteDisabled}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -685,7 +799,7 @@ export function SolveWorkspace({
             <div className="ice-scroll flex-1 space-y-4 overflow-y-auto p-4">
               {/* Initial hint bubble */}
               <div className="border-l-2 border-primary bg-primary/5 p-3">
-                <p className="text-sm leading-relaxed text-on-surface">{exercise.hint}</p>
+                <p className="text-sm leading-relaxed text-on-surface">{problemHint}</p>
               </div>
               {messages.length === 0 && (
                 <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
@@ -742,7 +856,7 @@ export function SolveWorkspace({
               <h3 className="font-label-mono text-label-mono uppercase">{t.promptSuggestions}</h3>
             </div>
             <div className="ice-scroll flex-1 space-y-2 overflow-y-auto p-3">
-              {PROMPT_SUGGESTIONS.map((p) => (
+              {t.promptItems.map((p) => (
                 <button
                   key={p}
                   onClick={() => handleSuggestionClick(p)}
