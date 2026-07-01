@@ -14,7 +14,7 @@ import { useI18n } from "@/lib/i18n";
 const cx = 200;
 const cy = 200;
 
-// Round so server (Node) and client (browser) serialise identical strings —
+// Round so server (Node) and client (browser) serialise identical strings -
 // Math.cos/sin can differ at the last ULP across engines → hydration mismatch.
 const r2 = (n: number) => Math.round(n * 100) / 100;
 

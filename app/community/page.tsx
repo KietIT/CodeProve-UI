@@ -40,7 +40,7 @@ const THREADS: Thread[] = [
   },
   {
     author: "Nguyễn Đức Long", tag: "API security", replies: 31, likes: 73,
-    title: { vi: "Vì sao Ciel hay 'gài' lỗi ở bài JWT — và cách mình bắt được", en: "Why Ciel plants a bug in the JWT task — and how I caught it" },
+    title: { vi: "Vì sao Ciel hay 'gài' lỗi ở bài JWT - và cách mình bắt được", en: "Why Ciel plants a bug in the JWT task - and how I caught it" },
     time: { vi: "hôm qua", en: "yesterday" },
   },
   {
@@ -67,7 +67,7 @@ const copy = {
   vi: {
     eyebrow: "Cộng đồng",
     title: "Cộng đồng CodeProve",
-    subtitle: "Học cách tư duy cùng AI từ những người dùng khác — thảo luận, chia sẻ và thi đua.",
+    subtitle: "Học cách tư duy cùng AI từ những người dùng khác - thảo luận, chia sẻ và thi đua.",
     members: "Thành viên",
     postsToday: "Bài hôm nay",
     online: "Đang online",
@@ -92,7 +92,7 @@ const copy = {
   en: {
     eyebrow: "Community",
     title: "CodeProve Community",
-    subtitle: "Learn how to think with AI from other builders — discuss, share and compete.",
+    subtitle: "Learn how to think with AI from other builders - discuss, share and compete.",
     members: "Members",
     postsToday: "Posts today",
     online: "Online now",
@@ -122,7 +122,7 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-// Podium order: 2nd, 1st, 3rd — 1st sits center and tallest.
+// Podium order: 2nd, 1st, 3rd - 1st sits center and tallest.
 const PODIUM = [
   { m: LEADERBOARD[1], place: 2, h: "h-24", ring: "ring-slate-300/60", medal: "military_tech" },
   { m: LEADERBOARD[0], place: 1, h: "h-32", ring: "ring-amber-400/70", medal: "trophy" },

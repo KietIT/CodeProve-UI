@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand tokens — driven by CSS variables so the theme toggle works.
+        // Brand tokens - driven by CSS variables so the theme toggle works.
         bg: "rgb(var(--bg) / <alpha-value>)",
         "bg-soft": "rgb(var(--bg-soft) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
@@ -27,7 +27,7 @@ const config: Config = {
         glowblue: "rgb(var(--primary-container) / <alpha-value>)",
         glowviolet: "rgb(var(--secondary-container) / <alpha-value>)",
 
-        // ── Iceberg (light) / Obsidian (dark) — switchable via CSS variables ──
+        // ── Iceberg (light) / Obsidian (dark) - switchable via CSS variables ──
         background: "rgb(var(--background) / <alpha-value>)",
         "on-background": "rgb(var(--on-surface) / <alpha-value>)",
         "surface-dim": "rgb(var(--surface-dim) / <alpha-value>)",

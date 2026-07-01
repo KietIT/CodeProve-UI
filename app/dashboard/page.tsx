@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
   const trendDelta = trendData.length >= 2
     ? `${trendData[trendData.length - 1] - trendData[0] >= 0 ? "+" : ""}${(trendData[trendData.length - 1] - trendData[0]).toFixed(0)}`
-    : "—";
+    : "-";
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-body-md text-on-surface">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Main content — only shown when data is loaded and not empty */}
+        {/* Main content - only shown when data is loaded and not empty */}
         {!loading && !error && !isEmpty && data && (
           <>
             {/* KPI cards */}
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                       <div className="text-right">
                         <div className={`font-label-mono text-label-mono ${a.ok ? "text-primary" : "text-error"}`}>{recentStatusL[a.status] ?? a.status}</div>
                         <div className="font-label-mono text-label-mono text-on-surface-variant/60">
-                          {a.score !== null ? `${a.score.toFixed(0)} ${t.pts}` : "—"}
+                          {a.score !== null ? `${a.score.toFixed(0)} ${t.pts}` : "-"}
                         </div>
                       </div>
                     </div>

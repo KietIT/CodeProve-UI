@@ -41,7 +41,7 @@ export function Sym({
   );
 }
 
-/** Horizontal top navigation — the only nav across all app pages. */
+/** Horizontal top navigation - the only nav across all app pages. */
 export function AppTopNav() {
   const pathname = usePathname();
   const { locale } = useI18n();
@@ -54,7 +54,7 @@ export function AppTopNav() {
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
       <div className="flex items-center gap-8">
-        {/* Brand mark — intentionally NOT a link inside the app. Clicking it used
+        {/* Brand mark - intentionally NOT a link inside the app. Clicking it used
             to jump back to the marketing landing page, which felt jarring once
             signed in. (The landing-page navbar keeps its home link.) */}
         <span
@@ -116,7 +116,7 @@ export function UserMenu() {
   // Real authenticated user (falls back to placeholders before /auth/me resolves).
   const user = {
     name: authUser?.full_name ?? "CodeProve User",
-    email: authUser?.email ?? "—",
+    email: authUser?.email ?? "-",
     initials: initialsOf(authUser?.full_name),
     avatar: authUser?.avatar ?? null,
   };
@@ -125,8 +125,6 @@ export function UserMenu() {
     vi: {
       upgrade: "Nâng cấp hồ sơ",
       profile: "Hồ sơ người dùng",
-      integrations: "Tích hợp",
-      settings: "Cài đặt",
       community: "Cộng đồng",
       help: "Trung tâm trợ giúp",
       darkMode: "Chế độ tối",
@@ -135,8 +133,6 @@ export function UserMenu() {
     en: {
       upgrade: "Upgrade profile",
       profile: "User Profile",
-      integrations: "Integrations",
-      settings: "Settings",
       community: "Community",
       help: "Help Center",
       darkMode: "Dark Mode",
@@ -144,10 +140,10 @@ export function UserMenu() {
     },
   }[locale];
 
+  // Kept intentionally lean: Settings and Integrations live inside the profile
+  // page itself, so the account dropdown only surfaces top-level destinations.
   const links = [
     { icon: "account_circle", label: tx.profile, href: "/profile" },
-    { icon: "extension", label: tx.integrations, href: "#" },
-    { icon: "settings", label: tx.settings, href: "#" },
   ];
   const links2 = [
     { icon: "groups", label: tx.community, href: "/community" },

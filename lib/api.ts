@@ -187,8 +187,8 @@ export type ReportOut = {
 
 // ── Report API helpers ────────────────────────────────────────────────────────
 
-export const submitAttempt = (id: number) =>
-  apiFetch<{ questions: string[] }>(`/attempts/${id}/submit`, { method: "POST" });
+export const submitAttempt = (id: number, locale: string = "en") =>
+  apiFetch<{ questions: string[] }>(`/attempts/${id}/submit?locale=${locale}`, { method: "POST" });
 
 export const explainBack = (
   id: number,

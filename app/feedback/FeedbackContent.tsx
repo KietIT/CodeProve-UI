@@ -202,7 +202,7 @@ export function FeedbackContent() {
                 <div className="mb-2 flex justify-between font-label-mono text-label-mono">
                   <span>{label}</span>
                   {isNull ? (
-                    <span className="text-on-surface-variant/40">—</span>
+                    <span className="text-on-surface-variant/40">-</span>
                   ) : (
                     <span className="text-primary">{Math.round(pct)}%</span>
                   )}

@@ -71,7 +71,7 @@ const copy = {
       divider: "hoặc tiếp tục với",
       google: "Google",
       github: "GitHub",
-      comingSoon: "Đăng nhập bằng {provider} sắp ra mắt — hiện hãy dùng email nhé.",
+      comingSoon: "Đăng nhập bằng {provider} sắp ra mắt - hiện hãy dùng email nhé.",
     },
     errors: {
       email: "Vui lòng nhập email hợp lệ.",
@@ -130,7 +130,7 @@ const copy = {
       divider: "or continue with",
       google: "Google",
       github: "GitHub",
-      comingSoon: "{provider} sign-in is coming soon — please use email for now.",
+      comingSoon: "{provider} sign-in is coming soon - please use email for now.",
     },
     errors: {
       email: "Please enter a valid email.",
@@ -455,7 +455,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            {/* SSO — interactive; OAuth backend not wired yet so clicks show a notice */}
+            {/* SSO - interactive; OAuth backend not wired yet so clicks show a notice */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"

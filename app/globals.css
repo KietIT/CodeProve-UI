@@ -150,7 +150,7 @@ body {
       0 22px 48px -30px rgba(0, 0, 0, 0.85);
   }
 
-  /* Gradient text — blue, theme-aware (readable on both light and dark) */
+  /* Gradient text - blue, theme-aware (readable on both light and dark) */
   .text-gradient {
     background: linear-gradient(
       120deg,
@@ -245,7 +245,7 @@ body {
 }
 
 /* Aurora blobs used by the page-wide ambient backdrop. We animate opacity only
-   (composited cheaply on the cached blurred layer) — never transform, which
+   (composited cheaply on the cached blurred layer) - never transform, which
    would force the heavy blur to re-rasterise every frame. */
 @keyframes aurora-breathe {
   0%,
@@ -277,7 +277,7 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Iceberg (light) / Obsidian (dark) — shared app utilities
+   Iceberg (light) / Obsidian (dark) - shared app utilities
    ───────────────────────────────────────────────────────────── */
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";

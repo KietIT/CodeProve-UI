@@ -6,12 +6,12 @@ import { useMemo } from "react";
  * Animated printed-circuit field: dim copper traces radiating from an origin
  * (the AI sphere) with bright energy pulses flowing outward continuously.
  *
- * Pure SVG — lives BEHIND the WebGL canvas so it never touches the 3D scene's
+ * Pure SVG - lives BEHIND the WebGL canvas so it never touches the 3D scene's
  * performance. Pulses animate via stroke-dashoffset (cheap, GPU-friendly) and a
  * radial mask fades the field out with distance from the sphere.
  *
  * Geometry is generated deterministically (seeded PRNG + integer coordinates),
- * so server and client render identically — no hydration mismatch.
+ * so server and client render identically - no hydration mismatch.
  */
 
 type Props = {
@@ -137,7 +137,7 @@ export function CircuitField({
           ))}
         </g>
 
-        {/* Flowing energy pulse — single animated layer (perf-friendly) */}
+        {/* Flowing energy pulse - single animated layer (perf-friendly) */}
         <g fill="none" strokeLinecap="round" strokeWidth="3.2">
           {traces.map((t, i) => (
             <path
@@ -160,7 +160,7 @@ export function CircuitField({
           ))}
         </g>
 
-        {/* End pads (static — no per-pad animation) */}
+        {/* End pads (static - no per-pad animation) */}
         <g>
           {traces.map((t, i) => (
             <g key={`pd${i}`}>

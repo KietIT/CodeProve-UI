@@ -18,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Geist (Cyber-Industrial display/body engine) is loaded via CSS @import in
-// globals.css — it isn't available in this next/font version.
+// globals.css - it isn't available in this next/font version.
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://codeprove.example"),

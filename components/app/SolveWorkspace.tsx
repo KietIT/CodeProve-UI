@@ -37,7 +37,7 @@ const TOKEN_CLASS: Record<string, string> = {
 
 // ── Shared editor metrics ───────────────────────────────────────────────────
 // The textarea, the highlight overlay, and the line-number gutter MUST share
-// identical font metrics + box padding so glyphs line up 1:1 — including when
+// identical font metrics + box padding so glyphs line up 1:1 - including when
 // scrolled. We pin them with inline styles rather than utility classes so the
 // numbers can't drift between the three layered elements.
 const EDITOR_FONT_FAMILY =
@@ -467,7 +467,7 @@ export function SolveWorkspace({
     [commitEditorValue],
   );
 
-  // ── Editor onKeyDown — IDE-like auto-indent (Enter/Tab/Backspace) ─────────
+  // ── Editor onKeyDown - IDE-like auto-indent (Enter/Tab/Backspace) ─────────
   const handleEditorKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const ta = e.currentTarget;
@@ -683,13 +683,13 @@ export function SolveWorkspace({
     setSubmitError(null);
     try {
       await performAutosave("submit", true);
-      // Flush telemetry before submitting — non-critical, so never let it block submit.
+      // Flush telemetry before submitting - non-critical, so never let it block submit.
       try {
         await telemetryRef.current?.stop();
       } catch {
         /* telemetry flush is best-effort; ignore failures */
       }
-      const { questions } = await submitAttempt(id);
+      const { questions } = await submitAttempt(id, locale);
       setExplainQuestions(questions);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
@@ -698,7 +698,7 @@ export function SolveWorkspace({
     }
     // Invoke optional external callback (used in tests / storybook).
     onSubmit?.();
-  }, [onSubmit, performAutosave]);
+  }, [onSubmit, performAutosave, locale, t.noActiveAttempt]);
 
   // ── Derived display values ────────────────────────────────────────────────
   const codeLines = editorCode.split("\n");
@@ -741,7 +741,7 @@ export function SolveWorkspace({
           fullscreenLocked ? "pointer-events-none select-none blur-[1px]" : ""
         }`}
       >
-        {/* Left — brief (resizable, hidden on < lg) */}
+        {/* Left - brief (resizable, hidden on < lg) */}
         {showLeft && (
         <>
         <Panel id="brief" order={1} defaultSize={24} minSize={15} collapsible className="flex flex-col">
@@ -819,7 +819,7 @@ export function SolveWorkspace({
         </>
         )}
 
-        {/* Center — editor + terminal */}
+        {/* Center - editor + terminal */}
         <Panel id="editor" order={2} minSize={30}>
         <div className="flex h-full flex-col overflow-hidden">
           <div className="flex flex-none items-center justify-between border-b border-outline-variant/60 bg-surface-container-low pr-4">
@@ -862,7 +862,7 @@ export function SolveWorkspace({
             </div>
           </div>
 
-          {/* Editor — textarea is the scroll container; gutter + overlay mirror
+          {/* Editor - textarea is the scroll container; gutter + overlay mirror
               its scroll position via handleEditorScroll. All three share the
               EDITOR_* metrics so highlighted glyphs and line numbers stay aligned
               with the real text even when scrolled deep into a long starter. */}
@@ -1015,7 +1015,7 @@ export function SolveWorkspace({
 
         </Panel>
 
-        {/* Right — AI mentor (resizable, hidden on < xl) */}
+        {/* Right - AI mentor (resizable, hidden on < xl) */}
         {showRight && (
         <>
         <ColResizeHandle />
@@ -1107,7 +1107,7 @@ export function SolveWorkspace({
         )}
       </PanelGroup>
 
-      {/* Explain-back modal — mounted after submit API returns questions */}
+      {/* Explain-back modal - mounted after submit API returns questions */}
       {explainQuestions !== null && attemptIdRef.current !== null && (
         <ExplainBackModal
           attemptId={attemptIdRef.current}

@@ -6,7 +6,7 @@ import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 
 /**
- * AI Neural Core — a translucent brain-sphere with a living neural network
+ * AI Neural Core - a translucent brain-sphere with a living neural network
  * inside, steered by a 3-axis control gyroscope (the "human-in-control"
  * metaphor) and framed by a camera-facing rubric ring whose 6 labelled nodes
  * are the 6 AI-Fluency assessment axes.
@@ -19,7 +19,7 @@ import * as THREE from "three";
  *
  * Performance notes: the glass shell uses a cheap physical material (no
  * per-frame transmission FBO), labels are lightweight projected HTML, and the
- * scene needs no HDR environment — so first paint and steady-state are smooth.
+ * scene needs no HDR environment - so first paint and steady-state are smooth.
  */
 
 const BRAIN_R = 1.3; // brain shell radius
@@ -27,7 +27,7 @@ const RING_R = 2.05; // rubric ring radius (6 axis nodes sit here)
 const LABEL_R = RING_R + 0.5; // labels sit just outside the nodes
 const N_NEURONS = 200;
 
-// Brand axes — stable English terms (shown identically in both locales).
+// Brand axes - stable English terms (shown identically in both locales).
 const AXIS_LABELS = [
   "Understanding",
   "Hypothesis",
@@ -219,7 +219,7 @@ export function FluencyCore({ rotate = true, speed = 0.15, theme = "dark" }: Pro
   const halo = useRef<THREE.Mesh>(null);
   const neuronsMat = useRef<THREE.PointsMaterial>(null);
 
-  // Neural cloud geometry (positions + synapse links) — stable across themes.
+  // Neural cloud geometry (positions + synapse links) - stable across themes.
   const { positions, radii, segments } = useMemo(() => {
     const pts: THREE.Vector3[] = [];
     const pos = new Float32Array(N_NEURONS * 3);
@@ -255,7 +255,7 @@ export function FluencyCore({ rotate = true, speed = 0.15, theme = "dark" }: Pro
     return { positions: pos, radii: rad, segments: new Float32Array(seg) };
   }, []);
 
-  // Per-neuron colours depend on the active palette — recomputed on theme swap.
+  // Per-neuron colours depend on the active palette - recomputed on theme swap.
   const colors = useMemo(() => {
     const col = new Float32Array(N_NEURONS * 3);
     const cInner = new THREE.Color(P.nInner);
@@ -354,7 +354,7 @@ export function FluencyCore({ rotate = true, speed = 0.15, theme = "dark" }: Pro
       {/* ── Tilted 3D assembly: brain + control gyroscope ────────── */}
       <group rotation={[0.32, 0, 0]}>
         <group ref={brain}>
-          {/* Translucent glossy shell (cheap — no transmission FBO) */}
+          {/* Translucent glossy shell (cheap - no transmission FBO) */}
           <mesh scale={[1.06, 0.97, 1]}>
             <sphereGeometry args={[BRAIN_R, 48, 48]} />
             <meshPhysicalMaterial

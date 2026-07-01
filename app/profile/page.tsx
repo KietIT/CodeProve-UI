@@ -121,7 +121,7 @@ export default function ProfilePage() {
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState("");
 
-  // Local-only preference toggles (mock — not persisted server-side yet).
+  // Local-only preference toggles (mock - not persisted server-side yet).
   const [emailNotif, setEmailNotif] = useState(true);
   const [connected, setConnected] = useState<Record<string, boolean>>({});
 
@@ -443,7 +443,7 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Community CTA — always visible under the active panel */}
+              {/* Community CTA - always visible under the active panel */}
               <Link
                 href="/community"
                 className="ice-card group flex items-center gap-4 p-6 transition-transform hover:-translate-y-0.5"

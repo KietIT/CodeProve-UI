@@ -43,7 +43,7 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      {/* Circuit field — energy traces flowing out from behind the AI sphere.
+      {/* Circuit field - energy traces flowing out from behind the AI sphere.
           Only mounted while the hero is on screen (perf). */}
       {active && (
         <CircuitField

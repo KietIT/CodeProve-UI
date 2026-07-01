@@ -18,7 +18,7 @@ export function Contact() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  // No backend in the MVP — compose a prefilled email instead.
+  // No backend in the MVP - compose a prefilled email instead.
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const subject = encodeURIComponent(`[CodeProve] ${name}`);
@@ -36,7 +36,7 @@ export function Contact() {
         aria-hidden="true"
       />
       <div className="container-site grid gap-12 lg:grid-cols-2 lg:gap-16">
-        {/* Left — contact form */}
+        {/* Left - contact form */}
         <Reveal>
           <h2 className="text-balance text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
             {c.title}
@@ -101,7 +101,7 @@ export function Contact() {
           </form>
         </Reveal>
 
-        {/* Right — FAQ */}
+        {/* Right - FAQ */}
         <Reveal>
           <h3 className="text-balance text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
             {c.faqTitle}

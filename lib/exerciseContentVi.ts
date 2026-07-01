@@ -10,7 +10,7 @@ export const exerciseContentVi: Record<string, ExerciseCopy> = {
   "CP-001": {
     summary:
       "Cho một mảng số nguyên và một giá trị target, trả về chỉ số của hai số cộng lại bằng target. Giải thích hướng tiếp cận của bạn trước và sau khi viết code.",
-    hint: "Trước khi code — giả thuyết của bạn để đạt O(n) là gì? Một hash map cho phép kiểm tra phần bù trong thời gian hằng số.",
+    hint: "Trước khi code - giả thuyết của bạn để đạt O(n) là gì? Một hash map cho phép kiểm tra phần bù trong thời gian hằng số.",
   },
   "CP-002": {
     summary:
@@ -35,7 +35,7 @@ export const exerciseContentVi: Record<string, ExerciseCopy> = {
   "CP-006": {
     summary:
       "Trả về một dict ánh xạ mỗi từ tới số lần xuất hiện, không phân biệt hoa/thường. Sau đó giải thích collections.Counter làm gì bên trong.",
-    hint: "Đã có collections.Counter — nhưng bạn có giải thích được mẫu tích luỹ bằng dict mà nó thay thế không?",
+    hint: "Đã có collections.Counter - nhưng bạn có giải thích được mẫu tích luỹ bằng dict mà nó thay thế không?",
   },
   "CP-007": {
     summary:
@@ -155,6 +155,6 @@ export const exerciseContentVi: Record<string, ExerciseCopy> = {
   "CP-208": {
     summary:
       "Một handler upload tin tưởng tên file và content-type từ client. Liệt kê các rủi ro và sửa chúng.",
-    hint: "Path traversal, giả mạo kiểu file, giới hạn dung lượng — bạn bịt rủi ro nào trước, và vì sao?",
+    hint: "Path traversal, giả mạo kiểu file, giới hạn dung lượng - bạn bịt rủi ro nào trước, và vì sao?",
   },
 };

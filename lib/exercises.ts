@@ -2,7 +2,7 @@
  * Single source of truth for training exercises.
  * Shared by the level picker (`/workspace/[level]`) and the solve workspace
  * (`/workspace/solve`). Replace the static `LEVELS` map with a fetch/DB call
- * later — the UI and helpers below stay unchanged.
+ * later - the UI and helpers below stay unchanged.
  */
 
 export type Difficulty = "Easy" | "Medium" | "Hard";
@@ -69,7 +69,7 @@ export const LEVELS: Record<string, LevelConfig> = {
         starter: `def two_sum(nums, target):
     # TODO: return the indices of the two numbers that add up to target
     pass`,
-        hint: "Before you code — what's your hypothesis for reaching O(n)? A hash map lets you check the complement in constant time.",
+        hint: "Before you code - what's your hypothesis for reaching O(n)? A hash map lets you check the complement in constant time.",
         tests: ["test_basic_case", "test_duplicates", "test_no_solution", "test_negatives"],
       },
       {
@@ -123,7 +123,7 @@ def sanitize_username(raw):
         starter: `def word_count(text):
     # TODO: return a dict mapping each lowercased word to its count
     pass`,
-        hint: "collections.Counter exists — but can you explain the dict-accumulation pattern it replaces?",
+        hint: "collections.Counter exists - but can you explain the dict-accumulation pattern it replaces?",
         tests: ["test_basic", "test_case_insensitive", "test_empty"],
       },
       {
@@ -423,7 +423,7 @@ def max_sliding_window(nums, k):
     # trusts client-provided name and type
     path = "/uploads/" + file.filename
     open(path, "wb").write(file.read())`,
-        hint: "Path traversal, type spoofing, size limits — which risk do you close first, and why?",
+        hint: "Path traversal, type spoofing, size limits - which risk do you close first, and why?",
         tests: ["test_safe_name", "test_path_traversal_blocked", "test_size_limit"],
       },
     ],

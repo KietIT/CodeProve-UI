@@ -139,7 +139,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
         }
       })
       .catch(() => {
-        // Network unavailable — keep the neutral fallback already in state.
+        // Network unavailable - keep the neutral fallback already in state.
       });
   }, [level]);
 
@@ -185,7 +185,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
 
   return (
     <>
-      {/* Progress card — real per-user data, consistent with the dashboard. */}
+      {/* Progress card - real per-user data, consistent with the dashboard. */}
       <div className="ice-card mb-6 flex flex-col gap-3 p-5 sm:max-w-sm">
         <div className="flex items-baseline justify-between">
           <span className="font-label-mono text-label-mono uppercase text-on-surface-variant/70">

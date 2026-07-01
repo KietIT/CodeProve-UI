@@ -1,9 +1,9 @@
 /**
  * Page-wide ambient backdrop: slow-drifting aurora blobs + a vignette, fixed
- * behind all marketing content. Lightweight (no per-frame circuit animation) —
+ * behind all marketing content. Lightweight (no per-frame circuit animation) -
  * the animated circuit field lives only in the hero, where the 3D core is.
  *
- * Purely decorative — pointer-events disabled, hidden from assistive tech, and
+ * Purely decorative - pointer-events disabled, hidden from assistive tech, and
  * frozen automatically under prefers-reduced-motion (global CSS rule).
  */
 export function AmbientBackdrop() {
@@ -12,7 +12,7 @@ export function AmbientBackdrop() {
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       aria-hidden="true"
     >
-      {/* teal — top right */}
+      {/* teal - top right */}
       <div
         className="aurora-blob"
         style={{
@@ -24,7 +24,7 @@ export function AmbientBackdrop() {
           animationDelay: "0s",
         }}
       />
-      {/* blue — left */}
+      {/* blue - left */}
       <div
         className="aurora-blob"
         style={{
@@ -36,7 +36,7 @@ export function AmbientBackdrop() {
           animationDelay: "-7s",
         }}
       />
-      {/* violet — bottom center */}
+      {/* violet - bottom center */}
       <div
         className="aurora-blob"
         style={{
