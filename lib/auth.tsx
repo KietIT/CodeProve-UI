@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { apiFetch, clearToken, getToken, setToken, updateMe } from "@/lib/api";
 
 type User = { id: number; full_name: string; email: string; avatar?: string | null };
@@ -10,6 +10,7 @@ type AuthCtx = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (full_name: string, email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   updateProfile: (data: { full_name?: string; avatar?: string | null }) => Promise<void>;
   logout: () => void;
 };
@@ -41,13 +42,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const out = await apiFetch<AuthOut>("/auth/signup", { method: "POST", body: { full_name, email, password }, auth: false });
     setToken(out.access_token); setUser(out.user);
   }
+  const loginWithToken = useCallback(async (token: string) => {
+    setToken(token);
+    setUser(await apiFetch<User>("/auth/me"));
+  }, []);
   async function updateProfile(data: { full_name?: string; avatar?: string | null }) {
     const updated = await updateMe(data);
     setUser(updated);
   }
   function logout() { clearToken(); setUser(null); }
 
-  return <Ctx.Provider value={{ user, loading, login, signup, updateProfile, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, signup, loginWithToken, updateProfile, logout }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth(): AuthCtx {
