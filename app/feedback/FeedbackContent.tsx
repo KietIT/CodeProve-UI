@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getReport, type ReportOut } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
+import { useI18n } from "@/lib/i18n";
+import { appContent } from "@/lib/appContent";
 
 // ── Score-ring constants ──────────────────────────────────────────────────────
 const R = 44;
@@ -15,11 +17,15 @@ function scoreOffset(score: number): number {
 }
 
 // ── Integrity badge ───────────────────────────────────────────────────────────
-const INTEGRITY_LABEL: Record<ReportOut["integrity_status"], string> = {
-  green: "Integrity: Verified",
-  yellow: "Integrity: Review",
-  red: "Integrity: Flagged",
-};
+// "green" means no cheating signals (blocked paste, tab-switch, fullscreen
+// exit...) were detected during the session - it does NOT mean the attempt
+// itself was verified as good work, so the label avoids the word "Verified".
+type FeedbackCopy = { integrityGreen: string; integrityYellow: string; integrityRed: string };
+function integrityLabel(status: ReportOut["integrity_status"], tf: FeedbackCopy): string {
+  if (status === "green") return tf.integrityGreen;
+  if (status === "yellow") return tf.integrityYellow;
+  return tf.integrityRed;
+}
 const INTEGRITY_CLASS: Record<ReportOut["integrity_status"], string> = {
   green: "border-primary/30 bg-primary/10 text-primary",
   yellow: "border-[rgb(var(--secondary))]/30 bg-[rgb(var(--secondary))]/10 text-[rgb(var(--secondary))]",
@@ -42,6 +48,8 @@ function axisLabel(key: string): string {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function FeedbackContent() {
+  const { locale } = useI18n();
+  const tf = appContent[locale].feedback;
   const searchParams = useSearchParams();
   const attemptParam = searchParams.get("attempt");
   const attemptId = attemptParam ? Number(attemptParam) : null;
@@ -143,7 +151,7 @@ export function FeedbackContent() {
             className={`inline-flex items-center gap-1.5 border px-3 py-1 font-label-mono text-label-mono text-sm ${INTEGRITY_CLASS[report.integrity_status]}`}
           >
             <Sym name={INTEGRITY_ICON[report.integrity_status]} className="text-[15px]" />
-            {INTEGRITY_LABEL[report.integrity_status]}
+            {integrityLabel(report.integrity_status, tf)}
           </span>
         </div>
       </header>

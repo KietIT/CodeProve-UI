@@ -122,6 +122,15 @@ export const appContent = {
       junior: "Logic và gỡ lỗi ở mức trung cấp. Kiểm chứng đầu ra của AI và giải thích lại lập luận của bạn.",
       senior: "Kiến trúc nâng cao và suy luận trường hợp biên. Kiểm chứng và kiểm thử ở mức quan trọng cao.",
     },
+    feedback: {
+      // "green" used to read "Integrity: Verified", which misleadingly implied the
+      // attempt itself was verified as good work. It only means no cheating
+      // signals (blocked paste, tab-switch, fullscreen exit...) were detected -
+      // an empty, 0-score attempt gets the same badge as a strong honest one.
+      integrityGreen: "Toàn vẹn: Không phát hiện gian lận",
+      integrityYellow: "Toàn vẹn: Cần xem lại",
+      integrityRed: "Toàn vẹn: Bị gắn cờ",
+    },
   },
   en: {
     nav: { dashboard: "Dashboard", workspace: "Workspace", analytics: "Analytics" },
@@ -241,6 +250,11 @@ export const appContent = {
       fresher: "Foundational problem-solving with AI guidance. Build core habits: read, hypothesise, prompt.",
       junior: "Intermediate logic and debugging. Verify AI output and explain your reasoning back.",
       senior: "Advanced architecture and edge-case reasoning. High-stakes verification and testing.",
+    },
+    feedback: {
+      integrityGreen: "Integrity: No flags detected",
+      integrityYellow: "Integrity: Review",
+      integrityRed: "Integrity: Flagged",
     },
   },
 } as const;
