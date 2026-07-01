@@ -16,6 +16,7 @@ type Props = {
 export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
   const router = useRouter();
   const { locale } = useI18n();
+  const tx = appContent[locale].solve.explainBack;
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
       );
       router.push(`/feedback?attempt=${attemptId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to submit answers. Please try again.");
+      setError(err instanceof Error ? err.message : tx.submitError);
       setSubmitting(false);
     }
   }
@@ -61,19 +62,18 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">
-              Explain-back
+              {tx.eyebrow}
             </span>
             <h2 className="mt-1 font-headline-lg-mobile text-headline-lg-mobile">
-              Verify your understanding
+              {tx.title}
             </h2>
             <p className="mt-1 text-sm text-on-surface-variant">
-              Answer each question in your own words. Your explanations are used to assess
-              genuine understanding.
+              {tx.subtitle}
             </p>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tx.close}
             className="flex-none cursor-pointer text-on-surface-variant/60 transition-colors hover:text-on-surface"
           >
             <Sym name="close" className="text-[22px]" />
@@ -96,7 +96,7 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
                 disabled={submitting}
                 rows={4}
                 className="w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-3 font-label-mono text-label-mono text-on-surface outline-none transition-colors focus:border-primary disabled:opacity-50"
-                placeholder="Type your explanation here…"
+                placeholder={tx.placeholder}
               />
             </div>
           ))}
@@ -124,7 +124,7 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
             disabled={submitting || answers.some((a) => !a.trim())}
             className="flex cursor-pointer items-center gap-2 bg-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? "Submitting…" : "Submit answers"}
+            {submitting ? tx.submitting : tx.submit}
             {!submitting && <Sym name="send" className="text-[16px]" />}
           </button>
           <button
@@ -132,7 +132,7 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
             disabled={submitting}
             className="cursor-pointer border border-outline-variant/60 px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
           >
-            Cancel
+            {tx.cancel}
           </button>
         </div>
       </div>
