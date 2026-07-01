@@ -72,7 +72,6 @@ const EDITOR_LINE_STYLE: React.CSSProperties = {
 
 const ATTEMPT_DURATION_MS = 45 * 60 * 1000;
 const AUTOSAVE_INTERVAL_MS = 12 * 1000;
-const BURST_PASTE_THRESHOLD = 80;
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
@@ -222,6 +221,50 @@ export function SolveWorkspace({
   const overlayRef = useRef<HTMLDivElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
 
+  // When a keydown handler rewrites the code (auto-indent, Tab), React re-renders
+  // the controlled textarea and resets the caret to the end. We stash the desired
+  // caret position here and restore it in a layout effect before the browser paints.
+  const pendingSelRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (pendingSelRef.current !== null && textareaRef.current) {
+      const pos = pendingSelRef.current;
+      textareaRef.current.selectionStart = pos;
+      textareaRef.current.selectionEnd = pos;
+      pendingSelRef.current = null;
+    }
+  });
+
+  const performAutosave = useCallback(async (reason: string, force = false) => {
+    const id = attemptIdRef.current;
+    if (!id || autosaveInFlightRef.current) return;
+
+    const source = editorCodeRef.current;
+    if (!force && source === lastAutosavedCodeRef.current) return;
+
+    autosaveInFlightRef.current = true;
+    setAutosaveState("saving");
+    const version = snapshotVersionRef.current + 1;
+    snapshotVersionRef.current = version;
+
+    try {
+      await saveSnapshot(id, version, source);
+      lastAutosavedCodeRef.current = source;
+      const savedAt = Date.now();
+      setLastAutosaveAt(savedAt);
+      setAutosaveState("saved");
+      telemetryRef.current?.log("AUTO_SAVE", {
+        reason,
+        version,
+        length: source.length,
+      });
+    } catch {
+      setAutosaveState("error");
+      telemetryRef.current?.log("AUTO_SAVE_FAILED", { reason, version }, ["AUTO_SAVE_FAILED"]);
+    } finally {
+      autosaveInFlightRef.current = false;
+    }
+  }, []);
+
   // ── Mount: fetch detail from API (fallback to initialExercise) + attempt ──
   useEffect(() => {
     let cancelled = false;
@@ -242,13 +285,6 @@ export function SolveWorkspace({
             tests: detail.tests ?? prev.tests,
             language: (detail.language as Exercise["language"]) ?? prev.language,
           }));
-          if (!cancelled && detail.starter) {
-            setEditorCode((current) =>
-              // Only override starter if the user has not typed anything yet.
-              current === initialExercise.starter ? detail.starter : current,
-            );
-            prevCodeLenRef.current = detail.starter.length;
-          }
         }
       } catch {
         // Static fallback: continue without live detail.
@@ -500,6 +536,25 @@ export function SolveWorkspace({
     }
   }, []);
 
+  // ── Anti-cheat: block paste + drop everywhere the student writes ──────────
+  // Pasting is how someone drops in an answer from another AI without engaging.
+  // We prevent it outright, surface a short banner, and log a flagged event so
+  // the scoring engine can penalise the attempt.
+  const handleBlockedPaste = useCallback((e: React.ClipboardEvent<HTMLElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text");
+    telemetryRef.current?.log("PASTE_BLOCKED", { length: pasted.length }, ["PASTE_BLOCKED"]);
+    flashPasteBlocked();
+  }, [flashPasteBlocked]);
+
+  const handleBlockedDrop = useCallback((e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    telemetryRef.current?.log("PASTE_BLOCKED", { via: "drop" }, ["PASTE_BLOCKED"]);
+    flashPasteBlocked();
+  }, [flashPasteBlocked]);
+
+  // Copy / cut are still allowed but logged as integrity signals (teammate's
+  // telemetry). Paste itself is blocked above rather than merely logged.
   const getSelectedCodeLength = useCallback(() => {
     const ta = textareaRef.current;
     if (!ta) return 0;
@@ -514,15 +569,21 @@ export function SolveWorkspace({
     telemetryRef.current?.log("CUT", { length: getSelectedCodeLength() });
   }, [getSelectedCodeLength]);
 
-  // ── Anti-cheat: block paste + drop everywhere the student writes ──────────
-  // Pasting is how someone drops in an answer from another AI without engaging.
-  // We prevent it outright, surface a short banner, and log a flagged event so
-  // the scoring engine can penalise the attempt.
-  const handleBlockedPaste = useCallback((e: React.ClipboardEvent<HTMLElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text");
-    if (pasted.length > 80) {
-      telemetryRef.current?.log("PASTE", { length: pasted.length }, ["BURST_PASTE"]);
+  const handleEnterFullscreen = useCallback(async () => {
+    setFullscreenError(null);
+
+    const root = document.documentElement;
+    if (!root.requestFullscreen) {
+      setFullscreenError("This browser does not support fullscreen mode.");
+      telemetryRef.current?.log("FULLSCREEN_UNSUPPORTED", {}, ["FULLSCREEN_UNSUPPORTED"]);
+      return;
+    }
+
+    try {
+      await root.requestFullscreen();
+    } catch {
+      setFullscreenError("Fullscreen was blocked. Click the button again to continue.");
+      telemetryRef.current?.log("FULLSCREEN_FAILED", {}, ["FULLSCREEN_FAILED"]);
     }
   }, []);
 
@@ -642,6 +703,31 @@ export function SolveWorkspace({
   // ── Derived display values ────────────────────────────────────────────────
   const codeLines = editorCode.split("\n");
   const backSlug = level ?? levelConfig.slug;
+  const fullscreenLocked = !fullscreenActive;
+  const fullscreenTitle = hasStartedFullscreen ? "Fullscreen paused" : "Start Attempt";
+  const fullscreenBody = hasStartedFullscreen
+    ? "You left fullscreen mode. Return to fullscreen to continue this attempt."
+    : "This assessment must run in fullscreen before the editor is available.";
+  const fullscreenAction = hasStartedFullscreen ? "Return to fullscreen" : "Start Attempt";
+  const timeLeft = formatDuration(remainingMs);
+  const timerIsLow = remainingMs <= 60 * 1000;
+  const autosaveLabel =
+    autosaveState === "saving"
+      ? "Saving..."
+      : autosaveState === "error"
+        ? "Autosave failed"
+        : lastAutosaveAt
+          ? `Saved ${new Date(lastAutosaveAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}`
+          : "Autosave ready";
+
+  // Localised briefing: prefer the Vietnamese overlay, falling back to the
+  // English canonical data so the problem statement + hint follow the language.
+  const viCopy = locale === "vi" ? exerciseContentVi[exercise.id] : undefined;
+  const problemSummary = viCopy?.summary ?? exercise.summary;
+  const problemHint = viCopy?.hint ?? exercise.hint;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -830,7 +916,11 @@ export function SolveWorkspace({
                   ref={textareaRef}
                   value={editorCode}
                   onChange={handleEditorChange}
-                  onPaste={handlePaste}
+                  onKeyDown={handleEditorKeyDown}
+                  onPaste={handleBlockedPaste}
+                  onDrop={handleBlockedDrop}
+                  onCopy={handleCopy}
+                  onCut={handleCut}
                   onScroll={handleEditorScroll}
                   spellCheck={false}
                   wrap="off"
