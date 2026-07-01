@@ -37,7 +37,7 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
 
         {/* Personal / Business toggle */}
         <Reveal className="mt-8 flex justify-center">
-          <div className="inline-flex gap-1 rounded-pill border border-border bg-surface/50 p-1">
+          <div className="inline-flex gap-1 rounded-pill border border-teal/40 bg-teal/80 p-1 dark:border-border dark:bg-surface/50">
             {(["personal", "business"] as Tab[]).map((key) => (
               <button
                 key={key}
@@ -45,8 +45,8 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
                 aria-pressed={tab === key}
                 className={`cursor-pointer rounded-pill px-6 py-2 text-sm font-medium transition-colors duration-200 ${
                   tab === key
-                    ? "bg-teal text-[#04211e]"
-                    : "text-muted hover:text-content"
+                    ? "bg-teal text-white dark:text-[#04211e]"
+                    : "text-white/80 hover:text-white dark:text-muted dark:hover:text-content"
                 }`}
               >
                 {p.tabs[key]}
@@ -60,14 +60,14 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
             {p.plans.map((plan) => (
               <StaggerItem key={plan.name} className="h-full">
                 <div
-                  className={`relative flex h-full flex-col rounded-card border p-7 transition-transform duration-300 ${
+                  className={`relative flex h-full transform-gpu flex-col rounded-card border p-7 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-2 hover:shadow-glow motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
                     plan.featured
-                      ? "border-teal/50 bg-surface shadow-glow lg:-translate-y-3 lg:scale-[1.03]"
+                      ? "border-teal/50 bg-surface shadow-glow lg:-translate-y-3 lg:scale-[1.03] lg:hover:-translate-y-4"
                       : "border-border bg-surface/50 hover:border-teal/30"
                   }`}
                 >
                   {plan.featured && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-pill bg-teal px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#04211e]">
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-pill bg-teal px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white dark:text-[#04211e]">
                       <Star className="h-3 w-3 fill-current" /> {p.popular}
                     </span>
                   )}
