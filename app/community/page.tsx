@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
@@ -88,6 +89,12 @@ const copy = {
     startPracticing: "Bắt đầu luyện tập",
     backProfile: "Về hồ sơ",
     threads: "chủ đề",
+    composePlaceholder: "Bạn muốn thảo luận điều gì?",
+    post: "Đăng",
+    cancel: "Huỷ",
+    justNow: "vừa xong",
+    noThreads: "Chưa có thảo luận nào cho chủ đề này.",
+    allTopics: "Tất cả chủ đề",
   },
   en: {
     eyebrow: "Community",
@@ -113,6 +120,12 @@ const copy = {
     startPracticing: "Start practicing",
     backProfile: "Back to profile",
     threads: "threads",
+    composePlaceholder: "What do you want to discuss?",
+    post: "Post",
+    cancel: "Cancel",
+    justNow: "just now",
+    noThreads: "No discussions for this topic yet.",
+    allTopics: "All topics",
   },
 } as const;
 
@@ -129,10 +142,54 @@ const PODIUM = [
   { m: LEADERBOARD[2], place: 3, h: "h-20", ring: "ring-orange-400/60", medal: "military_tech" },
 ];
 
+const POSTS_KEY = "codeprove-community-posts";
+
 export default function CommunityPage() {
   const { locale } = useI18n();
   const t = copy[locale];
   const { user } = useAuth();
+
+  // Community is UI-first (mock data); the user's own posts are real but local:
+  // they live in localStorage until a community backend exists.
+  const [userThreads, setUserThreads] = useState<Thread[]>([]);
+  const [composing, setComposing] = useState(false);
+  const [postTitle, setPostTitle] = useState("");
+  const [postTag, setPostTag] = useState<string>(TOPICS[0].name);
+  const [topicFilter, setTopicFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(POSTS_KEY);
+      if (raw) setUserThreads(JSON.parse(raw) as Thread[]);
+    } catch {
+      // Corrupt storage: start with an empty list rather than crashing the page.
+    }
+  }, []);
+
+  function publishPost() {
+    const title = postTitle.trim();
+    if (!title) return;
+    const thread: Thread = {
+      author: user?.full_name ?? "CodeProve User",
+      tag: postTag,
+      replies: 0,
+      likes: 0,
+      title: { vi: title, en: title },
+      time: { vi: copy.vi.justNow, en: copy.en.justNow },
+    };
+    const next = [thread, ...userThreads];
+    setUserThreads(next);
+    try {
+      window.localStorage.setItem(POSTS_KEY, JSON.stringify(next));
+    } catch {
+      // Storage full/blocked: the post still shows for this session.
+    }
+    setPostTitle("");
+    setComposing(false);
+  }
+
+  const allThreads = [...userThreads, ...THREADS];
+  const visibleThreads = topicFilter ? allThreads.filter((th) => th.tag === topicFilter) : allThreads;
 
   const stats = [
     { icon: "group", label: t.members, value: "3,142" },
@@ -230,13 +287,63 @@ export default function CommunityPage() {
                 <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{t.discussions}</h2>
                 <p className="mt-1 font-label-mono text-label-mono text-on-surface-variant/70">{t.discussionsSub}</p>
               </div>
-              <button className="flex cursor-pointer items-center gap-1.5 bg-primary px-3 py-1.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90">
+              <button
+                onClick={() => setComposing((v) => !v)}
+                className="flex cursor-pointer items-center gap-1.5 bg-primary px-3 py-1.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+              >
                 <Sym name="edit" className="text-[15px]" /> {t.newPost}
               </button>
             </div>
+
+            {/* Composer (posts are stored locally until a community backend exists) */}
+            {composing && (
+              <div className="mb-4 border border-outline-variant/60 bg-surface-container-high/40 p-3">
+                <textarea
+                  value={postTitle}
+                  onChange={(e) => setPostTitle(e.target.value)}
+                  placeholder={t.composePlaceholder}
+                  rows={2}
+                  className="w-full resize-none bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none"
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {TOPICS.map((tp) => (
+                    <button
+                      key={tp.name}
+                      onClick={() => setPostTag(tp.name)}
+                      className={`cursor-pointer rounded-pill px-2 py-0.5 font-label-mono text-[11px] transition-colors ${
+                        postTag === tp.name
+                          ? "bg-primary/15 text-primary"
+                          : "bg-surface-container-highest text-on-surface-variant hover:text-on-surface"
+                      }`}
+                    >
+                      {tp.name}
+                    </button>
+                  ))}
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      onClick={() => { setComposing(false); setPostTitle(""); }}
+                      className="cursor-pointer px-3 py-1 font-label-mono text-[11px] uppercase text-on-surface-variant hover:text-on-surface"
+                    >
+                      {t.cancel}
+                    </button>
+                    <button
+                      onClick={publishPost}
+                      disabled={!postTitle.trim()}
+                      className="cursor-pointer bg-primary px-3 py-1 font-label-mono text-[11px] uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-40"
+                    >
+                      {t.post}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col divide-y divide-outline-variant/40">
-              {THREADS.map((th, i) => (
-                <button key={i} className="group flex cursor-pointer flex-col gap-2 py-4 text-left">
+              {visibleThreads.length === 0 && (
+                <p className="py-6 text-center text-sm text-on-surface-variant/60">{t.noThreads}</p>
+              )}
+              {visibleThreads.map((th, i) => (
+                <article key={i} className="flex flex-col gap-2 py-4">
                   <div className="flex items-center gap-2">
                     <span className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-surface-container-highest text-[10px] font-bold text-on-surface-variant">
                       {initials(th.author)}
@@ -245,14 +352,14 @@ export default function CommunityPage() {
                     <span className="rounded-pill bg-primary/10 px-2 py-0.5 font-label-mono text-[11px] text-primary">{th.tag}</span>
                     <span className="ml-auto font-label-mono text-[11px] text-on-surface-variant/50">{th.time[locale]}</span>
                   </div>
-                  <p className="text-sm font-medium leading-snug text-on-surface transition-colors group-hover:text-primary">
+                  <p className="text-sm font-medium leading-snug text-on-surface">
                     {th.title[locale]}
                   </p>
                   <div className="flex items-center gap-4 font-label-mono text-[11px] text-on-surface-variant/60">
                     <span className="flex items-center gap-1"><Sym name="chat_bubble" className="text-[14px]" /> {th.replies} {t.replies}</span>
                     <span className="flex items-center gap-1"><Sym name="favorite" className="text-[14px]" /> {th.likes}</span>
                   </div>
-                </button>
+                </article>
               ))}
             </div>
           </section>
@@ -263,10 +370,30 @@ export default function CommunityPage() {
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="tag" className="text-[16px]" /> {t.popularTopics}
               </h3>
+              {/* Topics filter the discussion feed; click again to clear. */}
               <ul className="space-y-1">
+                <li>
+                  <button
+                    onClick={() => setTopicFilter(null)}
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors ${
+                      topicFilter === null
+                        ? "bg-primary/10 text-primary"
+                        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                    }`}
+                  >
+                    <span>{t.allTopics}</span>
+                  </button>
+                </li>
                 {TOPICS.map((tp) => (
                   <li key={tp.name}>
-                    <button className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface">
+                    <button
+                      onClick={() => setTopicFilter((cur) => (cur === tp.name ? null : tp.name))}
+                      className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors ${
+                        topicFilter === tp.name
+                          ? "bg-primary/10 text-primary"
+                          : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                      }`}
+                    >
                       <span>{tp.name}</span>
                       <span className="font-label-mono text-[11px] text-on-surface-variant/50">{tp.count} {t.threads}</span>
                     </button>

@@ -5,9 +5,8 @@ import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
-// Technical domain tags + business verticals stay in English (they double as
-// filter keys / product names); everything else follows the locale.
-const tags = ["Algorithms", "Debugging", "API security", "Concurrency"];
+// Business verticals stay in English (they double as product names);
+// everything else follows the locale.
 const business = ["FinTech", "HealthTech", "Logistics", "Classified"];
 
 const levels = [
@@ -32,32 +31,9 @@ export function WorkspaceLanding() {
           <p className="mt-3 max-w-lg text-on-surface-variant">{w.sub}</p>
         </header>
 
-        {/* Search + filters */}
-        <div className="ice-card mb-10 flex flex-wrap items-center gap-4 p-4">
-          <div className="flex min-w-[260px] flex-1 items-center gap-2 border-b border-outline-variant/70 bg-transparent px-2 py-2 focus-within:border-primary">
-            <Sym name="search" className="text-[20px] text-on-surface-variant" />
-            <input
-              className="w-full bg-transparent font-label-mono text-label-mono text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-0"
-              placeholder={w.searchPlaceholder}
-              type="text"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-label-mono text-label-mono uppercase text-on-surface-variant/70">{w.tags}</span>
-            {tags.map((t, i) => (
-              <button
-                key={t}
-                className={`cursor-pointer border px-3 py-1 font-label-mono text-label-mono transition-colors ${
-                  i === 0
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-outline-variant/70 text-on-surface-variant hover:border-primary hover:text-primary"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* A search box + tag chips used to sit here, but this hub only lists
+            the three level cards - there is nothing to filter. The working
+            topic filter lives on each level's exercise list. */}
 
         {/* Training levels */}
         <section className="mb-12">

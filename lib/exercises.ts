@@ -16,6 +16,11 @@ export type Exercise = {
   acceptance: number;
   status: Status;
   topics: string[];
+  /**
+   * "debug" = the task is to find/fix a flaw, so the buggy starter is shown
+   * verbatim. Absent/"implement" = starter is stripped to a stub.
+   */
+  kind?: "implement" | "debug";
   // ── Workspace content ──
   summary: string;
   filename: string;
@@ -93,7 +98,7 @@ export const LEVELS: Record<string, LevelConfig> = {
         tests: ["test_simple", "test_mixed_case", "test_punctuation", "test_empty"],
       },
       {
-        id: "CP-004", num: 4, title: "Fix the Off-By-One Loop", difficulty: "Easy", acceptance: 52.0, status: "todo", topics: ["Debugging"],
+        id: "CP-004", kind: "debug", num: 4, title: "Fix the Off-By-One Loop", difficulty: "Easy", acceptance: 52.0, status: "todo", topics: ["Debugging"],
         summary: "The function should sum the first n integers but returns the wrong total. Find the off-by-one error and fix it.",
         filename: "solution.py", language: "python",
         starter: `def sum_to_n(n):
@@ -137,7 +142,7 @@ def sanitize_username(raw):
         tests: ["test_equal_len", "test_one_empty", "test_interleaved"],
       },
       {
-        id: "CP-008", num: 8, title: "Debug the Null Reference", difficulty: "Easy", acceptance: 50.7, status: "todo", topics: ["Debugging"],
+        id: "CP-008", kind: "debug", num: 8, title: "Debug the Null Reference", difficulty: "Easy", acceptance: 50.7, status: "todo", topics: ["Debugging"],
         summary: "This function crashes when the user has no profile. Locate the null dereference and guard against it safely.",
         filename: "solution.py", language: "python",
         starter: `def display_name(user):
@@ -177,7 +182,7 @@ def sanitize_username(raw):
         tests: ["test_basic", "test_dup_at_end", "test_min_size"],
       },
       {
-        id: "CP-012", num: 12, title: "Trace the Race Condition", difficulty: "Medium", acceptance: 27.8, status: "locked", topics: ["Concurrency", "Debugging"],
+        id: "CP-012", kind: "debug", num: 12, title: "Trace the Race Condition", difficulty: "Medium", acceptance: 27.8, status: "locked", topics: ["Concurrency", "Debugging"],
         summary: "Two threads increment a shared counter and the total comes out wrong. Identify the race and make it safe.",
         filename: "solution.py", language: "python",
         starter: `counter = 0
@@ -217,7 +222,7 @@ def increment():
         tests: ["test_get_hit", "test_evict_lru", "test_update_existing"],
       },
       {
-        id: "CP-102", num: 2, title: "Debug the Memory Leak", difficulty: "Medium", acceptance: 38.0, status: "attempted", topics: ["Debugging"],
+        id: "CP-102", kind: "debug", num: 2, title: "Debug the Memory Leak", difficulty: "Medium", acceptance: 38.0, status: "attempted", topics: ["Debugging"],
         summary: "A cache grows without bound in production. Find why entries are never released and fix it.",
         filename: "solution.py", language: "python",
         starter: `_cache = {}
@@ -265,7 +270,7 @@ def consumer(q):
         tests: ["test_basic", "test_all_same", "test_empty"],
       },
       {
-        id: "CP-106", num: 6, title: "Patch the SQL Injection", difficulty: "Medium", acceptance: 41.8, status: "todo", topics: ["API security", "Debugging"],
+        id: "CP-106", kind: "debug", num: 6, title: "Patch the SQL Injection", difficulty: "Medium", acceptance: 41.8, status: "todo", topics: ["API security", "Debugging"],
         summary: "This query concatenates user input directly. Rewrite it to be injection-safe and explain the fix.",
         filename: "queries.py", language: "python",
         starter: `def find_user(db, name):
@@ -300,7 +305,7 @@ class Counter:
         tests: ["test_serial", "test_parallel", "test_value_exact"],
       },
       {
-        id: "CP-109", num: 9, title: "Reconstruct the Stack Trace", difficulty: "Medium", acceptance: 37.1, status: "todo", topics: ["Debugging"],
+        id: "CP-109", kind: "debug", num: 9, title: "Reconstruct the Stack Trace", difficulty: "Medium", acceptance: 37.1, status: "todo", topics: ["Debugging"],
         summary: "An exception is swallowed and re-raised without context. Restore a useful, chained trace.",
         filename: "solution.py", language: "python",
         starter: `def load(path):
@@ -356,7 +361,7 @@ def max_sliding_window(nums, k):
         tests: ["test_even_total", "test_odd_total", "test_one_empty"],
       },
       {
-        id: "CP-203", num: 3, title: "Audit the Auth Middleware", difficulty: "Hard", acceptance: 28.1, status: "todo", topics: ["API security", "Debugging"],
+        id: "CP-203", kind: "debug", num: 3, title: "Audit the Auth Middleware", difficulty: "Hard", acceptance: 28.1, status: "todo", topics: ["API security", "Debugging"],
         summary: "A middleware lets some unauthenticated requests through. Find the logic gap and close it.",
         filename: "middleware.py", language: "python",
         starter: `def require_auth(request, handler):
@@ -394,7 +399,7 @@ def max_sliding_window(nums, k):
         tests: ["test_literal", "test_dot", "test_star", "test_complex"],
       },
       {
-        id: "CP-206", num: 6, title: "Diagnose the Deadlock", difficulty: "Hard", acceptance: 23.3, status: "locked", topics: ["Concurrency", "Debugging"],
+        id: "CP-206", kind: "debug", num: 6, title: "Diagnose the Deadlock", difficulty: "Hard", acceptance: 23.3, status: "locked", topics: ["Concurrency", "Debugging"],
         summary: "Two threads each hold one lock and wait for the other. Break the deadlock without losing safety.",
         filename: "solution.py", language: "python",
         starter: `def transfer(a, b, amount):
@@ -416,7 +421,7 @@ def max_sliding_window(nums, k):
         tests: ["test_roundtrip", "test_single", "test_empty", "test_skewed"],
       },
       {
-        id: "CP-208", num: 8, title: "Harden the Upload Endpoint", difficulty: "Hard", acceptance: 26.2, status: "locked", topics: ["API security"],
+        id: "CP-208", kind: "debug", num: 8, title: "Harden the Upload Endpoint", difficulty: "Hard", acceptance: 26.2, status: "locked", topics: ["API security"],
         summary: "An upload handler trusts the client's filename and content-type. List the risks and fix them.",
         filename: "upload.py", language: "python",
         starter: `def save_upload(file):

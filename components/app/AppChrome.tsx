@@ -46,10 +46,11 @@ export function AppTopNav() {
   const pathname = usePathname();
   const { locale } = useI18n();
   const nav = appContent[locale].nav;
+  // Only real destinations: an "Analytics" item used to sit here pointing at
+  // "#" - analytics lives on the dashboard, so the dead link was dropped.
   const topLinks = [
     { label: nav.dashboard, href: "/dashboard" },
     { label: nav.workspace, href: "/workspace" },
-    { label: nav.analytics, href: "#" },
   ];
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
@@ -82,21 +83,11 @@ export function AppTopNav() {
           })}
         </nav>
       </div>
+      {/* Search and notification buttons used to sit here but had no feature
+          behind them - removed until those systems exist. */}
       <div className="flex items-center gap-3">
-        <button
-          aria-label="Search"
-          className="hidden h-9 w-9 cursor-pointer items-center justify-center text-on-surface-variant transition-colors hover:text-primary sm:flex"
-        >
-          <Sym name="search" className="text-[20px]" />
-        </button>
         <LanguageToggle />
         <ThemeToggle />
-        <button
-          aria-label="Notifications"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center text-on-surface-variant transition-colors hover:text-primary"
-        >
-          <Sym name="notifications" className="text-[20px]" />
-        </button>
         <UserMenu />
       </div>
     </header>
@@ -147,7 +138,8 @@ export function UserMenu() {
   ];
   const links2 = [
     { icon: "groups", label: tx.community, href: "/community" },
-    { icon: "help", label: tx.help, href: "#" },
+    // Help Center points at the landing-page FAQ until a dedicated page exists.
+    { icon: "help", label: tx.help, href: "/#faq" },
   ];
 
   useEffect(() => {
@@ -213,9 +205,11 @@ export function UserMenu() {
             </div>
           </div>
 
-          {/* Upgrade CTA */}
-          <button
-            type="button"
+          {/* Upgrade CTA - goes to the pricing page (plans live there). */}
+          <Link
+            href="/pricing"
+            role="menuitem"
+            onClick={() => setOpen(false)}
             className="mb-1 flex w-full items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary-container px-3 py-2.5 text-sm font-semibold text-on-primary transition-opacity hover:opacity-95"
           >
             <span className="flex items-center gap-2">
@@ -225,7 +219,7 @@ export function UserMenu() {
             <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
               PRO
             </span>
-          </button>
+          </Link>
 
           <div className="p-1">
             {links.map((l) => (

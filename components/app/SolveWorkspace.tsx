@@ -22,6 +22,7 @@ import {
   submitAttempt,
   type RunResult,
 } from "@/lib/api";
+import { ChatMarkdown } from "@/components/app/ChatMarkdown";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
@@ -141,7 +142,12 @@ export function SolveWorkspace({
   // ── Exercise state (starts with static data; hydrates from API) ───────────
   const [exercise, setExercise] = useState<Exercise>(initialExercise);
   const [levelConfig] = useState<LevelConfig>(initialLevel);
-  const initialStarter = studentStarterFromCode(initialExercise.starter);
+  // Debug-type exercises exist to have their flaw found: show the buggy
+  // starter verbatim. Implement-type starters are stripped to a scaffold.
+  const initialStarter =
+    initialExercise.kind === "debug"
+      ? initialExercise.starter
+      : studentStarterFromCode(initialExercise.starter);
 
   // ── Editor state ──────────────────────────────────────────────────────────
   const [editorCode, setEditorCode] = useState<string>(initialStarter);
@@ -1047,7 +1053,11 @@ export function SolveWorkspace({
                   ? "border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3"
                   : "border-l-2 border-primary bg-primary/5 p-3"
                 }>
-                  <p className="text-sm leading-relaxed text-on-surface">{m.text}</p>
+                  {m.role === "assistant" ? (
+                    <ChatMarkdown text={m.text} />
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-on-surface">{m.text}</p>
+                  )}
                   {m.verifyHint && (
                     <p className="mt-1 text-xs text-on-surface-variant/60 italic">
                       {t.verifyHint}

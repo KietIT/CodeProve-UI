@@ -23,6 +23,8 @@ export type LevelGroup = {
 };
 
 export type ExerciseDetail = ExerciseSummary & {
+  /** "debug" = buggy starter shown verbatim; "implement" = starter is a stub. */
+  kind?: "implement" | "debug";
   summary: string;
   language: string;
   starter: string;
