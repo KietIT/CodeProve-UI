@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "vivid";
 type Size = "sm" | "md" | "lg";
 
 const base =
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
   secondary:
     "border border-border bg-surface/60 text-content hover:border-primary/60 hover:bg-surface",
   ghost: "text-content hover:bg-surface/60",
+  vivid:
+    "bg-primary-container text-on-primary-container hover:opacity-90 shadow-[0_10px_40px_-8px_rgb(var(--primary-container)/0.65)]",
 };
 
 const sizes: Record<Size, string> = {
