@@ -21,7 +21,7 @@ export const content = {
       titleA: "Không kiểm tra AI giải được bài không -",
       titleB: "kiểm tra bạn biết dùng AI đúng cách không.",
       sub: "Đo cách bạn tư duy cùng AI - không chỉ dòng code cuối cùng.",
-      ctaPrimary: "Get started",
+      ctaPrimary: "Bắt đầu ngay",
       ctaSecondary: "Dành cho nhà tuyển dụng",
       badge: "6 TRỤC NĂNG LỰC",
       score: "94/120",
