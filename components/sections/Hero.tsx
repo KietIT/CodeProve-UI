@@ -57,29 +57,24 @@ export function Hero() {
       <div className="container-site grid items-center gap-10 lg:grid-cols-2 lg:gap-6">
         {/* Copy */}
         <div className="relative z-10 max-w-xl lg:pl-8 xl:pl-14">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.05 }}
-            className="text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]"
-          >
+          <h1 className="text-balance text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
             {t.hero.titleA}{" "}
             <span className="text-gradient">{t.hero.titleB}</span>
-          </motion.h1>
+          </h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.12 }}
+            transition={{ duration: 0.35, delay: 0.06 }}
             className="mt-6 max-w-lg text-base leading-relaxed text-muted sm:text-lg"
           >
             {t.hero.sub}
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.18 }}
+            transition={{ duration: 0.35, delay: 0.12 }}
             className="mt-8"
           >
             <Button href="/dashboard" size="lg" variant="vivid">
