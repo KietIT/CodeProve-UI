@@ -51,8 +51,11 @@ export function PersonaPage({ personaKey }: { personaKey: PersonaKey }) {
       <section className="py-16 sm:py-24">
         <div className="container-site">
           <Stagger className="grid gap-5 md:grid-cols-3">
+            {/* key must be locale-stable (see HowItWorks): a title-based key
+                remounts items on language switch, leaving them stuck in the
+                hidden variant after the once-only whileInView has fired. */}
             {page.sections.map((s, i) => (
-              <StaggerItem key={s.title}>
+              <StaggerItem key={i}>
                 <div className="glass-card h-full p-7 transition-colors duration-200 hover:border-teal/40">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-pill bg-teal/12 font-mono text-sm font-semibold text-teal">
                     {String(i + 1).padStart(2, "0")}

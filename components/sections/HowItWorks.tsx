@@ -25,8 +25,11 @@ export function HowItWorks() {
         <Stagger className="mt-10 grid gap-5 md:grid-cols-3">
           {h.steps.map((step, i) => {
             const Icon = stepIcons[i];
+            // key must be locale-stable: a title-based key remounts the item on
+            // language switch, resetting it to the hidden variant after the
+            // once-only whileInView animation has already fired.
             return (
-              <StaggerItem key={step.title}>
+              <StaggerItem key={i}>
                 <div className="glass-card h-full p-6 transition-colors duration-200 hover:border-teal/40">
                   <div className="flex items-center gap-3">
                     <span className="inline-flex h-11 w-11 items-center justify-center rounded-pill bg-teal/12 text-teal">
