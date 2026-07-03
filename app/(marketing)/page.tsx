@@ -1,5 +1,6 @@
 import { Hero } from "@/components/sections/Hero";
 import { TrustedBy } from "@/components/sections/TrustedBy";
+import { HowItWorks } from "@/components/sections/HowItWorks";
 import { About } from "@/components/sections/About";
 import { Service } from "@/components/sections/Service";
 import { RubricShowcase } from "@/components/sections/RubricShowcase";
@@ -11,6 +12,7 @@ export default function HomePage() {
     <>
       <Hero />
       <TrustedBy />
+      <HowItWorks />
       <About />
       <Service />
       <RubricShowcase />

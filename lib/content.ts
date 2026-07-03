@@ -31,6 +31,24 @@ export const content = {
       label: "Được tin dùng bởi các chương trình đào tạo & đối tác pilot",
       note: "(Logo đối tác trong giai đoạn MVP - placeholder)",
     },
+    howItWorks: {
+      title: "Cách hoạt động",
+      sub: "3 bước đơn giản để đo năng lực dùng AI của bạn.",
+      steps: [
+        {
+          title: "Giải bài cùng AI",
+          desc: "Làm bài trong workspace tích hợp sẵn, có Ciel hỗ trợ như một trợ lý thật.",
+        },
+        {
+          title: "Mọi bước tư duy được ghi lại",
+          desc: "Giả thuyết, prompt, chỉnh sửa - tất cả được ghi vào event stream, không chỉ dòng code cuối.",
+        },
+        {
+          title: "Nhận điểm số 6 trục",
+          desc: "Báo cáo chi tiết Understanding, Hypothesis, Prompting, Verification, Testing, Debugging.",
+        },
+      ],
+    },
     about: {
       title: "Về chúng tôi",
       lead: "CodeProve sinh ra để trả lời câu hỏi của thời đại AI: làm sao đo năng lực lập trình thật khi ai cũng có thể nhờ AI viết code?",
@@ -486,6 +504,24 @@ export const content = {
     trusted: {
       label: "Trusted by training programs & pilot partners",
       note: "(Partner logos are placeholders during the MVP stage)",
+    },
+    howItWorks: {
+      title: "How it works",
+      sub: "3 simple steps to measure how well you use AI.",
+      steps: [
+        {
+          title: "Solve challenges with AI",
+          desc: "Work inside a built-in workspace with Ciel acting as your real assistant.",
+        },
+        {
+          title: "Every step of your thinking is captured",
+          desc: "Hypotheses, prompts, edits - all logged to an event stream, not just the final code.",
+        },
+        {
+          title: "Get a 6-axis score",
+          desc: "A detailed report across Understanding, Hypothesis, Prompting, Verification, Testing, Debugging.",
+        },
+      ],
     },
     about: {
       title: "About us",
