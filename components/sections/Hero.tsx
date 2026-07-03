@@ -82,7 +82,7 @@ export function Hero() {
             transition={{ duration: 0.6, delay: 0.18 }}
             className="mt-8"
           >
-            <Button href="/dashboard" size="lg">
+            <Button href="/dashboard" size="lg" variant="vivid">
               {t.hero.ctaPrimary}
               <ArrowRight className="h-4 w-4" />
             </Button>
