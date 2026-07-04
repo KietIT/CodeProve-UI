@@ -17,11 +17,11 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-// Geist (Cyber-Industrial display/body engine) is loaded via CSS @import in
-// globals.css - it isn't available in this next/font version.
+// Display/body type is Inter (above). The old Geist CSS @import was removed:
+// it render-blocked every route and nothing used the font-geist classes.
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://codeprove.example"),
+  metadataBase: new URL("https://code-prove.vercel.app"),
   title: {
     default: "CodeProve - Đánh giá năng lực lập trình cùng AI",
     template: "%s · CodeProve",

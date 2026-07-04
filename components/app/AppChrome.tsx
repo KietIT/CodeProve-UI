@@ -18,6 +18,19 @@ function initialsOf(name: string | undefined): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+/** Loads the Material Symbols webfont for app-area pages only. It used to be
+    a CSS @import in globals.css, which render-blocked every route (including
+    the public marketing pages that never show these icons). Rendered once by
+    AppTopNav, which every icon-using page includes. */
+function MaterialSymbolsFont() {
+  return (
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0&display=block"
+    />
+  );
+}
+
 /** Material Symbols icon shortcut. */
 export function Sym({
   name,
@@ -54,6 +67,7 @@ export function AppTopNav() {
   ];
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
+      <MaterialSymbolsFont />
       <div className="flex items-center gap-8">
         {/* Brand mark - intentionally NOT a link inside the app. Clicking it used
             to jump back to the marketing landing page, which felt jarring once
