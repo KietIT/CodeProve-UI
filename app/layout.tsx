@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
@@ -11,11 +11,11 @@ const inter = Inter({
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
+// JetBrains Mono was retired (design decision: labels/chips read as sans now).
+// --font-mono is defined in globals.css and resolves to Inter, so every
+// font-mono / font-label-* consumer switched without call-site edits. The
+// solve editor is unaffected - it pins its own ui-monospace stack for 1:1
+// glyph alignment across its layered textarea/overlay/gutter.
 
 // Display/body type is Inter (above). The old Geist CSS @import was removed:
 // it render-blocked every route and nothing used the font-geist classes.
@@ -56,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${inter.variable} ${jetbrainsMono.variable} dark`}
+      className={`${inter.variable} dark`}
     >
       <body className="min-h-screen bg-bg font-sans text-content antialiased">
         <ThemeProvider>
