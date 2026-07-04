@@ -8,6 +8,10 @@
      covers display/body type. Material Symbols moved to AppChrome so only
      signed-in app pages pay for it. */
   --font-geist: "Inter", system-ui, sans-serif;
+  /* JetBrains Mono retired: every font-mono / font-label-* consumer now
+     renders the site sans (Inter). Real code stays monospace via the solve
+     editor's own pinned stack, which never referenced this variable. */
+  --font-mono: var(--font-inter), "Inter", system-ui, sans-serif;
 }
 
 /* ── Dark = Obsidian Refraction (default) ── */
@@ -268,7 +272,7 @@ body {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  font-family: var(--font-mono), ui-monospace, monospace;
+  font-family: var(--font-mono), system-ui, sans-serif;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

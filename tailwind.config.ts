@@ -63,7 +63,9 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        // --font-mono resolves to Inter since JetBrains Mono was retired;
+        // sans fallbacks keep the chain consistent if the var is missing.
+        mono: ["var(--font-mono)", "system-ui", "sans-serif"],
         // Cyber-Industrial type engines
         geist: ["var(--font-geist)", "var(--font-inter)", "system-ui", "sans-serif"],
         "display-lg": ["var(--font-geist)", "system-ui", "sans-serif"],
@@ -74,10 +76,10 @@ const config: Config = {
         "body-lg": ["var(--font-geist)", "system-ui", "sans-serif"],
         "body-md": ["var(--font-geist)", "system-ui", "sans-serif"],
         "label-caps": ["var(--font-geist)", "system-ui", "sans-serif"],
-        "label-md": ["var(--font-mono)", "ui-monospace", "monospace"],
-        "label-sm": ["var(--font-mono)", "ui-monospace", "monospace"],
-        "label-mono": ["var(--font-mono)", "ui-monospace", "monospace"],
-        "code-sm": ["var(--font-mono)", "ui-monospace", "monospace"],
+        "label-md": ["var(--font-mono)", "system-ui", "sans-serif"],
+        "label-sm": ["var(--font-mono)", "system-ui", "sans-serif"],
+        "label-mono": ["var(--font-mono)", "system-ui", "sans-serif"],
+        "code-sm": ["var(--font-mono)", "system-ui", "sans-serif"],
       },
       spacing: {
         base: "4px",
