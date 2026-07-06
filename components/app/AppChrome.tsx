@@ -64,6 +64,7 @@ export function AppTopNav() {
   const topLinks = [
     { label: nav.dashboard, href: "/dashboard" },
     { label: nav.workspace, href: "/workspace" },
+    { label: nav.daily, href: "/daily" },
   ];
   return (
     <header className="sticky top-0 z-50 flex h-16 flex-none items-center justify-between border-b border-outline-variant/60 bg-background/75 px-5 backdrop-blur-xl md:px-12">
