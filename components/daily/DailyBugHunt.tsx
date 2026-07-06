@@ -186,7 +186,7 @@ export function DailyBugHunt() {
           selectedLine={selectedLine}
           onSelectLine={setSelectedLine}
           revealedLine={phase === "revealed" ? result?.buggy_line ?? null : null}
-          disabled={phase === "revealed"}
+          disabled={phase === "revealed" || submitting}
         />
       </div>
 

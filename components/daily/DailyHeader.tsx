@@ -20,7 +20,7 @@ export function DailyHeader() {
     <header className="border-b border-border">
       <div className="container-site flex h-16 items-center justify-between">
         <Logo />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageToggle />
           <ThemeToggle />
           {user ? (
@@ -34,7 +34,7 @@ export function DailyHeader() {
             <>
               <Link
                 href="/login"
-                className="cursor-pointer rounded-pill px-3 py-2 text-sm text-muted transition-colors duration-200 hover:text-content"
+                className="hidden cursor-pointer rounded-pill px-3 py-2 text-sm text-muted transition-colors duration-200 hover:text-content sm:inline-flex"
               >
                 {t.nav.login}
               </Link>
