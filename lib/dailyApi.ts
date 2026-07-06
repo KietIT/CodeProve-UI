@@ -4,17 +4,21 @@ export type DailyResult = {
   correct: boolean;
   tier: "green" | "yellow" | "red";
   buggy_line: number;
-  explanation: string;
+  explanation_vi: string;
+  explanation_en: string;
   hints_used: number;
   time_taken_seconds: number;
 };
 
 export type DailyChallenge = {
   challenge_number: number;
-  prompt_title: string;
+  prompt_title_vi: string;
+  prompt_title_en: string;
   buggy_code: string;
-  hint_1: string;
-  hint_2: string;
+  hint_1_vi: string;
+  hint_1_en: string;
+  hint_2_vi: string;
+  hint_2_en: string;
   already_played: boolean;
   result: DailyResult | null;
 };
@@ -23,7 +27,8 @@ export type DailyAttemptResult = {
   correct: boolean;
   tier: "green" | "yellow" | "red";
   buggy_line: number;
-  explanation: string;
+  explanation_vi: string;
+  explanation_en: string;
   streak: number | null;
 };
 

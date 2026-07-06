@@ -26,7 +26,8 @@ type ResultView = {
   correct: boolean;
   tier: Tier;
   buggy_line: number;
-  explanation: string;
+  explanation_vi: string;
+  explanation_en: string;
   hints_used: number;
   time_taken_seconds: number;
   streak: number | null;
@@ -39,9 +40,12 @@ const TIER_DOT: Record<Tier, string> = {
 };
 
 export function DailyBugHunt() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const d = t.dailyBugHunt;
+  // Challenge content is stored bilingually (generated once per day for
+  // everyone); pick the half that matches the live UI locale.
+  const loc = <T,>(vi: T, en: T): T => (locale === "vi" ? vi : en);
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [challenge, setChallenge] = useState<DailyChallenge | null>(null);
@@ -168,7 +172,7 @@ export function DailyBugHunt() {
           {d.challengeLabel} #{challenge.challenge_number}
         </span>
         <span>&middot;</span>
-        <span>{challenge.prompt_title}</span>
+        <span>{loc(challenge.prompt_title_vi, challenge.prompt_title_en)}</span>
       </div>
 
       {showClaimBanner && (
@@ -196,8 +200,8 @@ export function DailyBugHunt() {
 
           {hintsUsed > 0 && (
             <div className="space-y-2 rounded-card border border-border bg-surface/60 p-4 text-sm text-content">
-              <p>{challenge.hint_1}</p>
-              {hintsUsed > 1 && <p>{challenge.hint_2}</p>}
+              <p>{loc(challenge.hint_1_vi, challenge.hint_1_en)}</p>
+              {hintsUsed > 1 && <p>{loc(challenge.hint_2_vi, challenge.hint_2_en)}</p>}
             </div>
           )}
 
@@ -249,7 +253,7 @@ export function DailyBugHunt() {
 
           <div className="glass-card p-4">
             <p className="text-xs uppercase tracking-wide text-muted">{d.explanationLabel}</p>
-            <p className="mt-1 text-content">{result.explanation}</p>
+            <p className="mt-1 text-content">{loc(result.explanation_vi, result.explanation_en)}</p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4">
