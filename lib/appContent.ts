@@ -4,9 +4,12 @@
 
 export const appContent = {
   vi: {
-    nav: { dashboard: "Bảng điều khiển", workspace: "Phòng luyện", analytics: "Phân tích" },
+    nav: { dashboard: "Bảng điều khiển", workspace: "Phòng luyện", analytics: "Phân tích", daily: "Bug Hunt" },
     dashboard: {
       eyebrow: "Tổng quan hệ thống",
+      dailyTitle: "Bug Hunt hôm nay",
+      dailyBody: "Ciel đã cài 1 lỗi tinh vi vào đoạn code hôm nay. Bắt được trong 60 giây để đạt hạng xanh và giữ chuỗi ngày của bạn.",
+      dailyCta: "Chơi ngay",
       welcome: "Chào mừng trở lại",
       loadingSub: "Đang tải tiến trình của bạn...",
       emptySub: "Bắt đầu thử thách đầu tiên để xem tiến trình tại đây.",
@@ -193,9 +196,12 @@ export const appContent = {
     },
   },
   en: {
-    nav: { dashboard: "Dashboard", workspace: "Workspace", analytics: "Analytics" },
+    nav: { dashboard: "Dashboard", workspace: "Workspace", analytics: "Analytics", daily: "Bug Hunt" },
     dashboard: {
       eyebrow: "System Overview",
+      dailyTitle: "Today's Bug Hunt",
+      dailyBody: "Ciel planted one subtle bug in today's code. Catch it within 60 seconds for a green tier and keep your streak alive.",
+      dailyCta: "Play now",
       welcome: "Welcome back",
       loadingSub: "Loading your progress...",
       emptySub: "Start your first challenge to see your progress here.",

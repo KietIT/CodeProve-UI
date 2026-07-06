@@ -116,6 +116,27 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        {/* Daily Bug Hunt promo - static entry point, no data dependency so it
+            shows even while the dashboard itself is loading or errored. */}
+        <Link
+          href="/daily"
+          className="ice-card group mb-8 flex flex-wrap items-center justify-between gap-4 p-6 transition-colors duration-200 hover:border-primary/60"
+        >
+          <div className="flex items-center gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-pill bg-primary/15 text-primary">
+              <Sym name="bug_report" className="text-[26px]" />
+            </span>
+            <div>
+              <h2 className="font-semibold text-on-surface">{t.dailyTitle}</h2>
+              <p className="mt-1 max-w-xl text-sm text-on-surface-variant">{t.dailyBody}</p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity group-hover:opacity-90">
+            {t.dailyCta}
+            <Sym name="arrow_forward" className="text-[16px]" />
+          </span>
+        </Link>
+
         {/* Loading state */}
         {loading && (
           <div className="flex items-center justify-center py-24 text-on-surface-variant">
