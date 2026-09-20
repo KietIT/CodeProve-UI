@@ -40,12 +40,20 @@ export function HeroCanvas({ active = true }: { active?: boolean }) {
         "number" &&
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 2;
 
-    const ok = supportsWebGL() && !lowMemory;
-    setUse3D(ok);
+    // Phones/tablets get the lightweight SVG poster: the WebGL scene costs ~2s+
+    // of main-thread work under mobile CPU throttling (huge TBT/TTI hit) for a
+    // decoration, and the hero stacks to one column below `lg` anyway.
+    const wideQuery = window.matchMedia("(min-width: 1024px)");
+    const decide = () => setUse3D(supportsWebGL() && !lowMemory && wideQuery.matches);
+    decide();
 
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    motionQuery.addEventListener("change", onChange);
-    return () => motionQuery.removeEventListener("change", onChange);
+    const onReduced = (e: MediaQueryListEvent) => setReduced(e.matches);
+    motionQuery.addEventListener("change", onReduced);
+    wideQuery.addEventListener("change", decide);
+    return () => {
+      motionQuery.removeEventListener("change", onReduced);
+      wideQuery.removeEventListener("change", decide);
+    };
   }, []);
 
   if (!use3D) return <HeroPoster />;
