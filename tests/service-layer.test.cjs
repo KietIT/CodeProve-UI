@@ -85,3 +85,44 @@ test('filterProblems returns an empty list when nothing matches (not all)', () =
   // level fresher AND difficulty Hard: no such problem
   assert.equal(filterProblems(PROBLEMS, { ...noFilter, difficulty: 'Hard', level: 'fresher' }).length, 0);
 });
+
+const { useVisualizerStore } = require('../lib/stores/useVisualizerStore.ts');
+const FRAMES = [
+  { line: 1, event: 'line', locals: {} },
+  { line: 2, event: 'line', locals: {} },
+  { line: 3, event: 'return', locals: {} },
+];
+
+test('visualizer store loads frames at step 0 and clamps prev/next at the ends', () => {
+  const s = useVisualizerStore.getState();
+  s.setFrames(FRAMES);
+  assert.equal(useVisualizerStore.getState().step, 0);
+  assert.equal(useVisualizerStore.getState().status, 'ready');
+  useVisualizerStore.getState().prev();
+  assert.equal(useVisualizerStore.getState().step, 0); // clamped at start
+  useVisualizerStore.getState().next();
+  useVisualizerStore.getState().next();
+  assert.equal(useVisualizerStore.getState().step, 2);
+  useVisualizerStore.getState().next();
+  assert.equal(useVisualizerStore.getState().step, 2); // clamped at end
+});
+
+test('visualizer store goto clamps and play auto-stops on the last frame', () => {
+  useVisualizerStore.getState().setFrames(FRAMES);
+  useVisualizerStore.getState().goto(99);
+  assert.equal(useVisualizerStore.getState().step, 2);
+  useVisualizerStore.getState().goto(0);
+  useVisualizerStore.getState().setPlaying(true);
+  assert.equal(useVisualizerStore.getState().playing, true);
+  useVisualizerStore.getState().next(); // 0 -> 1
+  assert.equal(useVisualizerStore.getState().playing, true);
+  useVisualizerStore.getState().next(); // 1 -> 2 (last) -> stop
+  assert.equal(useVisualizerStore.getState().step, 2);
+  assert.equal(useVisualizerStore.getState().playing, false);
+});
+
+test('visualizer store will not start playback with a single frame', () => {
+  useVisualizerStore.getState().setFrames([FRAMES[0]]);
+  useVisualizerStore.getState().setPlaying(true);
+  assert.equal(useVisualizerStore.getState().playing, false);
+});
