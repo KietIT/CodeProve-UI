@@ -1,26 +1,26 @@
 import Link from "next/link";
-import { type ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "vivid";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 font-medium rounded-pill cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 font-medium rounded-pill transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-primary text-on-primary hover:opacity-90 shadow-[0_8px_30px_-10px_rgb(var(--primary)/0.5)]",
+    "bg-accent text-on-accent hover:opacity-90 shadow-button",
   secondary:
     "border border-border bg-surface/60 text-content hover:border-primary/60 hover:bg-surface",
   ghost: "text-content hover:bg-surface/60",
   vivid:
-    "bg-primary-container text-on-primary-container hover:opacity-90 shadow-[0_10px_40px_-8px_rgb(var(--primary-container)/0.65)]",
+    "bg-primary-container text-on-primary-container hover:opacity-90 shadow-vivid",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-11 px-5 text-sm",
-  lg: "h-12 px-7 text-base",
+  sm: "min-h-9 px-4 text-sm",
+  md: "min-h-11 px-5 text-sm",
+  lg: "min-h-12 px-7 text-base",
 };
 
 type CommonProps = {
@@ -28,42 +28,26 @@ type CommonProps = {
   variant?: Variant;
   size?: Size;
   className?: string;
+  disabled?: boolean;
 };
 
-export function Button({
-  children,
-  variant = "primary",
-  size = "md",
-  className = "",
-  href,
-  onClick,
-  type = "button",
-  disabled,
-  ...rest
-}: CommonProps & {
-  href?: string;
-  onClick?: () => void;
-  type?: "button" | "submit";
-  disabled?: boolean;
-  "aria-label"?: string;
-}) {
-  const cls = `${base} ${variants[variant]} ${sizes[size]} ${className}`;
-  if (href) {
-    const external = href.startsWith("http");
-    return (
-      <Link
-        href={href}
-        className={cls}
-        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-        {...rest}
-      >
-        {children}
-      </Link>
-    );
+export type ButtonProps = CommonProps & (
+  | ({ href: string } & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof CommonProps | "href">)
+  | ({ href?: never } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof CommonProps>)
+);
+
+/** Callers own handlers, pending state and navigation. */
+export function Button(props: ButtonProps) {
+  const { children, variant = "primary", size = "md", className = "", disabled, ...rest } = props;
+  const cls = `${base} ${variants[variant]} ${sizes[size]} ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`;
+  if (rest.href !== undefined) {
+    const { href, ...anchorProps } = rest;
+    if (disabled) {
+      return <span id={anchorProps.id} title={anchorProps.title} aria-label={anchorProps["aria-label"]} role="link" aria-disabled="true" tabIndex={-1} className={cls}>{children}</span>;
+    }
+    const external = /^https?:\/\//.test(href);
+    return <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})} {...anchorProps} className={cls}>{children}</Link>;
   }
-  return (
-    <button type={type} onClick={onClick} disabled={disabled} className={cls} {...rest}>
-      {children}
-    </button>
-  );
+  const { href: _href, type = "button", ...buttonProps } = rest;
+  return <button {...buttonProps} type={type} disabled={disabled} className={cls}>{children}</button>;
 }

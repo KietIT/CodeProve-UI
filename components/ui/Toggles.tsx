@@ -19,7 +19,7 @@ export function LanguageToggle() {
           aria-pressed={locale === l}
           className={`cursor-pointer rounded-[9px] px-2.5 py-1 uppercase tracking-wider transition-colors duration-200 ${
             locale === l
-              ? "bg-teal text-[#04211e]"
+              ? "bg-teal text-on-primary"
               : "text-muted hover:text-content"
           }`}
         >

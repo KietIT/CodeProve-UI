@@ -137,9 +137,9 @@ function initials(name: string): string {
 
 // Podium order: 2nd, 1st, 3rd - 1st sits center and tallest.
 const PODIUM = [
-  { m: LEADERBOARD[1], place: 2, h: "h-24", ring: "ring-slate-300/60", medal: "military_tech" },
-  { m: LEADERBOARD[0], place: 1, h: "h-32", ring: "ring-amber-400/70", medal: "trophy" },
-  { m: LEADERBOARD[2], place: 3, h: "h-20", ring: "ring-orange-400/60", medal: "military_tech" },
+  { m: LEADERBOARD[1], place: 2, h: "h-24", ring: "ring-muted/60", medal: "military_tech" },
+  { m: LEADERBOARD[0], place: 1, h: "h-32", ring: "ring-warning/70", medal: "trophy" },
+  { m: LEADERBOARD[2], place: 3, h: "h-20", ring: "ring-warning/60", medal: "military_tech" },
 ];
 
 const POSTS_KEY = "codeprove-community-posts";
@@ -246,7 +246,7 @@ export default function CommunityPage() {
                 <div key={place} className="flex flex-1 flex-col items-center">
                   <div className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary-container text-sm font-bold text-on-primary ring-2 ${ring} ring-offset-2 ring-offset-background`}>
                     {initials(m.name)}
-                    <Sym name={medal} fill className={`absolute -top-3 text-[18px] ${place === 1 ? "text-amber-400" : place === 2 ? "text-slate-300" : "text-orange-400"}`} />
+                    <Sym name={medal} fill className={`absolute -top-3 text-[18px] ${place === 1 ? "text-warning" : place === 2 ? "text-muted" : "text-warning"}`} />
                   </div>
                   <p className="mt-2 max-w-[9rem] truncate text-center text-sm font-medium">{m.name}</p>
                   <p className="font-label-mono text-label-mono text-primary">{m.score.toLocaleString()}</p>
@@ -272,7 +272,7 @@ export default function CommunityPage() {
                   <div className="text-right">
                     <p className="font-label-mono text-label-mono text-primary">{m.score.toLocaleString()}</p>
                     <p className="font-label-mono text-[11px] text-on-surface-variant/60">
-                      <Sym name="local_fire_department" className="align-middle text-[13px] text-amber-500" /> {m.streak}
+                      <Sym name="local_fire_department" className="align-middle text-[13px] text-warning" /> {m.streak}
                     </p>
                   </div>
                 </li>

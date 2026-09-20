@@ -104,7 +104,7 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
 
         {/* Paste-blocked notice */}
         {pasteBlocked && (
-          <div className="flex items-center gap-2 border border-amber-500/40 bg-amber-500/10 p-3 font-label-mono text-label-mono text-amber-300">
+          <div className="flex items-center gap-2 border border-warning/40 bg-warning/10 p-3 font-label-mono text-label-mono text-warning">
             <Sym name="content_paste_off" className="text-[16px]" />
             {appContent[locale].solve.pasteDisabled}
           </div>

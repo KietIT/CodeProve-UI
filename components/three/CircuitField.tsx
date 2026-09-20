@@ -27,7 +27,7 @@ type Props = {
   fadeRadius?: number; // 0..1 of viewBox, where the field fades to nothing
 };
 
-const COLORS = ["#0055ff", "#6ea8ff", "#3ad8ff"];
+const COLORS = ["rgb(var(--color-blue))", "rgb(var(--color-blueLight))", "rgb(var(--color-cyan))"];
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -113,9 +113,9 @@ export function CircuitField({
     >
       <defs>
         <radialGradient id={fade} cx={`${cx}%`} cy={`${cy}%`} r={`${fadeRadius * 100}%`}>
-          <stop offset="0" stopColor="#fff" stopOpacity="1" />
-          <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0" stopColor="rgb(var(--color-white))" stopOpacity="1" />
+          <stop offset="0.5" stopColor="rgb(var(--color-white))" stopOpacity="0.55" />
+          <stop offset="1" stopColor="rgb(var(--color-white))" stopOpacity="0" />
         </radialGradient>
         <mask id={mask}>
           <rect width={width} height={height} fill={`url(#${fade})`} />
@@ -126,7 +126,7 @@ export function CircuitField({
         {/* Dim etched traces */}
         <g
           fill="none"
-          stroke="#5a8bff"
+          stroke="rgb(var(--color-circuitTrace))"
           strokeOpacity="0.16"
           strokeWidth="1.2"
           strokeLinecap="round"
@@ -165,7 +165,7 @@ export function CircuitField({
           {traces.map((t, i) => (
             <g key={`pd${i}`}>
               <circle cx={t.ex} cy={t.ey} r="5.5" fill={t.color} fillOpacity="0.16" />
-              <circle cx={t.ex} cy={t.ey} r="2.4" fill="#cfe2ff" />
+              <circle cx={t.ex} cy={t.ey} r="2.4" fill="rgb(var(--color-circuitPad))" />
             </g>
           ))}
         </g>

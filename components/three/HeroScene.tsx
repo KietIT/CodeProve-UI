@@ -1,5 +1,7 @@
 "use client";
 
+import { palette } from "@/lib/theme/tokens";
+
 import { Canvas } from "@react-three/fiber";
 import { Sparkles, AdaptiveDpr } from "@react-three/drei";
 import { FluencyCore } from "./FluencyCore";
@@ -27,11 +29,11 @@ export function HeroScene({
       style={{ background: "transparent" }}
     >
       <ambientLight intensity={0.65} />
-      <pointLight position={[5, 5, 5]} intensity={1.3} color="#3ed4c5" />
-      <pointLight position={[-5, -2, 2]} intensity={0.7} color="#6c63ff" />
-      <pointLight position={[0, 3, -4]} intensity={0.6} color="#2e87f0" />
+      <pointLight position={[5, 5, 5]} intensity={1.3} color={palette.accent} />
+      <pointLight position={[-5, -2, 2]} intensity={0.7} color={palette.violet} />
+      <pointLight position={[0, 3, -4]} intensity={0.6} color={palette.azure} />
       {/* Soft front-top fill so the upper brain doesn't read as murky glass. */}
-      <pointLight position={[0, 4, 6]} intensity={0.8} color="#cdeffe" />
+      <pointLight position={[0, 4, 6]} intensity={0.8} color={palette.frontLight} />
 
       <FluencyCore rotate={rotate && active} speed={0.16} theme={theme} />
 
@@ -43,7 +45,7 @@ export function HeroScene({
         // Additive sparkles vanish on white, so keep them faint + deep-blue in
         // light mode; bright cyan in dark.
         opacity={light ? 0.18 : 0.35}
-        color={light ? "#2f5fd0" : "#3ed4c5"}
+        color={light ? palette.sparkleInk : palette.accent}
       />
 
       <AdaptiveDpr pixelated />

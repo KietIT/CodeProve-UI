@@ -614,7 +614,7 @@ export function SolveWorkspace({
     } finally {
       setRunning(false);
     }
-  }, [editorCode]);
+  }, [editorCode, t.noActiveAttempt]);
 
   // ── Clear results ─────────────────────────────────────────────────────────
   const handleClear = useCallback(() => {
@@ -935,7 +935,7 @@ export function SolveWorkspace({
                 />
                 {/* Paste-blocked banner (auto-dismisses) */}
                 {pasteBlocked && (
-                  <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 font-label-mono text-label-mono text-amber-300 shadow-lg backdrop-blur-sm">
+                  <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-warning/40 bg-warning/15 px-3 py-1.5 font-label-mono text-label-mono text-warning shadow-lg backdrop-blur-sm">
                     <Sym name="content_paste_off" className="mr-1 align-middle text-[15px]" />
                     {t.pasteDisabled}
                   </div>

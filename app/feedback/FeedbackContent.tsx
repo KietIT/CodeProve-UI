@@ -30,8 +30,8 @@ function integrityLabel(status: ReportOut["integrity_status"], tf: FeedbackCopy)
 }
 const INTEGRITY_CLASS: Record<ReportOut["integrity_status"], string> = {
   green: "border-primary/30 bg-primary/10 text-primary",
-  yellow: "border-[rgb(var(--secondary))]/30 bg-[rgb(var(--secondary))]/10 text-[rgb(var(--secondary))]",
-  red: "border-error/30 bg-error/10 text-error",
+  yellow: "border-warning/30 bg-warning/10 text-warning",
+  red: "border-danger/30 bg-danger/10 text-danger",
 };
 const INTEGRITY_ICON: Record<ReportOut["integrity_status"], string> = {
   green: "verified",

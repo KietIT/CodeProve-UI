@@ -11,9 +11,9 @@ export function Logo({ className = "" }: { className?: string }) {
         <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
           <defs>
             <linearGradient id="logo-grad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#0041c8" />
-              <stop offset="55%" stopColor="#0055ff" />
-              <stop offset="100%" stopColor="#6ea8ff" />
+              <stop offset="0%" stopColor="rgb(var(--color-blueInk))" />
+              <stop offset="55%" stopColor="rgb(var(--color-blue))" />
+              <stop offset="100%" stopColor="rgb(var(--color-blueLight))" />
             </linearGradient>
           </defs>
           <path
@@ -25,12 +25,12 @@ export function Logo({ className = "" }: { className?: string }) {
           />
           <path
             d="M16 9 22 12.5v7L16 23l-6-3.5v-7z"
-            fill="rgba(0,85,255,0.14)"
-            stroke="#0055ff"
+            fill="rgb(var(--color-blue) / 0.14)"
+            stroke="rgb(var(--color-blue))"
             strokeWidth="1.2"
             strokeLinejoin="round"
           />
-          <circle cx="16" cy="16" r="2.4" fill="#0055ff" />
+          <circle cx="16" cy="16" r="2.4" fill="rgb(var(--color-blue))" />
         </svg>
       </span>
       <span className="text-[17px] font-semibold tracking-tight text-content">

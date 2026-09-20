@@ -7,9 +7,9 @@ import { useI18n } from "@/lib/i18n";
 const cardIcons = [MessagesSquare, Eye, ShieldCheck];
 
 const toneStyles: Record<string, string> = {
-  green: "bg-[#28c840]",
-  yellow: "bg-[#febc2e]",
-  red: "bg-[#ff5f57]",
+  green: "bg-success",
+  yellow: "bg-warning",
+  red: "bg-danger",
 };
 
 export function Integrity() {

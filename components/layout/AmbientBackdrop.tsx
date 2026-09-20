@@ -20,7 +20,7 @@ export function AmbientBackdrop() {
           right: "-8%",
           width: "46vw",
           height: "46vw",
-          background: "rgba(0, 85, 255, 0.14)",
+          background: "rgb(var(--color-blue) / 0.14)",
           animationDelay: "0s",
         }}
       />
@@ -32,7 +32,7 @@ export function AmbientBackdrop() {
           left: "-12%",
           width: "42vw",
           height: "42vw",
-          background: "rgba(110, 168, 255, 0.12)",
+          background: "rgb(var(--color-blueLight) / 0.12)",
           animationDelay: "-7s",
         }}
       />
@@ -44,7 +44,7 @@ export function AmbientBackdrop() {
           left: "30%",
           width: "50vw",
           height: "50vw",
-          background: "rgba(58, 216, 255, 0.10)",
+          background: "rgb(var(--color-cyan) / 0.10)",
           animationDelay: "-13s",
         }}
       />
@@ -53,7 +53,7 @@ export function AmbientBackdrop() {
         className="absolute inset-0 hidden dark:block"
         style={{
           background:
-            "radial-gradient(120% 90% at 50% 0%, transparent 40%, rgba(16,20,21,0.5) 100%)",
+            "radial-gradient(120% 90% at 50% 0%, transparent 40%, rgb(var(--color-obsidian) / 0.5) 100%)",
         }}
       />
     </div>

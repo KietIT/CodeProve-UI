@@ -24,6 +24,9 @@ function initialsOf(name: string | undefined): string {
     AppTopNav, which every icon-using page includes. */
 function MaterialSymbolsFont() {
   return (
+    // This app-only icon font intentionally blocks ligature text while loading.
+    // Pages Router's _document guidance does not apply to this App Router shell.
+    // eslint-disable-next-line @next/next/google-font-display, @next/next/no-page-custom-font
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0&display=block"

@@ -14,92 +14,7 @@
   --font-mono: var(--font-inter), "Inter", system-ui, sans-serif;
 }
 
-/* ── Dark = Obsidian Refraction (default) ── */
-:root,
-.dark {
-  /* Landing semantic aliases */
-  --bg: 16 20 21; /* #101415 */
-  --bg-soft: 25 28 30; /* #191c1e */
-  --surface: 29 32 34; /* #1d2022 */
-  --border: 67 70 86; /* outline-variant */
-  --text: 224 227 229; /* on-surface */
-  --muted: 195 197 217; /* on-surface-variant */
-
-  /* Material tokens */
-  --background: 16 20 21;
-  --surface-dim: 16 20 21;
-  --surface-bright: 54 58 59;
-  --surface-container-lowest: 11 15 16;
-  --surface-container-low: 25 28 30;
-  --surface-container: 29 32 34;
-  --surface-container-high: 39 42 44;
-  --surface-container-highest: 50 53 55;
-  --surface-variant: 50 53 55;
-  --on-surface: 224 227 229;
-  --on-surface-variant: 195 197 217;
-  --outline: 141 144 162;
-  --outline-variant: 67 70 86;
-  --primary: 182 196 255; /* #b6c4ff */
-  --on-primary: 0 39 128;
-  --primary-container: 0 85 255; /* #0055ff */
-  --on-primary-container: 227 230 255;
-  --inverse-primary: 0 77 234;
-  --secondary: 221 252 255;
-  --on-secondary: 0 54 58;
-  --secondary-container: 0 241 254; /* cyan */
-  --on-secondary-container: 0 106 112;
-  --tertiary: 194 199 206;
-  --on-tertiary: 44 49 55;
-  --tertiary-container: 99 104 110;
-  --error: 255 180 171;
-  --on-error: 105 0 5;
-  --error-container: 147 0 10;
-  --on-error-container: 255 218 214;
-  --inverse-surface: 224 227 229;
-  --inverse-on-surface: 45 49 51;
-}
-
-/* ── Light = Iceberg Protocol ── */
-.light {
-  --bg: 250 248 255; /* #faf8ff */
-  --bg-soft: 242 243 255; /* #f2f3ff */
-  --surface: 234 237 255; /* #eaedff */
-  --border: 195 197 217; /* #c3c5d9 */
-  --text: 21 27 45; /* #151b2d */
-  --muted: 67 70 86; /* #434656 */
-
-  --background: 250 248 255;
-  --surface-dim: 212 217 242;
-  --surface-bright: 250 248 255;
-  --surface-container-lowest: 255 255 255;
-  --surface-container-low: 242 243 255;
-  --surface-container: 234 237 255;
-  --surface-container-high: 227 231 255;
-  --surface-container-highest: 220 225 251;
-  --surface-variant: 220 225 251;
-  --on-surface: 21 27 45;
-  --on-surface-variant: 67 70 86;
-  --outline: 115 118 136;
-  --outline-variant: 195 197 217;
-  --primary: 0 65 200; /* #0041c8 */
-  --on-primary: 255 255 255;
-  --primary-container: 0 85 255; /* #0055ff */
-  --on-primary-container: 227 230 255;
-  --inverse-primary: 182 196 255;
-  --secondary: 46 99 133;
-  --on-secondary: 255 255 255;
-  --secondary-container: 165 216 255;
-  --on-secondary-container: 40 95 128;
-  --tertiary: 72 81 86;
-  --on-tertiary: 255 255 255;
-  --tertiary-container: 96 105 110;
-  --error: 186 26 26;
-  --on-error: 255 255 255;
-  --error-container: 255 218 214;
-  --on-error-container: 147 0 10;
-  --inverse-surface: 42 48 67;
-  --inverse-on-surface: 238 240 255;
-}
+/* Theme variables are emitted by the token plugin in tailwind.config.ts. */
 
 * {
   border-color: rgb(var(--border));
@@ -150,8 +65,8 @@ body {
   .glass-card {
     @apply rounded-card border border-border bg-surface/70 backdrop-blur-xl;
     box-shadow:
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
-      0 22px 48px -30px rgba(0, 0, 0, 0.85);
+      inset 0 1px 0 0 rgb(var(--color-white) / 0.05),
+      0 22px 48px -30px rgb(var(--color-black) / 0.85);
   }
 
   /* Gradient text - blue, theme-aware (readable on both light and dark) */
@@ -188,64 +103,9 @@ body {
   }
 }
 
-/* Light-mode palette for the workspace preview mockup only. */
-.light .workspace-mockup {
-  background-color: #f8fbff;
-  border-color: #cdd8ea;
-}
-.light .workspace-mockup .border-border {
-  border-color: #cdd8ea;
-}
-.light .workspace-mockup .border-teal\/30 {
-  border-color: rgb(15 118 110 / 0.32);
-}
-.light .workspace-mockup .bg-bg-soft {
-  background-color: #eef4ff;
-}
-.light .workspace-mockup .bg-bg-soft\/60 {
-  background-color: rgb(237 244 255 / 0.9);
-}
-.light .workspace-mockup .bg-surface {
-  background-color: #f8fbff;
-}
-.light .workspace-mockup .bg-teal\/10 {
-  background-color: #d9f6f2;
-}
-.light .workspace-mockup .bg-teal {
-  background-color: #0f766e;
-}
-.light .workspace-mockup .text-muted {
-  color: #526178;
-}
-.light .workspace-mockup .text-muted\/50 {
-  color: #8492a8;
-}
-.light .workspace-mockup .text-muted\/60 {
-  color: #718096;
-}
-.light .workspace-mockup .text-content {
-  color: #162033;
-}
-.light .workspace-mockup .text-teal {
-  color: #0f766e;
-}
+/* Syntax keywords need a text color, not the pale light-mode glow surface. */
 .light .workspace-mockup .text-glowviolet {
-  color: #6d28d9;
-}
-.light .workspace-mockup [class*="border-[#febc2e]/30"] {
-  border-color: rgb(180 83 9 / 0.28);
-}
-.light .workspace-mockup [class*="bg-[#febc2e]/10"] {
-  background-color: #fff3d6;
-}
-.light .workspace-mockup [class*="text-[#febc2e]"] {
-  color: #b45309;
-}
-.light .workspace-mockup [class*="text-[#ff7b72]"] {
-  color: #dc2626;
-}
-.light .workspace-mockup [class*="text-[#7ee787]"] {
-  color: #15803d;
+  color: rgb(var(--color-previewViolet));
 }
 
 /* Aurora blobs used by the page-wide ambient backdrop. We animate opacity only
@@ -308,7 +168,7 @@ body {
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgb(var(--outline-variant) / 0.6);
-  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 0.1);
+  box-shadow: inset 1px 1px 0 rgb(var(--color-white) / 0.1);
 }
 .ice-panel {
   background: rgb(var(--surface-container-low));
@@ -366,9 +226,9 @@ body {
 /* Grid backdrop used behind dark sections */
 .bg-grid {
   background-image:
-    linear-gradient(to right, rgba(48, 57, 70, 0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(48, 57, 70, 0.25) 1px, transparent 1px);
+    linear-gradient(to right, rgb(var(--color-grid) / 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--color-grid) / 0.25) 1px, transparent 1px);
   background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--color-black)) 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--color-black)) 30%, transparent 80%);
 }

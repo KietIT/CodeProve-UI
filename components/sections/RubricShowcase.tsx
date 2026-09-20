@@ -51,7 +51,7 @@ export function RubricShowcase() {
                     .map((v) => `${cx + (v.ax.x - cx) * s},${cy + (v.ax.y - cy) * s}`)
                     .join(" ")}
                   fill="none"
-                  stroke="rgb(48 57 70)"
+                  stroke="rgb(var(--color-grid))"
                   strokeWidth="1"
                 />
               ))}
@@ -62,12 +62,12 @@ export function RubricShowcase() {
                   y1={cy}
                   x2={v.ax.x}
                   y2={v.ax.y}
-                  stroke="rgb(48 57 70)"
+                  stroke="rgb(var(--color-grid))"
                   strokeWidth="1"
                 />
               ))}
 
-              <path d={weightPath} fill="rgba(62,212,197,0.16)" stroke="#3ed4c5" strokeWidth="1.5" />
+              <path d={weightPath} fill="rgb(var(--color-accent) / 0.16)" stroke="rgb(var(--color-accent))" strokeWidth="1.5" />
 
               {verts.map((v, i) => {
                 const isActive = active === i;
@@ -77,17 +77,17 @@ export function RubricShowcase() {
                       cx={v.wt.x}
                       cy={v.wt.y}
                       r={isActive ? 7 : 4.5}
-                      fill={isActive ? "#aef7ef" : "#3ed4c5"}
+                      fill={isActive ? "rgb(var(--color-accentLight))" : "rgb(var(--color-accent))"}
                       className="transition-all duration-200"
                     />
                     {isActive && (
-                      <circle cx={v.wt.x} cy={v.wt.y} r="12" fill="#3ed4c5" opacity="0.2" />
+                      <circle cx={v.wt.x} cy={v.wt.y} r="12" fill="rgb(var(--color-accent))" opacity="0.2" />
                     )}
                     <text
                       x={v.ax.x}
                       y={v.ax.y + (v.ax.y < cy ? -10 : 18)}
                       textAnchor="middle"
-                      className={`font-mono ${isActive ? "fill-teal" : "fill-[#93a0b0]"}`}
+                      className={`font-mono ${isActive ? "fill-teal" : "fill-muted"}`}
                       fontSize="10"
                     >
                       {axes[i].name}

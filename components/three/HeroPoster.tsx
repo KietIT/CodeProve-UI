@@ -61,14 +61,14 @@ export function HeroPoster() {
       >
         <defs>
           <linearGradient id="np-ring" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#3ed4c5" />
-            <stop offset="55%" stopColor="#2e87f0" />
-            <stop offset="100%" stopColor="#6c63ff" />
+            <stop offset="0%" stopColor="rgb(var(--color-accent))" />
+            <stop offset="55%" stopColor="rgb(var(--color-azure))" />
+            <stop offset="100%" stopColor="rgb(var(--color-violet))" />
           </linearGradient>
           <radialGradient id="np-core" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#aef7ef" stopOpacity="0.7" />
-            <stop offset="60%" stopColor="#3ed4c5" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#3ed4c5" stopOpacity="0" />
+            <stop offset="0%" stopColor="rgb(var(--color-accentLight))" stopOpacity="0.7" />
+            <stop offset="60%" stopColor="rgb(var(--color-accent))" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="rgb(var(--color-accent))" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -85,7 +85,7 @@ export function HeroPoster() {
         />
 
         {/* Control gyroscope: 3 nested ellipses */}
-        <g stroke="#3ed4c5" fill="none" strokeOpacity="0.5">
+        <g stroke="rgb(var(--color-accent))" fill="none" strokeOpacity="0.5">
           <ellipse cx={cx} cy={cy} rx="108" ry="62" strokeWidth="1.4" />
           <ellipse
             cx={cx}
@@ -93,7 +93,7 @@ export function HeroPoster() {
             rx="62"
             ry="108"
             strokeWidth="1.4"
-            stroke="#2e87f0"
+            stroke="rgb(var(--color-azure))"
             transform={`rotate(12 ${cx} ${cy})`}
           />
           <ellipse
@@ -102,7 +102,7 @@ export function HeroPoster() {
             rx="96"
             ry="96"
             strokeWidth="1.2"
-            stroke="#6c63ff"
+            stroke="rgb(var(--color-violet))"
             strokeOpacity="0.35"
           />
         </g>
@@ -114,13 +114,13 @@ export function HeroPoster() {
           cy={cy}
           r="78"
           fill="none"
-          stroke="#3ed4c5"
+          stroke="rgb(var(--color-accent))"
           strokeWidth="1"
           strokeOpacity="0.4"
         />
 
         {/* Synapses */}
-        <g stroke="#3ed4c5" strokeOpacity="0.22" strokeWidth="0.8">
+        <g stroke="rgb(var(--color-accent))" strokeOpacity="0.22" strokeWidth="0.8">
           {links.map(([a, b], i) => (
             <line
               key={`syn-${i}`}
@@ -135,24 +135,24 @@ export function HeroPoster() {
         {/* Neurons */}
         <g>
           {neurons.map((p, i) => (
-            <circle key={`n-${i}`} cx={p.x} cy={p.y} r="2.1" fill="#7ee5da" fillOpacity="0.9" />
+            <circle key={`n-${i}`} cx={p.x} cy={p.y} r="2.1" fill="rgb(var(--color-mintLight))" fillOpacity="0.9" />
           ))}
         </g>
 
         {/* Pulsing AI core */}
         <circle cx={cx} cy={cy} r="13" fill="url(#np-core)" />
-        <circle cx={cx} cy={cy} r="5.5" fill="#eafffb" />
+        <circle cx={cx} cy={cy} r="5.5" fill="rgb(var(--color-mintWhite))" />
 
         {/* 6 rubric-axis nodes + labels */}
         {axisNodes.map((p, i) => (
           <g key={`axis-${i}`}>
-            <circle cx={p.x} cy={p.y} r="10" fill="#3ed4c5" fillOpacity="0.16" />
-            <circle cx={p.x} cy={p.y} r="4.5" fill="#aef7ef" />
+            <circle cx={p.x} cy={p.y} r="10" fill="rgb(var(--color-accent))" fillOpacity="0.16" />
+            <circle cx={p.x} cy={p.y} r="4.5" fill="rgb(var(--color-accentLight))" />
             <text
               x={p.x}
               y={p.y < cy ? p.y - 14 : p.y + 22}
               textAnchor="middle"
-              className="fill-[#93a0b0] font-mono"
+              className="fill-muted font-mono"
               fontSize="9"
             >
               {axes[i].name}

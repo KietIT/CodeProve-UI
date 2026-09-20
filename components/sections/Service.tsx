@@ -18,9 +18,9 @@ const offerIcons = [Boxes, Bot, GitBranch, Briefcase];
 const integrityIcons = [MessagesSquare, Eye, ShieldCheck];
 
 const toneStyles: Record<string, string> = {
-  green: "bg-[#28c840]",
-  yellow: "bg-[#febc2e]",
-  red: "bg-[#ff5f57]",
+  green: "bg-success",
+  yellow: "bg-warning",
+  red: "bg-danger",
 };
 
 export function Service() {

@@ -12,13 +12,13 @@ export function WorkspaceMockup() {
         aria-hidden="true"
       />
       <div className="origin-center transition-transform duration-500 [transform:rotateX(8deg)_rotateY(-16deg)] group-hover:[transform:rotateX(4deg)_rotateY(-8deg)]">
-        <div className="workspace-mockup overflow-hidden rounded-card border border-border bg-[#0a0f14] shadow-card">
+        <div className="workspace-mockup overflow-hidden rounded-card border border-border bg-bg shadow-card">
           {/* window chrome */}
           <div className="flex items-center justify-between border-b border-border bg-bg-soft px-4 py-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-              <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-              <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+              <span className="h-3 w-3 rounded-full bg-danger" />
+              <span className="h-3 w-3 rounded-full bg-warning" />
+              <span className="h-3 w-3 rounded-full bg-success" />
             </div>
             <span className="font-mono text-[11px] text-muted">codeprove --assess · session #4f2a</span>
             <span className="inline-flex items-center gap-1 rounded-pill bg-surface px-2 py-0.5 font-mono text-[10px] text-teal">
@@ -40,13 +40,13 @@ export function WorkspaceMockup() {
                   <span className="text-content">    </span>
                   <span className="text-glowviolet">if</span>{" "}
                   <span className="text-content">n &lt; </span>
-                  <span className="text-[#febc2e]">2</span>
+                  <span className="text-warning">2</span>
                   <span className="text-content">:</span>
                   {"\n"}
                   <span className="text-muted/50">3  </span>
                   <span className="text-content">        </span>
                   <span className="text-glowviolet">return</span>{" "}
-                  <span className="text-[#ff7b72]">False</span>
+                  <span className="text-danger">False</span>
                   {"\n"}
                   <span className="text-muted/50">4  </span>
                   <span className="text-glowviolet">    for</span>{" "}
@@ -54,30 +54,30 @@ export function WorkspaceMockup() {
                   <span className="text-glowviolet">in</span>{" "}
                   <span className="text-teal">range</span>
                   <span className="text-content">(</span>
-                  <span className="text-[#febc2e]">2</span>
+                  <span className="text-warning">2</span>
                   <span className="text-content">, </span>
                   <span className="text-teal">int</span>
                   <span className="text-content">(n**</span>
-                  <span className="text-[#febc2e]">0.5</span>
+                  <span className="text-warning">0.5</span>
                   <span className="text-content">)+</span>
-                  <span className="text-[#febc2e]">1</span>
+                  <span className="text-warning">1</span>
                   <span className="text-content">):</span>
                   {"\n"}
                   <span className="text-muted/50">5  </span>
                   <span className="text-content">        </span>
                   <span className="text-glowviolet">if</span>{" "}
                   <span className="text-content">n % i == </span>
-                  <span className="text-[#febc2e]">0</span>
+                  <span className="text-warning">0</span>
                   <span className="text-content">:</span>
                   {"\n"}
                   <span className="text-muted/50">6  </span>
                   <span className="text-content">            </span>
                   <span className="text-glowviolet">return</span>{" "}
-                  <span className="text-[#ff7b72]">False</span>
+                  <span className="text-danger">False</span>
                   {"\n"}
                   <span className="text-muted/50">7  </span>
                   <span className="text-glowviolet">    return</span>{" "}
-                  <span className="text-[#7ee787]">True</span>
+                  <span className="text-success">True</span>
                 </code>
               </pre>
 
@@ -100,7 +100,7 @@ export function WorkspaceMockup() {
                 Kiểm tra ước số từ 2 đến √n để tối ưu.
               </div>
 
-              <div className="flex items-start gap-2 rounded-xl border border-[#febc2e]/30 bg-[#febc2e]/10 px-3 py-2 text-[11px] leading-relaxed text-[#febc2e]">
+              <div className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] leading-relaxed text-warning">
                 <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>verification-trap: đoạn AI gợi ý có 1 lỗi off-by-one - bạn có thấy không?</span>
               </div>

@@ -19,7 +19,7 @@ export function FinalCTA() {
               className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-3xl"
               style={{
                 background:
-                  "radial-gradient(closest-side, rgba(62,212,197,0.22), rgba(108,99,255,0.10) 55%, transparent 80%)",
+                  "radial-gradient(closest-side, rgb(var(--color-accent) / 0.22), rgb(var(--color-violet) / 0.10) 55%, transparent 80%)",
               }}
               aria-hidden="true"
             />

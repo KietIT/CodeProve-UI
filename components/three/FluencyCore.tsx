@@ -1,5 +1,7 @@
 "use client";
 
+import { palette, withAlpha } from "@/lib/theme/tokens";
+
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, Line } from "@react-three/drei";
@@ -89,40 +91,40 @@ type Palette = {
 // Dark = Obsidian Refraction. Cyan/blue glow on additive blending.
 const DARK_PALETTE: Palette = {
   blending: THREE.AdditiveBlending,
-  nInner: "#6ea8ff",
-  nMid: "#0055ff",
-  nOuter: "#3ad8ff",
-  shellColor: "#dce8ff",
+  nInner: palette.blueLight,
+  nMid: palette.blue,
+  nOuter: palette.cyan,
+  shellColor: palette.brainShell,
   shellOpacity: 0.14,
-  innerGlowColor: "#6ea8ff",
+  innerGlowColor: palette.blueLight,
   innerGlowOpacity: 0.06,
-  wireColor: "#6ea8ff",
+  wireColor: palette.blueLight,
   wireOpacity: 0.09,
-  synapseColor: "#6ea8ff",
+  synapseColor: palette.blueLight,
   synapseOpacity: 0.15,
   neuronSize: 0.135,
   neuronBase: 0.82,
   neuronPulse: 0.18,
-  coreColor: "#eafffb",
-  coreEmissive: "#6ea8ff",
+  coreColor: palette.mintWhite,
+  coreEmissive: palette.blueLight,
   coreEmissiveBase: 2.2,
   coreEmissivePulse: 1.7,
-  haloColor: "#0055ff",
+  haloColor: palette.blue,
   haloBase: 0.12,
   haloPulse: 0.13,
-  gimbalBase: "#0c1722",
-  gimbalEmZ: "#6ea8ff",
-  gimbalEmX: "#0055ff",
-  gimbalEmY: "#3ad8ff",
+  gimbalBase: palette.gimbalDark,
+  gimbalEmZ: palette.blueLight,
+  gimbalEmX: palette.blue,
+  gimbalEmY: palette.cyan,
   gimbalIntZ: 1.5,
   gimbalIntX: 1.3,
   gimbalIntY: 1.2,
-  ringColor: "#6ea8ff",
+  ringColor: palette.blueLight,
   ringOpacity: 0.5,
-  nodeCore: "#eafffb",
-  nodeEmissive: "#6ea8ff",
+  nodeCore: palette.mintWhite,
+  nodeEmissive: palette.blueLight,
   nodeEmissiveIntensity: 3.4,
-  nodeHaloColor: "#6ea8ff",
+  nodeHaloColor: palette.blueLight,
   nodeHaloOpacity: 0.2,
 };
 
@@ -130,40 +132,40 @@ const DARK_PALETTE: Palette = {
 // so every detail stays crisp and dark against the white page.
 const LIGHT_PALETTE: Palette = {
   blending: THREE.NormalBlending,
-  nInner: "#2f6bd6",
-  nMid: "#0a3fc0",
-  nOuter: "#5132c4",
-  shellColor: "#3a5fc8",
+  nInner: palette.brainBlue,
+  nMid: palette.brainBlueDeep,
+  nOuter: palette.brainIndigo,
+  shellColor: palette.shellInk,
   shellOpacity: 0.08,
-  innerGlowColor: "#2a4fc0",
+  innerGlowColor: palette.glowInk,
   innerGlowOpacity: 0.05,
-  wireColor: "#2a52c0",
+  wireColor: palette.wireInk,
   wireOpacity: 0.3,
-  synapseColor: "#1f48b8",
+  synapseColor: palette.synapseInk,
   synapseOpacity: 0.42,
   neuronSize: 0.15,
   neuronBase: 0.92,
   neuronPulse: 0.08,
-  coreColor: "#16308f",
-  coreEmissive: "#0033d6",
+  coreColor: palette.coreInk,
+  coreEmissive: palette.coreEmissiveInk,
   coreEmissiveBase: 1.0,
   coreEmissivePulse: 0.7,
-  haloColor: "#2a54c8",
+  haloColor: palette.haloInk,
   haloBase: 0.12,
   haloPulse: 0.08,
-  gimbalBase: "#16357f",
-  gimbalEmZ: "#2f6bd6",
-  gimbalEmX: "#0a3fc0",
-  gimbalEmY: "#5132c4",
+  gimbalBase: palette.gimbalInk,
+  gimbalEmZ: palette.brainBlue,
+  gimbalEmX: palette.brainBlueDeep,
+  gimbalEmY: palette.brainIndigo,
   gimbalIntZ: 0.7,
   gimbalIntX: 0.65,
   gimbalIntY: 0.6,
-  ringColor: "#0041c8",
+  ringColor: palette.blueInk,
   ringOpacity: 0.6,
-  nodeCore: "#13308f",
-  nodeEmissive: "#0033d6",
+  nodeCore: palette.nodeInk,
+  nodeEmissive: palette.coreEmissiveInk,
   nodeEmissiveIntensity: 1.7,
-  nodeHaloColor: "#3358c0",
+  nodeHaloColor: palette.nodeHaloInk,
   nodeHaloOpacity: 0.2,
 };
 
@@ -277,9 +279,9 @@ export function FluencyCore({ rotate = true, speed = 0.15, theme = "dark" }: Pro
     c.width = c.height = 64;
     const ctx = c.getContext("2d")!;
     const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, "rgba(255,255,255,1)");
-    g.addColorStop(0.35, "rgba(255,255,255,0.55)");
-    g.addColorStop(1, "rgba(255,255,255,0)");
+    g.addColorStop(0, withAlpha(palette.white, 1));
+    g.addColorStop(0.35, withAlpha(palette.white, 0.55));
+    g.addColorStop(1, withAlpha(palette.white, 0));
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 64, 64);
     const tex = new THREE.CanvasTexture(c);

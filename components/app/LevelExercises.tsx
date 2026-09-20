@@ -25,17 +25,17 @@ type DisplayExercise = {
 };
 
 const DIFF_STYLE: Record<Difficulty, string> = {
-  Easy: "text-emerald-500",
-  Medium: "text-amber-500",
-  Hard: "text-rose-500",
+  Easy: "text-success",
+  Medium: "text-warning",
+  Hard: "text-danger",
 };
 
 const STATUS_ICON: Record<
   Status,
   { name: string; fill: boolean; className: string; label: string }
 > = {
-  solved: { name: "check_circle", fill: true, className: "text-emerald-500", label: "Solved" },
-  attempted: { name: "pending", fill: true, className: "text-amber-500", label: "Attempted" },
+  solved: { name: "check_circle", fill: true, className: "text-success", label: "Solved" },
+  attempted: { name: "pending", fill: true, className: "text-warning", label: "Attempted" },
   todo: {
     name: "radio_button_unchecked",
     fill: false,

@@ -45,7 +45,7 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
                 aria-pressed={tab === key}
                 className={`cursor-pointer rounded-pill px-6 py-2 text-sm font-medium transition-colors duration-200 ${
                   tab === key
-                    ? "bg-teal text-white dark:text-[#04211e]"
+                    ? "bg-teal text-white dark:text-on-primary"
                     : "text-white/80 hover:text-white dark:text-muted dark:hover:text-content"
                 }`}
               >
@@ -67,7 +67,7 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
                   }`}
                 >
                   {plan.featured && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-pill bg-teal px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white dark:text-[#04211e]">
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-pill bg-teal px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white dark:text-on-primary">
                       <Star className="h-3 w-3 fill-current" /> {p.popular}
                     </span>
                   )}
