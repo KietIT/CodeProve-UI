@@ -22,7 +22,7 @@ function initialsOf(name: string | undefined): string {
     a CSS @import in globals.css, which render-blocked every route (including
     the public marketing pages that never show these icons). Rendered once by
     AppTopNav, which every icon-using page includes. */
-function MaterialSymbolsFont() {
+export function MaterialSymbolsFont() {
   return (
     // This app-only icon font intentionally blocks ligature text while loading.
     // Pages Router's _document guidance does not apply to this App Router shell.

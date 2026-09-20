@@ -57,3 +57,31 @@ test('editor store updates code/panel and resets to defaults', () => {
   assert.equal(useEditorStore.getState().code, '');
   assert.equal(useEditorStore.getState().openPanel, 'ciel');
 });
+
+const { filterProblems, ALL } = require('../components/dashboard/filterProblems.ts');
+const PROBLEMS = [
+  { id: 1, num: 1, code: 'CP-001', title: 'Two Sum', difficulty: 'Easy', acceptance: 80, topics: ['array', 'hash'], level: 'fresher', status: 'todo' },
+  { id: 2, num: 2, code: 'CP-002', title: 'Valid Parentheses', difficulty: 'Easy', acceptance: 60, topics: ['stack'], level: 'fresher', status: 'solved' },
+  { id: 3, num: 3, code: 'CP-010', title: 'LRU Cache', difficulty: 'Hard', acceptance: 30, topics: ['hash', 'design'], level: 'senior', status: 'todo' },
+];
+const noFilter = { search: '', difficulty: ALL, topic: ALL, level: ALL };
+
+test('filterProblems returns everything when no criteria are set', () => {
+  assert.equal(filterProblems(PROBLEMS, noFilter).length, 3);
+});
+
+test('filterProblems combines search + topic + level with AND', () => {
+  // Easy + topic hash + level fresher + search "sum" -> only CP-001
+  const out = filterProblems(PROBLEMS, { search: 'sum', difficulty: 'Easy', topic: 'hash', level: 'fresher' });
+  assert.deepEqual(out.map((p) => p.code), ['CP-001']);
+});
+
+test('filterProblems search matches title or code, case-insensitively', () => {
+  assert.deepEqual(filterProblems(PROBLEMS, { ...noFilter, search: 'cp-010' }).map((p) => p.code), ['CP-010']);
+  assert.deepEqual(filterProblems(PROBLEMS, { ...noFilter, search: 'CACHE' }).map((p) => p.code), ['CP-010']);
+});
+
+test('filterProblems returns an empty list when nothing matches (not all)', () => {
+  // level fresher AND difficulty Hard: no such problem
+  assert.equal(filterProblems(PROBLEMS, { ...noFilter, difficulty: 'Hard', level: 'fresher' }).length, 0);
+});

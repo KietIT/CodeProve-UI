@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
-import { getDashboard, type DashboardOut } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { Sym } from "@/components/app/AppChrome";
+import { getDashboard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -64,16 +64,11 @@ export default function DashboardPage() {
   const t = appContent[locale].dashboard;
   const axesL = appContent[locale].axes as Record<string, string>;
   const recentStatusL = appContent[locale].recentStatus as Record<string, string>;
-  const [data, setData] = useState<DashboardOut | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getDashboard()
-      .then(setData)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: getDashboard,
+  });
+  const error = queryError ? (queryError as Error).message : null;
 
   const isEmpty = !loading && !error && data?.kpis.completed === 0;
 
@@ -97,10 +92,7 @@ export default function DashboardPage() {
     : "-";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-body-md text-on-surface">
-      <AppTopNav />
-
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+    <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
         {/* Header */}
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -316,9 +308,6 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-      </main>
-
-      <AppFooter />
     </div>
   );
 }
