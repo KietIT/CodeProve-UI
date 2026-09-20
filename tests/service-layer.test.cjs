@@ -126,3 +126,24 @@ test('visualizer store will not start playback with a single frame', () => {
   useVisualizerStore.getState().setPlaying(true);
   assert.equal(useVisualizerStore.getState().playing, false);
 });
+
+const { formatVizValue, changedKeys } = require('../components/visualizer/vizValue.ts');
+
+test('formatVizValue renders scalar, array and map', () => {
+  assert.equal(formatVizValue({ kind: 'scalar', value: '7' }), '7');
+  assert.equal(formatVizValue({ kind: 'array', items: ['2', '7', '11'] }), '[2, 7, 11]');
+  assert.equal(formatVizValue({ kind: 'map', entries: [['2', '0']] }), '{2: 0}');
+});
+
+test('changedKeys flags new and modified locals only', () => {
+  const prev = { i: { kind: 'scalar', value: '0' }, seen: { kind: 'map', entries: [] } };
+  const cur = {
+    i: { kind: 'scalar', value: '1' }, // changed
+    seen: { kind: 'map', entries: [] }, // same
+    complement: { kind: 'scalar', value: '2' }, // new
+  };
+  const changed = changedKeys(prev, cur);
+  assert.ok(changed.has('i'));
+  assert.ok(changed.has('complement'));
+  assert.ok(!changed.has('seen'));
+});
