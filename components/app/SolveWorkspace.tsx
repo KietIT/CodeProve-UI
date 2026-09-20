@@ -18,10 +18,10 @@ import {
   logHypothesis,
   runTests,
   saveSnapshot,
-  sendMentor,
   submitAttempt,
   type RunResult,
 } from "@/lib/api";
+import { useCiel } from "@/hooks/useCiel";
 import { ChatMarkdown } from "@/components/app/ChatMarkdown";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
@@ -189,6 +189,10 @@ export function SolveWorkspace({
   const [chatInput, setChatInput] = useState<string>("");
   const [chatSending, setChatSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  // Ciel goes through the shared mutation hook (Phase 2) rather than calling the
+  // service directly. Same request/response shape as before; mutateAsync is a
+  // stable reference. `chatSending` still drives the local send UI.
+  const { mutateAsync: askCiel } = useCiel(attemptId);
 
   // ── Hypothesis state ──────────────────────────────────────────────────────
   const [hypothesis, setHypothesis] = useState<string>("");
@@ -641,7 +645,7 @@ export function SolveWorkspace({
     try {
       // Send the student's current editor code so Ciel can reason about
       // "this exercise" and what they have written so far.
-      const res = await sendMentor(id, msg, editorCodeRef.current);
+      const res = await askCiel({ message: msg, code: editorCodeRef.current });
       setMessages((prev) => [
         ...prev,
         { role: "assistant", text: res.reply, verifyHint: res.injected_error },
@@ -652,7 +656,7 @@ export function SolveWorkspace({
     } finally {
       setChatSending(false);
     }
-  }, [chatInput, chatSending]);
+  }, [chatInput, chatSending, askCiel]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     void handleChatSend(suggestion);
