@@ -1,4 +1,5 @@
 import { Hero } from "@/components/sections/Hero";
+import { ProductPreviewSection } from "@/components/landing/ProductPreviewSection";
 import { TrustedBy } from "@/components/sections/TrustedBy";
 import { HowItWorks } from "@/components/sections/HowItWorks";
 import { About } from "@/components/sections/About";
@@ -11,6 +12,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <ProductPreviewSection />
       <TrustedBy />
       <HowItWorks />
       <About />

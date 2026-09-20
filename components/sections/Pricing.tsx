@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/lib/i18n";
 
 type Tab = "personal" | "business";
+type Billing = "monthly" | "annual";
 
 export function Pricing({ standalone = false }: { standalone?: boolean }) {
   const { t } = useI18n();
   const p = t.pricing;
   const [tab, setTab] = useState<Tab>("personal");
+  // Pure UI state - billing period only changes which price string is shown,
+  // no data fetch and no navigation.
+  const [billing, setBilling] = useState<Billing>("monthly");
 
   return (
     <section
@@ -55,6 +59,31 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
           </div>
         </Reveal>
 
+        {/* Monthly / Annual billing toggle - only for the personal plans */}
+        {tab === "personal" && (
+          <Reveal className="mt-6 flex items-center justify-center gap-3">
+            <div className="inline-flex gap-1 rounded-pill border border-border bg-surface/50 p-1">
+              {(["monthly", "annual"] as Billing[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setBilling(key)}
+                  aria-pressed={billing === key}
+                  className={`cursor-pointer rounded-pill px-5 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                    billing === key
+                      ? "bg-teal text-white dark:text-on-primary"
+                      : "text-muted hover:text-content"
+                  }`}
+                >
+                  {p.billing[key]}
+                </button>
+              ))}
+            </div>
+            <span className="inline-flex items-center rounded-pill border border-teal/40 bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">
+              {p.billing.save}
+            </span>
+          </Reveal>
+        )}
+
         {tab === "personal" ? (
           <Stagger className="mx-auto mt-12 grid max-w-5xl items-stretch gap-5 lg:grid-cols-3">
             {p.plans.map((plan) => (
@@ -74,12 +103,29 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
 
                   <h3 className="text-xl font-semibold text-content">{plan.name}</h3>
 
-                  <div className="mt-5 flex items-baseline gap-1.5">
-                    <span className="text-4xl font-bold tracking-tight text-content">
-                      {plan.price}
-                    </span>
-                    <span className="text-sm text-muted">{plan.period}</span>
-                  </div>
+                  {(() => {
+                    const annual = billing === "annual";
+                    const showPrice = annual ? plan.priceAnnual : plan.price;
+                    const discounted = annual && plan.priceAnnual !== plan.price;
+                    return (
+                      <div className="mt-5">
+                        <div className="flex items-baseline gap-1.5">
+                          {discounted && (
+                            <span className="text-lg font-medium text-muted line-through">
+                              {plan.price}
+                            </span>
+                          )}
+                          <span className="text-4xl font-bold tracking-tight text-content">
+                            {showPrice}
+                          </span>
+                          <span className="text-sm text-muted">{plan.period}</span>
+                        </div>
+                        {annual && plan.annualNote && (
+                          <p className="mt-1.5 text-xs text-muted">{plan.annualNote}</p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <ul className="mt-6 flex-1 space-y-3">
                     {plan.features.map((f) => (

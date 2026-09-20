@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useI18n } from "@/lib/i18n";
 
-export function Navbar() {
+export function MarketingNav() {
   const { t } = useI18n();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);

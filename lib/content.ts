@@ -281,12 +281,15 @@ export const content = {
       title: "Chọn gói dịch vụ của bạn",
       sub: "Bắt đầu miễn phí. Nâng cấp khi bạn muốn đo sâu hơn năng lực dùng AI của mình.",
       tabs: { personal: "Cá nhân", business: "Doanh nghiệp" },
-      popular: "Phổ biến",
+      popular: "Phổ biến nhất",
+      billing: { monthly: "Hàng tháng", annual: "Hàng năm", save: "-2 tháng" },
       plans: [
         {
           name: "Free",
           price: "0đ",
           period: "/tháng",
+          priceAnnual: "0đ",
+          annualNote: "",
           featured: false,
           features: [
             "Thử thách & radar 6 trục cơ bản",
@@ -300,6 +303,8 @@ export const content = {
           name: "Plus",
           price: "99.000đ",
           period: "/tháng",
+          priceAnnual: "82.500đ",
+          annualNote: "thanh toán 990.000đ/năm",
           featured: true,
           features: [
             "Mọi tính năng gói Free",
@@ -314,6 +319,8 @@ export const content = {
           name: "Pro",
           price: "199.000đ",
           period: "/tháng",
+          priceAnnual: "165.800đ",
+          annualNote: "thanh toán 1.990.000đ/năm",
           featured: false,
           features: [
             "Mọi tính năng gói Plus",
@@ -790,12 +797,15 @@ export const content = {
       title: "Choose your plan",
       sub: "Start free. Upgrade when you want to measure your AI fluency in depth.",
       tabs: { personal: "Personal", business: "Business" },
-      popular: "Popular",
+      popular: "Most popular",
+      billing: { monthly: "Monthly", annual: "Annual", save: "2 months free" },
       plans: [
         {
           name: "Free",
           price: "$0",
           period: "/month",
+          priceAnnual: "$0",
+          annualNote: "",
           featured: false,
           features: [
             "Basic challenges & 6-axis radar",
@@ -809,6 +819,8 @@ export const content = {
           name: "Plus",
           price: "$3.99",
           period: "/month",
+          priceAnnual: "$3.32",
+          annualNote: "billed $39.90/year",
           featured: true,
           features: [
             "Everything in Free",
@@ -823,6 +835,8 @@ export const content = {
           name: "Pro",
           price: "$7.99",
           period: "/month",
+          priceAnnual: "$6.66",
+          annualNote: "billed $79.90/year",
           featured: false,
           features: [
             "Everything in Plus",

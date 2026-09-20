@@ -4,14 +4,12 @@ import {
   Bot,
   Boxes,
   Briefcase,
-  Check,
   Eye,
   GitBranch,
   MessagesSquare,
   ShieldCheck,
 } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
-import { WorkspaceMockup } from "@/components/sections/WorkspacePreview";
 import { useI18n } from "@/lib/i18n";
 
 const offerIcons = [Boxes, Bot, GitBranch, Briefcase];
@@ -26,7 +24,6 @@ const toneStyles: Record<string, string> = {
 export function Service() {
   const { t } = useI18n();
   const s = t.service;
-  const w = t.workspace;
   const ig = t.integrity;
 
   return (
@@ -73,31 +70,6 @@ export function Service() {
             );
           })}
         </Stagger>
-
-        {/* Assessment workspace */}
-        <div className="mt-20 grid items-center gap-12 lg:grid-cols-2">
-          <Reveal>
-            <h3 className="text-balance text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
-              {w.title}
-            </h3>
-            <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
-              {w.body}
-            </p>
-            <ul className="mt-7 space-y-3">
-              {w.features.map((f) => (
-                <li key={f} className="flex items-start gap-3 text-sm text-content">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal/15">
-                    <Check className="h-3.5 w-3.5 text-teal" />
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-          <Reveal delay={0.1} className="py-6">
-            <WorkspaceMockup />
-          </Reveal>
-        </div>
 
         {/* Academic integrity */}
         <div className="mt-20">

@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/layout/Navbar";
+import { MarketingNav } from "@/components/shell/MarketingNav";
 import { Footer } from "@/components/layout/Footer";
 import { AmbientBackdrop } from "@/components/layout/AmbientBackdrop";
 
@@ -10,7 +10,7 @@ export default function MarketingLayout({
   return (
     <>
       <AmbientBackdrop />
-      <Navbar />
+      <MarketingNav />
       <main className="relative">{children}</main>
       <Footer />
     </>
