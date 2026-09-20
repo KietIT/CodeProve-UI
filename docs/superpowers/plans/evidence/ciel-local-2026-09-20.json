@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-20T11:44:16.151Z",
+  "origin": "http://localhost:8000",
+  "exercise": "CP-001",
+  "attemptId": 21,
+  "method": "POST",
+  "path": "/api/attempts/21/mentor",
+  "request": {
+    "message": "Giải thích hướng tiếp cận hash map cho bài Two Sum và độ phức tạp. Chưa cần viết code hoàn chỉnh.",
+    "code": "def two_sum(nums, target):\n    pass"
+  },
+  "status": 200,
+  "durationMs": 4150,
+  "response": {
+    "reply": "Hướng tiếp cận sử dụng hash map cho bài Two Sum rất hiệu quả.\n\n1. **Ý tưởng chính**: Sử dụng một hash map để lưu trữ các số đã duyệt cùng với chỉ số của chúng. Khi duyệt từng số trong mảng, ta sẽ kiểm tra xem số cần tìm (target - số hiện tại) đã có trong hash map chưa.\n\n2. **Các bước thực hiện**:\n   - Khởi tạo một hash map rỗng.\n   - Duyệt qua từng phần tử trong mảng:\n     - Tính toán số cần tìm: `complement = target - nums[i]`.\n     - Kiểm tra xem `complement` có trong hash map không.\n     - Nếu có, trả về chỉ số của `complement` và chỉ số hiện tại.\n     - Nếu không, thêm số hiện tại và chỉ số của nó vào hash map.\n\n3. **Độ phức tạp**:\n   - Thời gian: O(n), vì mỗi phần tử được duyệt một lần.\n   - Không gian: O(n), do lưu trữ các phần tử trong hash map.\n\nHãy thử viết một đoạn mã nhỏ để kiểm tra logic này nhé. Dưới đây là một ví dụ nhỏ:\n\n```python\ndef two_sum(nums, target):\n    num_map = {}\n    for i in range(len(nums)):\n        complement = target - nums[i]\n        if complement in num_map:\n            return [num_map[complement], i]\n        num_map[nums[i]] = i\n```\n\nHãy chú ý đến cách bạn xử lý các chỉ số và kiểm tra điều kiện nhé!",
+    "injected_error": true
+  }
+}
