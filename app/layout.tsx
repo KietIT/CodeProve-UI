@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
+import { QueryProvider } from "@/lib/query/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -59,11 +60,13 @@ export default function RootLayout({
       className={`${inter.variable} dark`}
     >
       <body className="min-h-screen bg-bg font-sans text-content antialiased">
-        <ThemeProvider>
-          <I18nProvider>
-            <AuthProvider>{children}</AuthProvider>
-          </I18nProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <I18nProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

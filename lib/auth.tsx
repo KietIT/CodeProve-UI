@@ -1,10 +1,16 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiFetch, clearToken, getToken, setToken, updateMe } from "@/lib/api";
-
-type User = { id: number; full_name: string; email: string; avatar?: string | null };
-type AuthOut = { user: User; access_token: string };
+import {
+  login as apiLogin,
+  signup as apiSignup,
+  getMe,
+  updateMe,
+  clearToken,
+  getToken,
+  setToken,
+} from "@/lib/api";
+import type { User } from "@/lib/types/auth";
 type AuthCtx = {
   user: User | null;
   loading: boolean;
@@ -25,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!getToken()) { setLoading(false); return; }
     (async () => {
       try {
-        setUser(await apiFetch<User>("/auth/me"));
+        setUser(await getMe());
       } catch {
         clearToken();
       } finally {
@@ -35,16 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
-    const out = await apiFetch<AuthOut>("/auth/login", { method: "POST", body: { email, password }, auth: false });
+    const out = await apiLogin(email, password);
     setToken(out.access_token); setUser(out.user);
   }
   async function signup(full_name: string, email: string, password: string) {
-    const out = await apiFetch<AuthOut>("/auth/signup", { method: "POST", body: { full_name, email, password }, auth: false });
+    const out = await apiSignup(full_name, email, password);
     setToken(out.access_token); setUser(out.user);
   }
   const loginWithToken = useCallback(async (token: string) => {
     setToken(token);
-    setUser(await apiFetch<User>("/auth/me"));
+    setUser(await getMe());
   }, []);
   async function updateProfile(data: { full_name?: string; avatar?: string | null }) {
     const updated = await updateMe(data);
