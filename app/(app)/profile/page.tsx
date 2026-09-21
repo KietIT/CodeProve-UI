@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
+import { Sym } from "@/components/app/AppChrome";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -208,10 +208,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-body-md text-on-surface">
-      <AppTopNav />
-
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10 md:px-8">
+    <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8">
         <header className="mb-8">
           <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">{t.eyebrow}</span>
           <h1 className="mt-2 font-headline-xl text-[40px] leading-none tracking-tight">{t.title}</h1>
@@ -438,9 +435,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-      </main>
-
-      <AppFooter />
     </div>
   );
 }
