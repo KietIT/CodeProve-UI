@@ -308,13 +308,6 @@ export default function ProfilePage() {
                     </button>
                   );
                 })}
-                <Link
-                  href="/community"
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-                >
-                  <Sym name="groups" className="text-[20px]" /> {t.nav.community}
-                  <Sym name="arrow_outward" className="ml-auto text-[16px] text-on-surface-variant/50" />
-                </Link>
               </nav>
             </aside>
 
@@ -442,23 +435,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
-
-              {/* Community CTA - always visible under the active panel */}
-              <Link
-                href="/community"
-                className="ice-card group flex items-center gap-4 p-6 transition-transform hover:-translate-y-0.5"
-              >
-                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Sym name="groups" className="text-[24px]" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-headline-lg-mobile text-headline-lg-mobile">{t.communityTitle}</p>
-                  <p className="text-sm text-on-surface-variant/70">{t.communitySub}</p>
-                </div>
-                <span className="flex items-center gap-1 font-label-mono text-label-mono uppercase text-primary transition-transform group-hover:translate-x-1">
-                  {t.communityCta} <Sym name="arrow_forward" className="text-[16px]" />
-                </span>
-              </Link>
             </div>
           </div>
         )}

@@ -37,7 +37,6 @@ const NAV = {
     ] as NavMenu[],
     direct: [
       { label: "Bảng giá", href: "/pricing" },
-      { label: "Cộng đồng", href: "/community" },
     ] as NavItem[],
   },
   en: {
@@ -62,7 +61,6 @@ const NAV = {
     ] as NavMenu[],
     direct: [
       { label: "Pricing", href: "/pricing" },
-      { label: "Community", href: "/community" },
     ] as NavItem[],
   },
 } as const;

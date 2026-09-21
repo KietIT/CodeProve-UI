@@ -155,8 +155,7 @@ export function UserMenu() {
     { icon: "account_circle", label: tx.profile, href: "/profile" },
   ];
   const links2 = [
-    { icon: "groups", label: tx.community, href: "/community" },
-    // Help Center points at the landing-page FAQ until a dedicated page exists.
+    // Community moved to the app sidebar; Help Center points at the landing FAQ.
     { icon: "help", label: tx.help, href: "/#faq" },
   ];
 

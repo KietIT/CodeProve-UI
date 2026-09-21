@@ -4,7 +4,7 @@
 
 export const appContent = {
   vi: {
-    nav: { dashboard: "Bảng điều khiển", workspace: "Phòng luyện", analytics: "Phân tích", daily: "Bug Hunt", problems: "Bài tập", leaderboard: "Xếp hạng", practice: "Visualizer" },
+    nav: { dashboard: "Bảng điều khiển", workspace: "Phòng luyện", analytics: "Phân tích", daily: "Bug Hunt", problems: "Bài tập", leaderboard: "Xếp hạng", practice: "Visualizer", community: "Cộng đồng" },
     dashboard: {
       eyebrow: "Tổng quan hệ thống",
       dailyTitle: "Bug Hunt hôm nay",
@@ -196,7 +196,7 @@ export const appContent = {
     },
   },
   en: {
-    nav: { dashboard: "Dashboard", workspace: "Workspace", analytics: "Analytics", daily: "Bug Hunt", problems: "Problems", leaderboard: "Leaderboard", practice: "Visualizer" },
+    nav: { dashboard: "Dashboard", workspace: "Workspace", analytics: "Analytics", daily: "Bug Hunt", problems: "Problems", leaderboard: "Leaderboard", practice: "Visualizer", community: "Community" },
     dashboard: {
       eyebrow: "System Overview",
       dailyTitle: "Today's Bug Hunt",

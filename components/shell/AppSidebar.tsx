@@ -22,7 +22,8 @@ export function AppSidebar() {
     { label: nav.problems, href: "/problems", icon: "list_alt" },
     { label: nav.workspace, href: "/workspace", icon: "terminal" },
     { label: nav.daily, href: "/daily", icon: "bug_report" },
-    { label: nav.leaderboard, href: "/leaderboard", icon: "leaderboard", soon: true },
+    { label: nav.community, href: "/community", icon: "forum" },
+    { label: nav.leaderboard, href: "/leaderboard", icon: "leaderboard" },
   ];
 
   const rowBase =
