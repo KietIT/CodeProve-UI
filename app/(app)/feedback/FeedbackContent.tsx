@@ -124,19 +124,19 @@ export function FeedbackContent() {
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+      <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
         <div className="flex items-center gap-3 text-on-surface-variant">
           <Sym name="hourglass_empty" className="animate-spin text-[22px] text-primary" />
           <span className="font-label-mono text-label-mono">{tf.loading}</span>
         </div>
-      </main>
+      </div>
     );
   }
 
   // ── No attempt param ──────────────────────────────────────────────────────
   if (attemptId === null || isNaN(attemptId)) {
     return (
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+      <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
         <div className="ice-card p-8 text-center">
           <Sym name="info" className="mb-3 text-[36px] text-on-surface-variant/50" />
           <h2 className="mb-2 font-headline-lg-mobile text-headline-lg-mobile">{tf.noAttemptTitle}</h2>
@@ -148,14 +148,14 @@ export function FeedbackContent() {
             {tf.backToDashboard} <Sym name="arrow_forward" className="text-[16px]" />
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
   // ── Error state ───────────────────────────────────────────────────────────
   if (error || !report) {
     return (
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+      <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
         <div className="ice-card p-8 text-center">
           <Sym name="error_outline" className="mb-3 text-[36px] text-error" />
           <h2 className="mb-2 font-headline-lg-mobile text-headline-lg-mobile">{tf.errorTitle}</h2>
@@ -167,7 +167,7 @@ export function FeedbackContent() {
             {tf.backToDashboard} <Sym name="arrow_forward" className="text-[16px]" />
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -187,7 +187,7 @@ export function FeedbackContent() {
   const pulse = PULSE_COPY[locale];
 
   return (
-    <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+    <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
       <header className="mb-10">
         <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">
           {tf.eyebrow}
@@ -396,7 +396,7 @@ export function FeedbackContent() {
           {tf.backToDashboard}
         </Link>
       </div>
-    </main>
+    </div>
   );
 }
 
