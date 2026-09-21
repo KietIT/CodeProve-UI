@@ -1,9 +1,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const ts = require('typescript');
 const React = require('react');
 const { renderToStaticMarkup: render } = require('react-dom/server');
+
+// Resolve the app's "@/..." path alias (tsconfig paths) to the project root so
+// components that import siblings via the alias load in this harness.
+const Module = require('node:module');
+const origResolve = Module._resolveFilename;
+Module._resolveFilename = function (request, ...rest) {
+  if (request.startsWith('@/')) request = path.join(process.cwd(), request.slice(2));
+  return origResolve.call(this, request, ...rest);
+};
 
 // Use the existing TypeScript compiler to render TSX without a new test runtime.
 for (const ext of ['.ts', '.tsx']) {
@@ -59,4 +69,24 @@ test('levels and integrity flags have textual labels as well as color', () => {
     assert.match(render(h(LevelBadge, { level })), new RegExp(level));
   }
   assert.match(render(h(LevelBadge, { level: 'red', label: 'Cần kiểm tra' })), /Cần kiểm tra/);
+});
+
+test('RadarChart renders one point + label per axis and tolerates a null axis', () => {
+  const { RadarChart } = require('../components/report/RadarChart.tsx');
+  const data = [
+    { label: 'Understanding', value: 80 }, { label: 'Hypothesis', value: 60 },
+    { label: 'Prompting', value: 40 }, { label: 'Verification', value: null },
+    { label: 'Testing', value: 90 }, { label: 'Debugging', value: 50 },
+  ];
+  const html = render(h(RadarChart, { data }));
+  for (const a of data) assert.match(html, new RegExp(a.label));
+  // 6 value dots (circles) rendered, and no NaN from the null axis.
+  assert.equal((html.match(/<circle/g) || []).length, 6);
+  assert.doesNotMatch(html, /NaN/);
+});
+
+test('IntegrityFlags shows the flag label (reusing LevelBadge)', () => {
+  const { IntegrityFlags } = require('../components/report/IntegrityFlags.tsx');
+  assert.match(render(h(IntegrityFlags, { status: 'red', label: 'Gắn cờ' })), /Gắn cờ/);
+  assert.match(render(h(IntegrityFlags, { status: 'green', label: 'Không cờ' })), /Không cờ/);
 });

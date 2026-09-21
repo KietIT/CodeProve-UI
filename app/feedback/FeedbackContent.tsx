@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { getReport, type FeedbackItem, type ReportOut, type TimelineItem } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
+import { RadarChart } from "@/components/report/RadarChart";
+import { IntegrityFlags } from "@/components/report/IntegrityFlags";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -15,6 +17,12 @@ const CIRC = 2 * Math.PI * R;
 function scoreOffset(score: number): number {
   return CIRC * (1 - Math.min(100, Math.max(0, score)) / 100);
 }
+
+// Session-pulse labels (values come from the report timeline; no new metrics).
+const PULSE_COPY = {
+  vi: { title: "Nhịp phiên", radar: "Radar 6 trục", coverage: "Coverage", explain: "Giải thích lại", hypothesis: "Giả thuyết", yes: "Có", no: "Không", na: "—" },
+  en: { title: "Session pulse", radar: "6-axis radar", coverage: "Coverage", explain: "Explain-back", hypothesis: "Hypothesis", yes: "Yes", no: "No", na: "—" },
+} as const;
 
 // Copy for this page in the active locale (vi/en share the same keys).
 type FeedbackCopy = (typeof appContent)["vi"]["feedback"] | (typeof appContent)["en"]["feedback"];
@@ -28,16 +36,6 @@ function integrityLabel(status: ReportOut["integrity_status"], tf: FeedbackCopy)
   if (status === "yellow") return tf.integrityYellow;
   return tf.integrityRed;
 }
-const INTEGRITY_CLASS: Record<ReportOut["integrity_status"], string> = {
-  green: "border-primary/30 bg-primary/10 text-primary",
-  yellow: "border-warning/30 bg-warning/10 text-warning",
-  red: "border-danger/30 bg-danger/10 text-danger",
-};
-const INTEGRITY_ICON: Record<ReportOut["integrity_status"], string> = {
-  green: "verified",
-  yellow: "warning",
-  red: "gpp_bad",
-};
 
 // ── Localisation helpers ──────────────────────────────────────────────────────
 
@@ -113,32 +111,15 @@ export function FeedbackContent() {
   const attemptParam = searchParams.get("attempt");
   const attemptId = attemptParam ? Number(attemptParam) : null;
 
-  const [report, setReport] = useState<ReportOut | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (attemptId === null || isNaN(attemptId)) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    let cancelled = false;
-    async function fetchReport() {
-      try {
-        const data = await getReport(attemptId!);
-        if (!cancelled) setReport(data);
-      } catch (err) {
-        if (!cancelled)
-          setError(err instanceof Error ? err.message : null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void fetchReport();
-    return () => { cancelled = true; };
-  }, [attemptId]);
+  const hasAttempt = attemptId !== null && !Number.isNaN(attemptId);
+  const query = useQuery({
+    queryKey: ["report", attemptId],
+    queryFn: () => getReport(attemptId!),
+    enabled: hasAttempt,
+  });
+  const report = query.data ?? null;
+  const loading = hasAttempt && query.isLoading;
+  const error = query.error ? (query.error as Error).message : null;
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
@@ -196,6 +177,15 @@ export function FeedbackContent() {
   const axisPctEntries = Object.entries(report.axes_pct);
   const tierName = (tf.tierNames as Record<string, string>)[report.tier] ?? report.tier;
 
+  // Radar data (percentages). Renders even if the backend omits an axis.
+  const radarData = axisPctEntries.map(([key, pct]) => ({ label: axisName(key), value: pct }));
+
+  // "Session pulse" from real timeline numbers only (no fabricated metrics).
+  const implItem = report.timeline.find((t) => timelineKeyOf(t) === "implementation");
+  const explainItem = report.timeline.find((t) => timelineKeyOf(t) === "explain_back");
+  const hypoItem = report.timeline.find((t) => timelineKeyOf(t) === "hypothesis");
+  const pulse = PULSE_COPY[locale];
+
   return (
     <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
       <header className="mb-10">
@@ -206,20 +196,15 @@ export function FeedbackContent() {
           <h1 className="font-headline-xl text-[40px] leading-none tracking-tight sm:text-headline-xl">
             {tf.title}
           </h1>
-          {/* Integrity badge */}
-          <span
-            className={`inline-flex items-center gap-1.5 border px-3 py-1 font-label-mono text-label-mono text-sm ${INTEGRITY_CLASS[report.integrity_status]}`}
-          >
-            <Sym name={INTEGRITY_ICON[report.integrity_status]} className="text-[15px]" />
-            {integrityLabel(report.integrity_status, tf)}
-          </span>
+          {/* Integrity flag (Phase 1 LevelBadge, kept above the fold) */}
+          <IntegrityFlags status={report.integrity_status} label={integrityLabel(report.integrity_status, tf)} />
         </div>
       </header>
 
       {/* Score ring + axis bars */}
       <div className="mb-10 grid grid-cols-1 gap-6 xl:grid-cols-12">
         {/* Ring */}
-        <div className="ice-card relative flex flex-col items-center justify-center overflow-hidden p-10 xl:col-span-5">
+        <div className="ice-card relative flex flex-col items-center justify-center overflow-hidden p-10 xl:col-span-4">
           <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-[90px]" />
           <div className="relative flex h-56 w-56 items-center justify-center">
             <svg
@@ -257,8 +242,28 @@ export function FeedbackContent() {
           </p>
         </div>
 
+        {/* Radar (6 axes, self-drawn SVG) */}
+        <div className="ice-card flex flex-col p-6 xl:col-span-4">
+          <h3 className="mb-2 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
+            {pulse.radar}
+          </h3>
+          <div className="flex flex-1 items-center justify-center">
+            <RadarChart data={radarData} />
+          </div>
+        </div>
+
+        {/* Session pulse (real timeline numbers) */}
+        <div className="ice-card flex flex-col gap-4 p-6 xl:col-span-4">
+          <h3 className="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
+            {pulse.title}
+          </h3>
+          <PulseRow label={pulse.coverage} value={implItem?.coverage_pct != null ? `${Math.round(implItem.coverage_pct)}%` : pulse.na} />
+          <PulseRow label={pulse.explain} value={explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na} />
+          <PulseRow label={pulse.hypothesis} value={hypoItem ? (hypoItem.active ? pulse.yes : pulse.no) : pulse.na} />
+        </div>
+
         {/* Axis bars */}
-        <div className="ice-card flex flex-col gap-5 p-8 xl:col-span-7">
+        <div className="ice-card flex flex-col gap-5 p-8 xl:col-span-12">
           <h3 className="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             {tf.byAxis}
           </h3>
@@ -392,5 +397,14 @@ export function FeedbackContent() {
         </Link>
       </div>
     </main>
+  );
+}
+
+function PulseRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between border-b border-outline-variant/40 pb-2 last:border-0">
+      <span className="font-label-mono text-label-mono text-on-surface-variant">{label}</span>
+      <span className="font-label-mono text-label-mono text-primary">{value}</span>
+    </div>
   );
 }
