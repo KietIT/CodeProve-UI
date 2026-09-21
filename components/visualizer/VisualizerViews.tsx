@@ -6,6 +6,7 @@ import { StepPlayer } from "./StepPlayer";
 import { CodeTrace } from "./CodeTrace";
 import { VariablesView } from "./VariablesView";
 import { ArrayView } from "./ArrayView";
+import { MapView } from "./MapView";
 import { changedKeys } from "./vizValue";
 
 export type VisualizerViewsCopy = { variables: string; hint: string; error: string };
@@ -21,6 +22,7 @@ export function VisualizerViews({ code, copy }: { code: string; copy: Visualizer
   const prevFrame = step > 0 ? frames[step - 1] : undefined;
   const changed = frame ? changedKeys(prevFrame?.locals, frame.locals) : new Set<string>();
   const arrayEntry = frame ? Object.entries(frame.locals).find(([, v]) => v.kind === "array") : undefined;
+  const mapEntry = frame ? Object.entries(frame.locals).find(([, v]) => v.kind === "map") : undefined;
 
   if (status === "error") {
     return (
@@ -50,6 +52,11 @@ export function VisualizerViews({ code, copy }: { code: string; copy: Visualizer
             items={(arrayEntry[1] as { items: string[] }).items}
             ptrs={(arrayEntry[1] as { ptrs?: Record<string, number> }).ptrs}
           />
+        </div>
+      )}
+      {mapEntry && (
+        <div className="rounded-lg border border-outline-variant/50 bg-surface-container-low p-4">
+          <MapView name={mapEntry[0]} entries={(mapEntry[1] as { entries: [string, string][] }).entries} />
         </div>
       )}
       <div className="rounded-lg border border-outline-variant/50 bg-surface-container-low p-4">

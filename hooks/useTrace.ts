@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { traceCode } from "@/lib/api";
+import { traceCode, type TraceInput } from "@/lib/api";
 import type { TraceResponse } from "@/lib/types/trace";
 import { useVisualizerStore } from "@/lib/stores/useVisualizerStore";
 
@@ -15,8 +15,8 @@ export function useTrace() {
   const setFrames = useVisualizerStore((s) => s.setFrames);
   const setError = useVisualizerStore((s) => s.setError);
 
-  return useMutation<TraceResponse, Error, string>({
-    mutationFn: (source_code) => traceCode(source_code),
+  return useMutation<TraceResponse, Error, TraceInput>({
+    mutationFn: (input) => traceCode(input),
     onMutate: () => setLoading(),
     onSuccess: (res) => {
       if (res.error && res.frames.length === 0) {

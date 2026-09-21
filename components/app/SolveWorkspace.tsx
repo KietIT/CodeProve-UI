@@ -789,7 +789,7 @@ export function SolveWorkspace({
               <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
             <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />
-            <WorkspaceVisualizer getCode={() => editorCodeRef.current} />
+            <WorkspaceVisualizer getCode={() => editorCodeRef.current} exerciseCode={exercise.id} />
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}

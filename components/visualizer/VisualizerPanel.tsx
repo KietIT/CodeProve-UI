@@ -14,7 +14,9 @@ const DEFAULT_CODE = `def two_sum(nums, target):
         complement = target - nums[i]
         if complement in seen:
             return [seen[complement], i]
-        seen[nums[i]] = i`;
+        seen[nums[i]] = i
+
+result = two_sum([2, 7, 11, 15], 9)`;
 
 const copy = {
   vi: {
@@ -48,7 +50,7 @@ export function VisualizerPanel() {
         <div className="flex items-center justify-between">
           <span className="font-label-mono text-label-mono uppercase text-on-surface-variant/70">{c.codeLabel}</span>
           <button
-            onClick={() => trace.mutate(code)}
+            onClick={() => trace.mutate({ source_code: code })}
             disabled={trace.isPending}
             className="flex items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
           >

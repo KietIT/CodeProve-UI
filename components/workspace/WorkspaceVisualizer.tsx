@@ -30,7 +30,13 @@ const copy = {
  * click via getCode) and steps through it inline, next to the problem - so the
  * student solves and watches in one place. Reuses the shared VisualizerViews.
  */
-export function WorkspaceVisualizer({ getCode }: { getCode: () => string }) {
+export function WorkspaceVisualizer({
+  getCode,
+  exerciseCode,
+}: {
+  getCode: () => string;
+  exerciseCode: string;
+}) {
   const { locale } = useI18n();
   const c = copy[locale];
   const trace = useTrace();
@@ -39,7 +45,8 @@ export function WorkspaceVisualizer({ getCode }: { getCode: () => string }) {
   const onVisualize = () => {
     const code = getCode();
     setTracedCode(code);
-    trace.mutate(code);
+    // Backend traces this code against the exercise's first visible test input.
+    trace.mutate({ source_code: code, exercise_code: exerciseCode });
   };
 
   return (
