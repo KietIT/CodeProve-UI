@@ -90,3 +90,35 @@ test('IntegrityFlags shows the flag label (reusing LevelBadge)', () => {
   assert.match(render(h(IntegrityFlags, { status: 'red', label: 'Gắn cờ' })), /Gắn cờ/);
   assert.match(render(h(IntegrityFlags, { status: 'green', label: 'Không cờ' })), /Không cờ/);
 });
+
+const RESULT_LABELS = {
+  testRunner: 'Test runner', running: 'Running', runTests: 'Run', clear: 'Clear',
+  runtimeVersion: 'python 3.11', collecting: 'Collecting', found: 'found',
+  pending: 'PENDING', runningTests: 'Running tests', passed: 'passed', coverage: 'coverage',
+};
+
+test('ResultTabs default Terminal view marks not-yet-run cases as pending, not fail', () => {
+  const { I18nProvider } = require('../lib/i18n.tsx');
+  const { ResultTabs } = require('../components/workspace/ResultTabs.tsx');
+  const html = render(h(I18nProvider, null, h(ResultTabs, {
+    runResult: null, runError: null, running: false,
+    tests: ['test_basic', 'test_edge'], onRun() {}, onClear() {}, labels: RESULT_LABELS,
+  })));
+  assert.match(html, /test_basic PENDING/);
+  assert.doesNotMatch(html, /FAIL/);
+});
+
+test('ResultTabs Terminal view shows PASS and FAIL per case from a run result', () => {
+  const { I18nProvider } = require('../lib/i18n.tsx');
+  const { ResultTabs } = require('../components/workspace/ResultTabs.tsx');
+  const runResult = { passed: 1, total: 2, coverage: 0.5, runtime_error: null, cases: [
+    { name: 'test_basic', passed: true, stdout: '', error: null },
+    { name: 'test_edge', passed: false, stdout: '', error: 'AssertionError' },
+  ] };
+  const html = render(h(I18nProvider, null, h(ResultTabs, {
+    runResult, runError: null, running: false, tests: [], onRun() {}, onClear() {}, labels: RESULT_LABELS,
+  })));
+  assert.match(html, /\[PASS\] test_basic/);
+  assert.match(html, /\[FAIL\] test_edge/);
+  assert.match(html, /AssertionError/);
+});

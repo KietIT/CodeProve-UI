@@ -22,6 +22,8 @@ import {
   type RunResult,
 } from "@/lib/api";
 import { useCiel } from "@/hooks/useCiel";
+import { ResultTabs } from "@/components/workspace/ResultTabs";
+import { HintAccordion } from "@/components/workspace/HintAccordion";
 import { ChatMarkdown } from "@/components/app/ChatMarkdown";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
@@ -785,6 +787,7 @@ export function SolveWorkspace({
               </h3>
               <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
+            <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}
@@ -948,79 +951,28 @@ export function SolveWorkspace({
             </div>
           </div>
 
-          {/* Terminal / Test runner panel */}
-          <div className="flex h-56 flex-none flex-col border-t border-outline-variant/60 bg-surface-container-lowest">
-            <div className="flex items-center justify-between border-b border-outline-variant/60 bg-surface-container-low px-4 py-2">
-              <div className="flex items-center gap-2">
-                <Sym name="terminal" className="text-[16px]" />
-                <span className="font-label-mono text-label-mono uppercase">{t.testRunner}</span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => void handleRunTests()}
-                  disabled={running}
-                  className="cursor-pointer bg-primary px-3 py-1 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  {running ? t.running : t.runTests}
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="cursor-pointer border border-outline-variant/60 px-3 py-1 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
-                >
-                  {t.clear}
-                </button>
-              </div>
-            </div>
-
-            <div className="ice-scroll flex-1 space-y-1.5 overflow-y-auto p-4 font-label-mono text-label-mono">
-              <div className="text-on-surface-variant/70">{t.runtimeVersion}</div>
-
-              {/* Idle / no results yet */}
-              {!runResult && !runError && !running && (
-                <>
-                  <div className="text-on-surface-variant/70">
-                    {t.collecting} {exercise.tests.length} {t.found}
-                  </div>
-                  {exercise.tests.map((tc) => (
-                    <div key={tc} className="text-on-surface-variant/50">
-                      · {tc} {t.pending}
-                    </div>
-                  ))}
-                  <div className="text-on-surface-variant/70">&gt; _</div>
-                </>
-              )}
-
-              {/* Running spinner text */}
-              {running && (
-                <div className="text-primary animate-pulse">{t.runningTests}</div>
-              )}
-
-              {/* Error */}
-              {runError && <div className="text-error">[ERROR] {runError}</div>}
-
-              {/* Real results */}
-              {runResult && (
-                <>
-                  {runResult.runtime_error && (
-                    <div className="text-error">[RUNTIME ERROR] {runResult.runtime_error}</div>
-                  )}
-                  {runResult.cases.map((c) => (
-                    <div key={c.name} className={c.passed ? "text-primary" : "text-error"}>
-                      [{c.passed ? "PASS" : "FAIL"}] {c.name}
-                      {c.stdout && (
-                        <span className="ml-2 text-on-surface-variant/60">{c.stdout}</span>
-                      )}
-                      {c.error && <div className="ml-4 text-error/80">{c.error}</div>}
-                    </div>
-                  ))}
-                  <div className="mt-1 text-on-surface-variant/70">
-                    {runResult.passed}/{runResult.total} {t.passed} · {t.coverage} {Math.round(runResult.coverage * 100)}%
-                  </div>
-                  <div className="text-on-surface-variant/70">&gt; _</div>
-                </>
-              )}
-            </div>
-          </div>
+          {/* Terminal / Tests / Leaderboard */}
+          <ResultTabs
+            runResult={runResult}
+            runError={runError}
+            running={running}
+            tests={exercise.tests}
+            onRun={() => void handleRunTests()}
+            onClear={handleClear}
+            labels={{
+              testRunner: t.testRunner,
+              running: t.running,
+              runTests: t.runTests,
+              clear: t.clear,
+              runtimeVersion: t.runtimeVersion,
+              collecting: t.collecting,
+              found: t.found,
+              pending: t.pending,
+              runningTests: t.runningTests,
+              passed: t.passed,
+              coverage: t.coverage,
+            }}
+          />
         </div>
 
         </Panel>
