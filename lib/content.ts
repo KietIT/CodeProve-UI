@@ -31,7 +31,7 @@ export const content = {
         },
         {
           title: "Mọi bước tư duy được ghi lại",
-          desc: "Giả thuyết, prompt, chỉnh sửa - tất cả được ghi vào event stream, không chỉ dòng code cuối.",
+          desc: "Giả thuyết, câu hỏi cho AI, mỗi lần chỉnh sửa - tất cả đều được ghi lại, không chỉ dòng code cuối cùng.",
         },
         {
           title: "Nhận điểm số 6 trục",
@@ -190,12 +190,12 @@ export const content = {
     workspace: {
       eyebrow: "Assessment Workspace",
       title: "Một không gian làm bài - mọi tư duy đều để lại dấu vết.",
-      body: "Editor Python, sandbox thực thi cô lập, và Ciel trong một side-box duy nhất. Mỗi prompt, mỗi lần chạy, mỗi giả thuyết đều được ghi vào event stream append-only để chấm điểm và đảm bảo tính toàn vẹn. Ngay bên cạnh, một visualizer cho bạn xem thuật toán chạy từng bước.",
+      body: "Một nơi làm bài duy nhất: trình soạn code, khu chạy thử an toàn và trợ lý Ciel ngay bên cạnh. Mỗi câu hỏi cho AI, mỗi lần chạy, mỗi giả thuyết đều được ghi lại để chấm điểm công bằng. Cạnh đó, một visualizer cho bạn xem thuật toán chạy từng bước.",
       features: [
-        "Code editor + sandbox cô lập (không mạng ngoài)",
-        "Ciel - trợ lý AI duy nhất trong phiên",
-        "Prompt log + giả thuyết ban đầu + giải thích cuối",
-        "Verification-trap: AI cố tình chèn lỗi để kiểm tra bạn",
+        "Khu chạy thử cô lập, không nối mạng ngoài",
+        "Ciel - trợ lý AI duy nhất trong suốt phiên làm bài",
+        "Lưu lại câu hỏi cho AI, giả thuyết ban đầu và phần giải thích cuối",
+        "AI thỉnh thoảng cố tình cài lỗi để thử xem bạn có phát hiện không",
       ],
       chip: "$ codeprove --assess",
     },
@@ -251,17 +251,17 @@ export const content = {
           desc: "Giải thích lại giải pháp sau khi nộp - code dán ngoài không qua được bước này.",
         },
         {
-          title: "Verification-trap",
-          desc: "Ciel cố tình chèn lỗi; chỉ người thực sự hiểu mới phát hiện và sửa.",
+          title: "Bẫy kiểm chứng",
+          desc: "Ciel cố tình chèn lỗi; chỉ người thực sự hiểu mới phát hiện và sửa được.",
         },
         {
           title: "Chấm theo quá trình",
-          desc: "Biến thể động + dấu vết hội thoại khiến lời giải chép sẵn vô hiệu.",
+          desc: "Đề thay đổi theo từng phiên và mọi trao đổi đều được ghi lại, nên lời giải chép sẵn thành vô dụng.",
         },
       ],
       levels: [
         { tone: "green", label: "Xanh", desc: "Hành vi tự nhiên, dấu vết tư duy đầy đủ - chấm tự động." },
-        { tone: "yellow", label: "Vàng", desc: "Vài tín hiệu bất thường - gắn cờ, tăng câu hỏi explain-back." },
+        { tone: "yellow", label: "Vàng", desc: "Vài tín hiệu bất thường - gắn cờ, hỏi thêm để bạn giải thích lại." },
         { tone: "red", label: "Đỏ", desc: "Nhiều tín hiệu trùng khớp - giữ kết quả để rà soát thủ công." },
       ],
     },
@@ -345,11 +345,11 @@ export const content = {
         },
         {
           q: "Nhà tuyển dụng có thấy được prompt của sinh viên không?",
-          a: "Có - prompt và dấu vết tư duy là dữ liệu chấm điểm, hiển thị trong dashboard giảng viên một cách minh bạch. Telemetry hành vi được công khai với người học theo nguyên tắc quyền riêng tư.",
+          a: "Có - câu hỏi cho AI và dấu vết tư duy là dữ liệu chấm điểm, hiển thị minh bạch trong bảng điều khiển của giảng viên. Dữ liệu thao tác cũng được công khai với chính người học theo nguyên tắc quyền riêng tư.",
         },
         {
           q: "Có hỗ trợ ngôn ngữ nào ngoài Python không?",
-          a: "MVP tập trung Python. Kiến trúc Rule Engine tách rời ngôn ngữ nên thêm ngôn ngữ/SQL mới không cần sửa lõi.",
+          a: "Hiện tại tập trung vào Python. Hệ thống chấm được tách rời khỏi ngôn ngữ, nên thêm ngôn ngữ mới hay SQL sau này không phải sửa phần lõi.",
         },
         {
           q: "Integrity Score có tự đánh trượt sinh viên không?",
@@ -535,7 +535,7 @@ export const content = {
         },
         {
           title: "Every step of your thinking is captured",
-          desc: "Hypotheses, prompts, edits - all logged to an event stream, not just the final code.",
+          desc: "Hypotheses, questions to the AI, edits - all recorded, not just the final code.",
         },
         {
           title: "Get a 6-axis score",
@@ -694,12 +694,12 @@ export const content = {
     workspace: {
       eyebrow: "Assessment Workspace",
       title: "One workspace - every thought leaves a trace.",
-      body: "A Python editor, an isolated execution sandbox, and the Ciel in a single side-box. Every prompt, every run, every hypothesis is recorded into an append-only event stream for scoring and integrity. Alongside it, a visualizer lets you watch the algorithm run step by step.",
+      body: "One place to work: a code editor, a safe run-it sandbox and the Ciel assistant right beside you. Every question to the AI, every run, every hypothesis is recorded so scoring stays fair. Alongside it, a visualizer lets you watch the algorithm run step by step.",
       features: [
-        "Code editor + isolated sandbox (no external network)",
-        "Ciel - the only AI in the session",
-        "Prompt log + initial hypothesis + final explanation",
-        "Verification-trap: the AI injects errors on purpose to test you",
+        "An isolated run-it sandbox with no external network",
+        "Ciel - the only AI throughout the session",
+        "Keeps your questions to the AI, initial hypothesis and final explanation",
+        "The AI sometimes plants an error on purpose to see if you catch it",
       ],
       chip: "$ codeprove --assess",
     },
@@ -755,17 +755,17 @@ export const content = {
           desc: "Explain your solution after submitting - pasted code can't pass this step.",
         },
         {
-          title: "Verification-trap",
-          desc: "The Ciel injects errors on purpose; only those who truly understand catch and fix them.",
+          title: "Verification trap",
+          desc: "The Ciel plants errors on purpose; only those who truly understand catch and fix them.",
         },
         {
           title: "Process grading",
-          desc: "Dynamic variants + conversation traces make pre-copied solutions worthless.",
+          desc: "Problems change each session and every exchange is recorded, so pre-copied solutions are useless.",
         },
       ],
       levels: [
         { tone: "green", label: "Green", desc: "Natural behavior, full reasoning trace - auto-graded." },
-        { tone: "yellow", label: "Yellow", desc: "A few anomalies - flagged, more explain-back questions." },
+        { tone: "yellow", label: "Yellow", desc: "A few anomalies - flagged, with more questions asking you to explain." },
         { tone: "red", label: "Red", desc: "Multiple matching signals - held for manual review." },
       ],
     },
@@ -849,11 +849,11 @@ export const content = {
         },
         {
           q: "Can recruiters see the students' prompts?",
-          a: "Yes - prompts and reasoning traces are scoring data, shown transparently in the instructor dashboard. Behavioral telemetry is disclosed to learners under our privacy principle.",
+          a: "Yes - questions to the AI and reasoning traces are scoring data, shown transparently in the instructor dashboard. Activity data is also disclosed to the learners themselves under our privacy principle.",
         },
         {
           q: "Are languages other than Python supported?",
-          a: "The MVP focuses on Python. The Rule Engine is language-agnostic, so adding new languages/SQL requires no core changes.",
+          a: "For now it focuses on Python. The grading system is separated from the language, so adding new languages or SQL later needs no core changes.",
         },
         {
           q: "Does the Integrity Score auto-fail students?",
