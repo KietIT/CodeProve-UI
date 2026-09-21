@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Activity,
   Bot,
   Boxes,
   Briefcase,
@@ -12,7 +13,7 @@ import {
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
 import { useI18n } from "@/lib/i18n";
 
-const offerIcons = [Boxes, Bot, GitBranch, Briefcase];
+const offerIcons = [Boxes, Bot, GitBranch, Activity, Briefcase];
 const integrityIcons = [MessagesSquare, Eye, ShieldCheck];
 
 const toneStyles: Record<string, string> = {
@@ -43,7 +44,7 @@ export function Service() {
         </Reveal>
 
         {/* What we offer */}
-        <Stagger className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {s.offerings.map((o, i) => {
             const Icon = offerIcons[i];
             return (

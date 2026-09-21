@@ -4,28 +4,17 @@
 export const content = {
   vi: {
     nav: {
-      links: [
-        { label: "Giới thiệu", href: "/#intro" },
-        { label: "Về chúng tôi", href: "/#about" },
-        { label: "Dịch vụ", href: "/#service" },
-        { label: "Tiêu chí", href: "/#criteria" },
-        { label: "Bug Hunt", href: "/daily" },
-        { label: "Bảng giá", href: "/#pricing" },
-        { label: "Liên hệ", href: "/#contact" },
-      ],
+      // Public nav is authored in MarketingNav (dropdown menus); only the
+      // labels below are consumed from here.
       login: "Đăng nhập",
       signup: "Đăng ký",
       bookDemo: "Đặt lịch demo",
     },
     hero: {
-      eyebrow: "EDTECH · ĐÁNH GIÁ LẬP TRÌNH CÙNG AI",
       titleA: "Không kiểm tra AI giải được bài không -",
       titleB: "kiểm tra bạn biết dùng AI đúng cách không.",
       sub: "Đo cách bạn tư duy cùng AI - không chỉ dòng code cuối cùng.",
       ctaPrimary: "Bắt đầu ngay",
-      ctaSecondary: "Dành cho nhà tuyển dụng",
-      badge: "6 TRỤC NĂNG LỰC",
-      score: "94/120",
       coreLabel: "AI Fluency Core",
     },
     trusted: {
@@ -101,6 +90,7 @@ export const content = {
         { name: "Bài tập theo cấp độ", desc: "Lộ trình từ cơ bản đến nâng cao, mỗi bài đo cách bạn tư duy cùng AI.", soon: false },
         { name: "Ciel tích hợp", desc: "Trợ lý AI ngay trong môi trường thi - gợi ý và hướng dẫn, không giải hộ.", soon: false },
         { name: "Chấm theo quá trình", desc: "Điểm gắn với dấu vết tư duy quan sát được, không chỉ kết quả cuối.", soon: false },
+        { name: "Visualizer thuật toán", desc: "Xem code chạy từng bước - biến đổi, con trỏ mảng - ngay khi luyện tập.", soon: false },
         { name: "Business problem", desc: "Bài toán doanh nghiệp thực chiến, sát với công việc thật.", soon: true },
       ],
       soonLabel: "Sắp ra mắt",
@@ -201,7 +191,7 @@ export const content = {
     workspace: {
       eyebrow: "Assessment Workspace",
       title: "Một không gian làm bài - mọi tư duy đều để lại dấu vết.",
-      body: "Editor Python, sandbox thực thi cô lập, và Ciel trong một side-box duy nhất. Mỗi prompt, mỗi lần chạy, mỗi giả thuyết đều được ghi vào event stream append-only để chấm điểm và đảm bảo tính toàn vẹn.",
+      body: "Editor Python, sandbox thực thi cô lập, và Ciel trong một side-box duy nhất. Mỗi prompt, mỗi lần chạy, mỗi giả thuyết đều được ghi vào event stream append-only để chấm điểm và đảm bảo tính toàn vẹn. Ngay bên cạnh, một visualizer cho bạn xem thuật toán chạy từng bước.",
       features: [
         "Code editor + sandbox cô lập (không mạng ngoài)",
         "Ciel - trợ lý AI duy nhất trong phiên",
@@ -520,28 +510,17 @@ export const content = {
 
   en: {
     nav: {
-      links: [
-        { label: "Intro", href: "/#intro" },
-        { label: "About us", href: "/#about" },
-        { label: "Service", href: "/#service" },
-        { label: "Criteria", href: "/#criteria" },
-        { label: "Bug Hunt", href: "/daily" },
-        { label: "Pricing", href: "/#pricing" },
-        { label: "Contact", href: "/#contact" },
-      ],
+      // Public nav is authored in MarketingNav (dropdown menus); only the
+      // labels below are consumed from here.
       login: "Log in",
       signup: "Sign up",
       bookDemo: "Book a demo",
     },
     hero: {
-      eyebrow: "EDTECH · AI-NATIVE CODE ASSESSMENT",
       titleA: "Don't test whether AI can solve it -",
       titleB: "test whether you can use AI the right way.",
       sub: "We measure how you think with AI - not just the final lines of code.",
       ctaPrimary: "Get started",
-      ctaSecondary: "For employers",
-      badge: "6 COMPETENCY AXES",
-      score: "94/120",
       coreLabel: "AI Fluency Core",
     },
     trusted: {
@@ -617,6 +596,7 @@ export const content = {
         { name: "Tiered challenges", desc: "A path from foundational to advanced; each task measures how you think with AI.", soon: false },
         { name: "Built-in Ciel", desc: "An AI assistant inside the assessment - it hints and guides, never solves for you.", soon: false },
         { name: "Process-based scoring", desc: "Scores tied to observable reasoning traces, not just the final output.", soon: false },
+        { name: "Algorithm visualizer", desc: "Watch code run step by step - variable changes and array pointers - right inside practice.", soon: false },
         { name: "Business problems", desc: "Real-world company problems, close to actual work.", soon: true },
       ],
       soonLabel: "Coming soon",
@@ -717,7 +697,7 @@ export const content = {
     workspace: {
       eyebrow: "Assessment Workspace",
       title: "One workspace - every thought leaves a trace.",
-      body: "A Python editor, an isolated execution sandbox, and the Ciel in a single side-box. Every prompt, every run, every hypothesis is recorded into an append-only event stream for scoring and integrity.",
+      body: "A Python editor, an isolated execution sandbox, and the Ciel in a single side-box. Every prompt, every run, every hypothesis is recorded into an append-only event stream for scoring and integrity. Alongside it, a visualizer lets you watch the algorithm run step by step.",
       features: [
         "Code editor + isolated sandbox (no external network)",
         "Ciel - the only AI in the session",
