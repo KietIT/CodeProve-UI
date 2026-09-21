@@ -29,7 +29,13 @@
 | GET (nav) | `/auth/google/start` | full-page redirect | OAuth flow → callback trả token |
 
 `User = { id: number; full_name: string; email: string; avatar?: string \| null }`.
-OAuth callback FE ở `/auth/callback` đọc token rồi gọi `/auth/me` — backend giữ luồng redirect + trả token như hiện tại.
+
+⚠️ **OAuth redirect origin (bug đã gặp khi dev):** FE gọi `GET <API_BASE>/api/auth/google/start?redirect=<origin>/auth/callback` — nay **có kèm `redirect`** = origin hiện tại (localhost khi dev, domain khi prod). Toàn bộ quyết định redirect cuối do **backend**; trước đây backend hardcode về production `code-prove.vercel.app` nên dev trên localhost:3000 vẫn bị đẩy sang prod. **Backend cần:**
+1. Đọc query `redirect`, **validate theo allowlist** (`http://localhost:3000`, domain Vercel prod) để tránh open-redirect; dùng nó làm URL trả về sau OAuth. Không có/không hợp lệ → fallback URL mặc định theo env.
+2. `redirect_uri` gửi cho Google (callback của backend) phải khớp **Authorized redirect URIs** trong Google Cloud Console — thêm cả bản dev (`http://localhost:8000/...`).
+3. Dev: FE đặt `.env.local` `NEXT_PUBLIC_API_URL=http://localhost:8000` để OAuth start trỏ backend local; backend local cấu hình allow `http://localhost:3000`.
+
+FE `/auth/callback` đọc token từ URL rồi gọi `/auth/me`.
 
 ---
 

@@ -194,7 +194,11 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   // GitHub is still pending; Google is wired through the backend OAuth flow.
   function handleGoogleSignIn() {
     setSsoNotice("");
-    window.location.href = `${API_BASE}/api/auth/google/start`;
+    // Tell the backend where to return, so OAuth comes back to THIS origin
+    // (localhost in dev, the deployed URL in prod) instead of a hardcoded host.
+    // The backend must validate `redirect` against an allowlist (open-redirect).
+    const returnTo = `${window.location.origin}/auth/callback`;
+    window.location.href = `${API_BASE}/api/auth/google/start?redirect=${encodeURIComponent(returnTo)}`;
   }
 
   function handleSso(provider: string) {
