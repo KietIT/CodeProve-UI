@@ -9,9 +9,9 @@ import { appContent } from "@/lib/appContent";
 type NavItem = { label: string; href: string; icon: string; soon?: boolean };
 
 /**
- * Vertical icon rail for the authenticated app area - separate from the
- * marketing MarketingNav. Fixed to the left edge; the app shell offsets its
- * content by the rail width. Icon-only with accessible labels + tooltips.
+ * Vertical rail for the authenticated app area. Collapsed to icons by default;
+ * expands to icon + label on hover (overlay, so it never shifts the content).
+ * The CP logo returns to the marketing landing page.
  */
 export function AppSidebar() {
   const pathname = usePathname();
@@ -25,26 +25,36 @@ export function AppSidebar() {
     { label: nav.leaderboard, href: "/leaderboard", icon: "leaderboard", soon: true },
   ];
 
+  const rowBase =
+    "flex h-11 items-center gap-3 rounded-xl px-2.5 transition-colors";
+  const labelCls =
+    "whitespace-nowrap text-sm font-medium opacity-0 transition-opacity duration-150 group-hover:opacity-100";
+
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-16 flex-col items-center gap-2 border-r border-outline-variant/60 bg-surface-container-low/80 py-4 backdrop-blur-xl">
+    <aside className="group fixed inset-y-0 left-0 z-40 flex w-16 flex-col gap-1 overflow-hidden border-r border-outline-variant/60 bg-surface-container-low/80 p-3 backdrop-blur-xl transition-[width] duration-200 hover:w-60 hover:shadow-card">
+      {/* Logo → landing page */}
       <Link
-        href="/dashboard"
+        href="/"
         aria-label="CodeProve"
-        className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 font-bold text-primary"
+        className="mb-2 flex h-11 items-center gap-3 rounded-xl px-2.5 hover:bg-surface-container"
       >
-        CP
+        <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-primary/15 text-xs font-bold text-primary">
+          CP
+        </span>
+        <span className={`${labelCls} font-headline-lg-mobile font-bold tracking-tight text-on-surface`}>
+          Code<span className="text-primary">Prove</span>
+        </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col items-center gap-1">
+      <nav className="flex flex-1 flex-col gap-1">
         {items.map((item) => {
           const active = !item.soon && pathname.startsWith(item.href);
-          const cls =
-            "group relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors";
-          const inner = (
+          const icon = (
             <>
-              <Sym name={item.icon} className="text-[22px]" />
-              {/* Tooltip label on hover/focus */}
-              <span className="pointer-events-none absolute left-14 z-50 whitespace-nowrap rounded-lg border border-outline-variant/60 bg-surface-container px-2.5 py-1 text-xs font-medium text-on-surface opacity-0 shadow-card transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="flex w-6 flex-none justify-center">
+                <Sym name={item.icon} className="text-[22px]" />
+              </span>
+              <span className={labelCls}>
                 {item.label}
                 {item.soon ? " · soon" : ""}
               </span>
@@ -57,9 +67,9 @@ export function AppSidebar() {
                 key={item.href}
                 aria-disabled="true"
                 aria-label={`${item.label} (soon)`}
-                className={`${cls} cursor-not-allowed text-on-surface-variant/40`}
+                className={`${rowBase} cursor-not-allowed text-on-surface-variant/40`}
               >
-                {inner}
+                {icon}
               </span>
             );
           }
@@ -70,13 +80,13 @@ export function AppSidebar() {
               href={item.href}
               aria-current={active ? "page" : undefined}
               aria-label={item.label}
-              className={`${cls} ${
+              className={`${rowBase} ${
                 active
                   ? "bg-primary/15 text-primary"
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
             >
-              {inner}
+              {icon}
             </Link>
           );
         })}
