@@ -35,9 +35,6 @@ export function RubricShowcase() {
           <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
             {t.rubric.sub}
           </p>
-          <code className="mt-5 inline-block rounded-pill border border-border bg-surface/60 px-4 py-2 font-mono text-sm text-teal">
-            {t.rubric.formula}
-          </code>
         </Reveal>
 
         <div className="mt-12 grid items-center gap-10 lg:grid-cols-[minmax(0,360px)_1fr]">
@@ -111,8 +108,17 @@ export function RubricShowcase() {
                   }`}
                 >
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="font-semibold text-content">{ax.name}</h3>
-                    <span className="font-mono text-xs text-teal">w {ax.weight}</span>
+                    <h3 className="font-semibold text-content">
+                      {ax.vi}
+                      {(ax.name as string) !== ax.vi && (
+                        <span className="ml-2 align-middle font-mono text-[11px] font-normal text-muted/50">
+                          {ax.name}
+                        </span>
+                      )}
+                    </h3>
+                    <span className="font-mono text-xs text-teal">
+                      {Math.round(parseFloat(ax.weight) * 100)}%
+                    </span>
                   </div>
                   <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-bg">
                     <div

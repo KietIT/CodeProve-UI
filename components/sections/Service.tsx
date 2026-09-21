@@ -114,7 +114,6 @@ export function Service() {
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-sm italic leading-relaxed text-muted/80">{ig.note}</p>
           </Reveal>
         </div>
       </div>

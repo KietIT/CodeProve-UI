@@ -59,7 +59,6 @@ export function Integrity() {
               </div>
             ))}
           </div>
-          <p className="mt-4 text-sm italic leading-relaxed text-muted/80">{t.integrity.note}</p>
         </Reveal>
       </div>
     </section>
