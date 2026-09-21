@@ -24,6 +24,7 @@ import {
 import { useCiel } from "@/hooks/useCiel";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
 import { HintAccordion } from "@/components/workspace/HintAccordion";
+import { WorkspaceVisualizer } from "@/components/workspace/WorkspaceVisualizer";
 import { ChatMarkdown } from "@/components/app/ChatMarkdown";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { createTelemetry } from "@/lib/telemetry";
@@ -788,6 +789,7 @@ export function SolveWorkspace({
               <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
             <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />
+            <WorkspaceVisualizer getCode={() => editorCodeRef.current} />
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}
