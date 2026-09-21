@@ -1,6 +1,7 @@
 "use client";
 
 import { VisualizerPanel } from "@/components/visualizer/VisualizerPanel";
+import { MaterialSymbolsFont } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
 
 const copy = {
@@ -21,7 +22,8 @@ export default function PracticePage() {
   const t = copy[locale];
 
   return (
-    <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
+    <div className="mx-auto w-full max-w-container-max px-5 pb-16 pt-28 md:px-12">
+      <MaterialSymbolsFont />
       <header className="mb-8">
         <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">
           {t.eyebrow}

@@ -22,6 +22,7 @@ const NAV = {
         items: [
           { label: "Dịch vụ", href: "/#service", desc: "Cách CodeProve đánh giá" },
           { label: "Tiêu chí", href: "/#criteria", desc: "Radar 6 trục AI Fluency" },
+          { label: "Visualizer", href: "/practice", desc: "Xem thuật toán chạy từng bước" },
           { label: "Bug Hunt", href: "/daily", desc: "Thử thách gỡ lỗi mỗi ngày" },
         ],
       },
@@ -46,6 +47,7 @@ const NAV = {
         items: [
           { label: "Service", href: "/#service", desc: "How CodeProve assesses" },
           { label: "Rubric", href: "/#criteria", desc: "The 6-axis AI Fluency radar" },
+          { label: "Visualizer", href: "/practice", desc: "Watch an algorithm run step by step" },
           { label: "Bug Hunt", href: "/daily", desc: "A daily debugging challenge" },
         ],
       },

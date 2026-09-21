@@ -20,7 +20,6 @@ export function AppSidebar() {
   const items: NavItem[] = [
     { label: nav.dashboard, href: "/dashboard", icon: "space_dashboard" },
     { label: nav.problems, href: "/problems", icon: "list_alt" },
-    { label: nav.practice, href: "/practice", icon: "animation" },
     { label: nav.workspace, href: "/workspace", icon: "terminal" },
     { label: nav.daily, href: "/daily", icon: "bug_report" },
     { label: nav.leaderboard, href: "/leaderboard", icon: "leaderboard", soon: true },
