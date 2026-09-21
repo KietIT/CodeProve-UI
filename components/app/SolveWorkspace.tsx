@@ -25,8 +25,9 @@ import { useCiel } from "@/hooks/useCiel";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
 import { HintAccordion } from "@/components/workspace/HintAccordion";
 import { WorkspaceVisualizer } from "@/components/workspace/WorkspaceVisualizer";
-import { ChatMarkdown } from "@/components/app/ChatMarkdown";
+import { CielPanel } from "@/components/workspace/CielPanel";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
+import { useSessionStore } from "@/lib/stores/useSessionStore";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
@@ -187,11 +188,12 @@ export function SolveWorkspace({
   const [running, setRunning] = useState(false);
 
   // ── Chat state ────────────────────────────────────────────────────────────
-  type ChatMessage = { role: "user" | "assistant"; text: string; verifyHint?: boolean };
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // The conversation itself lives in useSessionStore (client-side prompt log,
+  // Phase 5); only the input box and in-flight flag are local UI state.
   const [chatInput, setChatInput] = useState<string>("");
   const [chatSending, setChatSending] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const startSession = useSessionStore((s) => s.startSession);
+  const addPromptEntry = useSessionStore((s) => s.addPromptEntry);
   // Ciel goes through the shared mutation hook (Phase 2) rather than calling the
   // service directly. Same request/response shape as before; mutateAsync is a
   // stable reference. `chatSending` still drives the local send UI.
@@ -310,6 +312,8 @@ export function SolveWorkspace({
         const id = resp.attempt_id;
         attemptIdRef.current = id;
         setAttemptId(id);
+        // Fresh attempt → fresh prompt log for this session.
+        startSession(id, code);
 
         const telem = createTelemetry(id);
         telemetryRef.current = telem;
@@ -629,12 +633,8 @@ export function SolveWorkspace({
     setRunError(null);
   }, []);
 
-  // ── Auto-scroll chat to bottom ────────────────────────────────────────────
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   // ── Chat send ─────────────────────────────────────────────────────────────
+  // Turns are appended to the session prompt log; PromptLog renders from there.
   const handleChatSend = useCallback(async (text?: string) => {
     const msg = (text ?? chatInput).trim();
     if (!msg || chatSending) return;
@@ -642,24 +642,21 @@ export function SolveWorkspace({
     if (!id) return;
 
     setChatInput("");
-    setMessages((prev) => [...prev, { role: "user", text: msg }]);
+    addPromptEntry({ role: "user", text: msg });
     setChatSending(true);
 
     try {
       // Send the student's current editor code so Ciel can reason about
       // "this exercise" and what they have written so far.
       const res = await askCiel({ message: msg, code: editorCodeRef.current });
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: res.reply, verifyHint: res.injected_error },
-      ]);
+      addPromptEntry({ role: "assistant", text: res.reply, verifyHint: res.injected_error });
     } catch (err) {
       const errText = err instanceof Error ? err.message : "Failed to reach Ciel.";
-      setMessages((prev) => [...prev, { role: "assistant", text: `[Error] ${errText}` }]);
+      addPromptEntry({ role: "assistant", text: `[Error] ${errText}` });
     } finally {
       setChatSending(false);
     }
-  }, [chatInput, chatSending, askCiel]);
+  }, [chatInput, chatSending, askCiel, addPromptEntry]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     void handleChatSend(suggestion);
@@ -984,92 +981,22 @@ export function SolveWorkspace({
         <>
         <ColResizeHandle />
         <Panel id="ciel" order={3} defaultSize={24} minSize={16} collapsible className="flex flex-col">
-          <aside className="flex h-full flex-col border-l border-outline-variant/60 bg-surface-container-low">
-          <div className="flex flex-1 flex-col overflow-hidden border-b border-outline-variant/60">
-            <div className="flex items-center justify-between border-b border-outline-variant/60 p-4">
-              <div className="flex items-center gap-2">
-                <Sym name="smart_toy" className="text-primary" />
-                <span className="font-label-mono text-label-mono uppercase">Ciel</span>
-              </div>
-              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-            </div>
-            <div className="ice-scroll flex-1 space-y-4 overflow-y-auto p-4">
-              {/* Initial hint bubble */}
-              <div className="border-l-2 border-primary bg-primary/5 p-3">
-                <p className="text-sm leading-relaxed text-on-surface">{problemHint}</p>
-              </div>
-              {messages.length === 0 && (
-                <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
-                  <p className="text-sm leading-relaxed text-on-surface-variant">
-                    {t.cielIntro}
-                  </p>
-                </div>
-              )}
-              {/* Chat message history */}
-              {messages.map((m, i) => (
-                <div key={i} className={m.role === "user"
-                  ? "border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3"
-                  : "border-l-2 border-primary bg-primary/5 p-3"
-                }>
-                  {m.role === "assistant" ? (
-                    <ChatMarkdown text={m.text} />
-                  ) : (
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-on-surface">{m.text}</p>
-                  )}
-                  {m.verifyHint && (
-                    <p className="mt-1 text-xs text-on-surface-variant/60 italic">
-                      {t.verifyHint}
-                    </p>
-                  )}
-                </div>
-              ))}
-              {chatSending && (
-                <div className="border-l-2 border-primary bg-primary/5 p-3">
-                  <p className="animate-pulse text-sm text-on-surface-variant/60">{t.cielThinking}</p>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-            <div className="border-t border-outline-variant/60 p-4">
-              <div className="relative">
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleChatSend(); } }}
-                  disabled={chatSending}
-                  className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
-                  placeholder={t.askCiel}
-                  type="text"
-                />
-                <button
-                  aria-label="Send"
-                  onClick={() => void handleChatSend()}
-                  disabled={chatSending || !chatInput.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-primary disabled:opacity-40"
-                >
-                  <Sym name="send" className="text-[18px]" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="flex h-1/3 flex-col">
-            <div className="border-b border-outline-variant/60 p-4">
-              <h3 className="font-label-mono text-label-mono uppercase">{t.promptSuggestions}</h3>
-            </div>
-            <div className="ice-scroll flex-1 space-y-2 overflow-y-auto p-3">
-              {t.promptItems.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => handleSuggestionClick(p)}
-                  disabled={chatSending}
-                  className="w-full cursor-pointer border border-outline-variant/50 p-2 text-left font-label-mono text-label-mono text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-          </aside>
+          <CielPanel
+            initialHint={problemHint}
+            input={chatInput}
+            sending={chatSending}
+            onInputChange={setChatInput}
+            onSend={() => void handleChatSend()}
+            onSuggestionClick={handleSuggestionClick}
+            suggestions={t.promptItems}
+            labels={{
+              intro: t.cielIntro,
+              verifyHint: t.verifyHint,
+              thinking: t.cielThinking,
+              ask: t.askCiel,
+              suggestionsTitle: t.promptSuggestions,
+            }}
+          />
         </Panel>
         </>
         )}
