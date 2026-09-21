@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
+import { Sym } from "@/components/app/AppChrome";
 import { LEVELS } from "@/lib/exercises";
 import LevelExercises from "@/components/app/LevelExercises";
 import { useI18n } from "@/lib/i18n";
@@ -24,10 +24,7 @@ export default function LevelPicker({ params }: { params: { level: string } }) {
   const blurb = c.levelInfo[slug] ?? config.blurb;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-body-md text-on-surface">
-      <AppTopNav />
-
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-8 md:px-12">
+    <div className="mx-auto w-full max-w-container-max px-5 py-8 md:px-12">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 font-label-mono text-label-mono text-on-surface-variant/70">
           <Link href="/workspace" className="flex items-center gap-1 transition-colors hover:text-primary">
@@ -59,9 +56,6 @@ export default function LevelPicker({ params }: { params: { level: string } }) {
 
         {/* Exercise list - fetches from API with static fallback */}
         <LevelExercises level={config.slug} />
-      </main>
-
-      <AppFooter />
     </div>
   );
 }

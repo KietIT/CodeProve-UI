@@ -371,7 +371,7 @@ export default function LevelExercises({ level }: LevelExercisesProps) {
                     </div>
                   ) : (
                     <Link
-                      href={{ pathname: "/workspace/solve", query: { id: ex.code, level } }}
+                      href={{ pathname: "/solve", query: { id: ex.code, level } }}
                       className="group block cursor-pointer"
                     >
                       {Row}

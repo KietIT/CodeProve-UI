@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AppTopNav, AppFooter, Sym } from "@/components/app/AppChrome";
+import { Sym } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -21,10 +21,7 @@ export function WorkspaceLanding() {
   const w = c.workspace;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-body-md text-on-surface">
-      <AppTopNav />
-
-      <main className="mx-auto w-full max-w-container-max flex-1 px-5 py-10 md:px-12">
+    <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
         <header className="mb-8">
           <span className="font-label-caps text-label-caps uppercase tracking-[0.2em] text-primary">{w.eyebrow}</span>
           <h1 className="mt-2 font-headline-xl text-[40px] leading-none tracking-tight sm:text-headline-xl">{w.title}</h1>
@@ -92,9 +89,6 @@ export function WorkspaceLanding() {
             ))}
           </div>
         </section>
-      </main>
-
-      <AppFooter />
     </div>
   );
 }

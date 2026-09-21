@@ -187,7 +187,7 @@ export function ProblemTable() {
                       <tr key={p.code} className="group transition-colors hover:bg-surface-container/50">
                         <td className="px-5 py-3.5">
                           <Link
-                            href={{ pathname: "/workspace/solve", query: { id: p.code, level: p.level } }}
+                            href={{ pathname: "/solve", query: { id: p.code, level: p.level } }}
                             className="flex flex-col"
                           >
                             <span className="font-medium text-on-surface group-hover:text-primary">

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { DailyHeader } from "@/components/daily/DailyHeader";
 import { DailyBugHunt } from "@/components/daily/DailyBugHunt";
 
 export const metadata: Metadata = {
@@ -7,11 +6,7 @@ export const metadata: Metadata = {
   description: "A daily challenge: spot the bug Ciel planted in today's code.",
 };
 
+// Rendered inside the app shell (sidebar + top bar), so no page-level header.
 export default function DailyPage() {
-  return (
-    <>
-      <DailyHeader />
-      <DailyBugHunt />
-    </>
-  );
+  return <DailyBugHunt />;
 }
