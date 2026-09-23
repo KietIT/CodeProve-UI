@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { CodeBlock } from "@/components/daily/CodeBlock";
+import { stripPythonComments } from "@/components/daily/stripComments";
 import { useAuth } from "@/lib/auth";
 import {
   claimStreak,
@@ -186,7 +187,7 @@ export function DailyBugHunt() {
 
       <div className="mt-6">
         <CodeBlock
-          code={challenge.buggy_code}
+          code={stripPythonComments(challenge.buggy_code)}
           selectedLine={selectedLine}
           onSelectLine={setSelectedLine}
           revealedLine={phase === "revealed" ? result?.buggy_line ?? null : null}
