@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sym } from "@/components/app/AppChrome";
+import { LogoMark } from "@/components/ui/Logo";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -11,7 +12,7 @@ type NavItem = { label: string; href: string; icon: string; soon?: boolean };
 /**
  * Vertical rail for the authenticated app area. Collapsed to icons by default;
  * expands to icon + label on hover (overlay, so it never shifts the content).
- * The CP logo returns to the marketing landing page.
+ * The logo returns to the dashboard.
  */
 export function AppSidebar() {
   const pathname = usePathname();
@@ -33,14 +34,15 @@ export function AppSidebar() {
 
   return (
     <aside className="group fixed inset-y-0 left-0 z-40 flex w-16 flex-col gap-1 overflow-hidden border-r border-outline-variant/60 bg-surface-container-low/80 p-3 backdrop-blur-xl transition-[width] duration-200 hover:w-60 hover:shadow-card">
-      {/* Logo → landing page */}
+      {/* Logo → dashboard. Stays inside the app on purpose: the marketing
+          landing page would push a signed-in user back through login. */}
       <Link
-        href="/"
+        href="/dashboard"
         aria-label="CodeProve"
         className="mb-2 flex h-11 items-center gap-3 rounded-xl px-2.5 hover:bg-surface-container"
       >
-        <span className="flex h-6 w-6 flex-none items-center justify-center rounded-md bg-primary/15 text-xs font-bold text-primary">
-          CP
+        <span className="flex h-6 w-6 flex-none items-center justify-center">
+          <LogoMark className="h-6 w-6" gradientId="logo-grad-sidebar" />
         </span>
         <span className={`${labelCls} font-headline-lg-mobile font-bold tracking-tight text-on-surface`}>
           Code<span className="text-primary">Prove</span>
