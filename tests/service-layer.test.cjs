@@ -36,7 +36,7 @@ test('session store keeps the prompt log in insertion order and clears it', () =
   const s = useSessionStore.getState();
   s.startSession(94, 'CP-001');
   s.addPromptEntry({ role: 'user', text: 'first' });
-  s.addPromptEntry({ role: 'assistant', text: 'second', verifyHint: true });
+  s.addPromptEntry({ role: 'assistant', text: 'second' });
   const log = useSessionStore.getState().promptLog;
   assert.equal(log.length, 2);
   assert.deepEqual(log.map((e) => e.text), ['first', 'second']);

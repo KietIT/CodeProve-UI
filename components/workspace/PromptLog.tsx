@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import { ChatMarkdown } from "@/components/app/ChatMarkdown";
+import { hasCodeBlock } from "@/lib/chat";
 import { useSessionStore } from "@/lib/stores/useSessionStore";
 
 export type PromptLogLabels = {
   /** Shown once, before the first question is asked. */
   intro: string;
-  /** Footnote under a reply that carries a deliberate verify prompt. */
+  /** Footnote under every reply that contains code (AI code can be wrong). */
   verifyHint: string;
   /** Placeholder bubble while Ciel is answering. */
   thinking: string;
@@ -63,7 +64,7 @@ export function PromptLog({ initialHint, sending, labels }: PromptLogProps) {
           ) : (
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-on-surface">{m.text}</p>
           )}
-          {m.verifyHint && (
+          {m.role === "assistant" && hasCodeBlock(m.text) && (
             <p className="mt-1 text-xs italic text-on-surface-variant/60">{labels.verifyHint}</p>
           )}
         </div>

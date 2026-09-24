@@ -8,8 +8,7 @@ export type MentorRequest = {
   code?: string;
 };
 
-/** Ciel mentor response. `injected_error` drives the verify-your-work hint. */
+/** Ciel mentor response. The verify-your-work hint is shown on every reply that contains code. */
 export type MentorReply = {
   reply: string;
-  injected_error: boolean;
 };

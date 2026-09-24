@@ -122,3 +122,11 @@ test('ResultTabs Terminal view shows PASS and FAIL per case from a run result', 
   assert.match(html, /\[FAIL\] test_edge/);
   assert.match(html, /AssertionError/);
 });
+
+const { hasCodeBlock } = require('../lib/chat.ts');
+
+test('hasCodeBlock detects fenced code only', () => {
+  assert.equal(hasCodeBlock('Try this:\n```python\nx = 1\n```'), true);
+  assert.equal(hasCodeBlock('Think about the loop bounds.'), false);
+  assert.equal(hasCodeBlock('Use `range(n)` inline'), false);
+});

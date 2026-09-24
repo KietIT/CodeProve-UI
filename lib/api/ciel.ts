@@ -3,7 +3,7 @@ import type { MentorReply } from "@/lib/types/ciel";
 
 /**
  * Ciel mentor call - moved verbatim from the previous flat lib/api.ts.
- * Request stays `{ message, code? }`, response stays `{ reply, injected_error }`.
+ * Request stays `{ message, code? }`, response is `{ reply }`.
  * The UI always passes the current editor code; no history/sessionId is sent.
  */
 export const sendMentor = (id: number, message: string, code?: string): Promise<MentorReply> =>
