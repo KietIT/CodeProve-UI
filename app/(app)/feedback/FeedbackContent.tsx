@@ -175,6 +175,8 @@ export function FeedbackContent() {
   const score = Math.round(report.overall);
   const offset = scoreOffset(report.overall);
   const axisPctEntries = Object.entries(report.axes_pct);
+  // Older reports predate `not_applicable`; treat a missing map as empty.
+  const notApplicable = report.feedback.not_applicable ?? {};
   const tierName = (tf.tierNames as Record<string, string>)[report.tier] ?? report.tier;
 
   // Radar data (percentages). Renders even if the backend omits an axis.
@@ -275,13 +277,18 @@ export function FeedbackContent() {
                 <div className="mb-2 flex justify-between font-label-mono text-label-mono">
                   <span>{label}</span>
                   {isNull ? (
-                    <span className="text-on-surface-variant/40">-</span>
+                    <span className="text-on-surface-variant/40">{tf.naLabel}</span>
                   ) : (
                     <span className="text-primary">{Math.round(pct)}%</span>
                   )}
                 </div>
                 {isNull ? (
-                  <div className="h-1.5 w-full bg-surface-container-highest opacity-30" />
+                  <>
+                    <div className="h-1.5 w-full bg-surface-container-highest opacity-30" />
+                    {notApplicable[key] && (
+                      <p className="mt-1 text-xs text-on-surface-variant/60">{tf.naReasons[notApplicable[key]]}</p>
+                    )}
+                  </>
                 ) : (
                   <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">
                     <div

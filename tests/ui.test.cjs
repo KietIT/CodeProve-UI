@@ -122,3 +122,22 @@ test('ResultTabs Terminal view shows PASS and FAIL per case from a run result', 
   assert.match(html, /\[FAIL\] test_edge/);
   assert.match(html, /AssertionError/);
 });
+
+const { hasCodeBlock } = require('../lib/chat.ts');
+
+test('hasCodeBlock detects fenced code only', () => {
+  assert.equal(hasCodeBlock('Try this:\n```python\nx = 1\n```'), true);
+  assert.equal(hasCodeBlock('Think about the loop bounds.'), false);
+  assert.equal(hasCodeBlock('Use `range(n)` inline'), false);
+});
+
+test('RadarChart marks not-applicable axes instead of plotting them as a score', () => {
+  const { RadarChart } = require('../components/report/RadarChart.tsx');
+  const html = render(h(RadarChart, { data: [
+    { label: 'Understanding', value: 90 },
+    { label: 'Hypothesis', value: 85 },
+    { label: 'Debugging', value: null },
+  ] }));
+  assert.match(html, /Debugging —/);
+  assert.doesNotMatch(html, /Understanding —/);
+});

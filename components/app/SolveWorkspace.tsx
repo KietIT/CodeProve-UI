@@ -649,7 +649,7 @@ export function SolveWorkspace({
       // Send the student's current editor code so Ciel can reason about
       // "this exercise" and what they have written so far.
       const res = await askCiel({ message: msg, code: editorCodeRef.current });
-      addPromptEntry({ role: "assistant", text: res.reply, verifyHint: res.injected_error });
+      addPromptEntry({ role: "assistant", text: res.reply });
     } catch (err) {
       const errText = err instanceof Error ? err.message : "Failed to reach Ciel.";
       addPromptEntry({ role: "assistant", text: `[Error] ${errText}` });

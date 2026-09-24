@@ -3,6 +3,8 @@
 // only data present on reports stored before localisation was added).
 export type FeedbackItem = { axis: string; code?: string; note: string };
 
+export type NotApplicableReason = "no_failure" | "no_ai_use" | "no_ai_code";
+
 export type TimelineItem = {
   key?: "hypothesis" | "implementation" | "explain_back";
   coverage_pct?: number | null;
@@ -22,6 +24,8 @@ export type ReportOut = {
     strengths: FeedbackItem[];
     risks: FeedbackItem[];
     per_axis: Record<string, { score: number; notes: string[] }>;
+    /** Axes the student had no opportunity to show, with the reason. Absent on older reports. */
+    not_applicable?: Record<string, NotApplicableReason>;
     timeline?: TimelineItem[];
   };
   integrity_status: "green" | "yellow" | "red";

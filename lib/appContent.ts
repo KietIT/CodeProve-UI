@@ -97,7 +97,7 @@ export const appContent = {
       coverage: "độ phủ",
       cielIntro: "Ciel dẫn dắt tư duy của bạn; không bao giờ viết hộ lời giải.",
       cielThinking: "Ciel đang suy nghĩ…",
-      verifyHint: "Hãy kiểm chứng kỹ trước khi tin.",
+      verifyHint: "AI có thể sai — hãy chạy thử và kiểm chứng trước khi dùng.",
       promptSuggestions: "Gợi ý câu hỏi",
       askCiel: "Hỏi Ciel…",
       noActiveAttempt: "Chưa có lượt làm. Vui lòng tải lại trang.",
@@ -163,6 +163,12 @@ export const appContent = {
       },
       ringDesc: "Điểm của bạn phản ánh mức thông thạo AI trên sáu trục tư duy.",
       byAxis: "Kết quả theo trục",
+      naLabel: "Không áp dụng",
+      naReasons: {
+        no_failure: "Code của bạn không phát sinh lỗi nên không có gì để debug.",
+        no_ai_use: "Bạn không dùng Ciel trong lượt này.",
+        no_ai_code: "Ciel không đưa code nào để bạn kiểm chứng.",
+      },
       timelineHeader: "Dòng thời gian & bằng chứng",
       timelineSteps: {
         hypothesis: "Bước 1 · Giả thuyết",
@@ -289,7 +295,7 @@ export const appContent = {
       coverage: "coverage",
       cielIntro: "Ciel guides your reasoning; it never writes the solution for you.",
       cielThinking: "Ciel is thinking…",
-      verifyHint: "Verify this carefully before trusting it.",
+      verifyHint: "AI can be wrong — run and verify it before you use it.",
       promptSuggestions: "Prompt suggestions",
       askCiel: "Ask Ciel…",
       noActiveAttempt: "No active attempt. Please reload the page.",
@@ -351,6 +357,12 @@ export const appContent = {
       },
       ringDesc: "Your score reflects AI-fluency across six reasoning axes.",
       byAxis: "Performance by axis",
+      naLabel: "Not applicable",
+      naReasons: {
+        no_failure: "Your code never failed, so there was nothing to debug.",
+        no_ai_use: "You didn't use Ciel in this attempt.",
+        no_ai_code: "Ciel gave you no code to verify.",
+      },
       timelineHeader: "Process timeline & evidence",
       timelineSteps: {
         hypothesis: "Step 1 · Hypothesis",
