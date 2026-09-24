@@ -7,7 +7,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AppTopNav, Sym } from "@/components/app/AppChrome";
 import {
   tokenizeLine,
-  studentStarterFromCode,
+  resolveEditorStarter,
   RUBRIC,
   type Exercise,
   type LevelConfig,
@@ -19,6 +19,7 @@ import {
   runTests,
   saveSnapshot,
   submitAttempt,
+  type ExerciseDetail,
   type RunResult,
 } from "@/lib/api";
 import { useCiel } from "@/hooks/useCiel";
@@ -146,18 +147,16 @@ export function SolveWorkspace({
   // ── Exercise state (starts with static data; hydrates from API) ───────────
   const [exercise, setExercise] = useState<Exercise>(initialExercise);
   const [levelConfig] = useState<LevelConfig>(initialLevel);
-  // Debug-type exercises exist to have their flaw found: show the buggy
-  // starter verbatim. Implement-type starters are stripped to a scaffold.
-  const initialStarter =
-    initialExercise.kind === "debug"
-      ? initialExercise.starter
-      : studentStarterFromCode(initialExercise.starter);
 
   // ── Editor state ──────────────────────────────────────────────────────────
-  const [editorCode, setEditorCode] = useState<string>(initialStarter);
+  // The editor stays in a loading state until the exercise detail request
+  // settles, then opens with the API starter (static starter only if the API
+  // fails). Rendering the static copy first and swapping would flash stale code.
+  const [starterReady, setStarterReady] = useState(false);
+  const [editorCode, setEditorCode] = useState<string>("");
   // Mirror editorCode in a ref so callbacks (e.g. chat send) read the latest
   // value without needing it in their dependency array.
-  const editorCodeRef = useRef<string>(initialStarter);
+  const editorCodeRef = useRef<string>("");
   editorCodeRef.current = editorCode;
 
   // Anti-cheat: paste is blocked in the editor (and hypothesis / explain-back).
@@ -226,7 +225,7 @@ export function SolveWorkspace({
 
   // ── Debounce + delta accumulator for CODE_EDIT telemetry ──────────────────
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const prevCodeLenRef = useRef<number>(initialStarter.length);
+  const prevCodeLenRef = useRef<number>(0);
   // Sum of per-keystroke deltas within the current debounce window. Flushing the
   // debounced log sends this total and resets it, so fast typing isn't lost.
   const editDeltaAccRef = useRef<number>(0);
@@ -285,25 +284,35 @@ export function SolveWorkspace({
     let cancelled = false;
 
     async function init() {
-      // Enrich the *briefing* (summary / hint / tests / language) from the API,
-      // but NOT the editor's starter code. The static starter is already the
-      // correct stub; swapping in the API's copy after mount caused the editor to
-      // flash the old content for a few ms before settling. We keep the local
-      // stub as the single source of truth for what the student sees.
+      setStarterReady(false);
+
+      // The API detail is the source of truth for the briefing and the editor's
+      // starter. The static exercise is only an offline fallback.
+      let detail: ExerciseDetail | null = null;
       try {
-        const detail = await getExerciseDetail(code);
-        if (!cancelled) {
-          setExercise((prev) => ({
-            ...prev,
-            summary: detail.summary ?? prev.summary,
-            hint: detail.hint ?? prev.hint,
-            tests: detail.tests ?? prev.tests,
-            language: (detail.language as Exercise["language"]) ?? prev.language,
-          }));
-        }
+        detail = await getExerciseDetail(code);
       } catch {
         // Static fallback: continue without live detail.
       }
+      if (cancelled) return;
+
+      if (detail) {
+        const live = detail;
+        setExercise((prev) => ({
+          ...prev,
+          kind: live.kind ?? prev.kind,
+          summary: live.summary ?? prev.summary,
+          hint: live.hint ?? prev.hint,
+          tests: live.tests ?? prev.tests,
+          language: (live.language as Exercise["language"]) ?? prev.language,
+        }));
+      }
+
+      const starter = resolveEditorStarter(detail?.starter, initialExercise);
+      editorCodeRef.current = starter;
+      prevCodeLenRef.current = starter.length;
+      setEditorCode(starter);
+      setStarterReady(true);
 
       // Create attempt on backend.
       try {
@@ -880,6 +889,16 @@ export function SolveWorkspace({
               with the real text even when scrolled deep into a long starter. */}
           <div className="relative flex-1 overflow-hidden bg-surface-container-lowest/60">
             <div className="scanline" />
+            {!starterReady ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="absolute inset-0 flex items-center justify-center gap-2 font-label-mono text-label-mono text-on-surface-variant"
+              >
+                <Sym name="progress_activity" className="animate-spin text-[18px]" />
+                {t.loadingEditor}
+              </div>
+            ) : (
             <div className="absolute inset-0 flex">
               {/* Line numbers (vertical scroll mirrored, own overflow clipped) */}
               <div
@@ -948,6 +967,7 @@ export function SolveWorkspace({
                 )}
               </div>
             </div>
+            )}
           </div>
 
           {/* Terminal / Tests / Leaderboard */}
