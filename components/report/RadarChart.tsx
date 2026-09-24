@@ -4,7 +4,7 @@ export type RadarAxis = { label: string; value: number | null };
 
 /**
  * Self-drawn radar for the Fluency axes (SVG, no chart dependency). Generalised
- * to N axes so it renders even when the backend omits one or two (null → 0).
+ * to N axes. null = not applicable (drawn at the centre, label dimmed).
  * Values are percentages (0–100). Display only — no scoring here.
  */
 export function RadarChart({ data, size = 320 }: { data: RadarAxis[]; size?: number }) {
@@ -60,8 +60,9 @@ export function RadarChart({ data, size = 320 }: { data: RadarAxis[]; size?: num
             dominantBaseline="middle"
             className="fill-on-surface-variant font-label-mono"
             fontSize="10"
+            opacity={d.value === null ? 0.45 : 1}
           >
-            {d.label}
+            {d.value === null ? `${d.label} —` : d.label}
           </text>
         );
       })}

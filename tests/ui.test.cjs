@@ -130,3 +130,14 @@ test('hasCodeBlock detects fenced code only', () => {
   assert.equal(hasCodeBlock('Think about the loop bounds.'), false);
   assert.equal(hasCodeBlock('Use `range(n)` inline'), false);
 });
+
+test('RadarChart marks not-applicable axes instead of plotting them as a score', () => {
+  const { RadarChart } = require('../components/report/RadarChart.tsx');
+  const html = render(h(RadarChart, { data: [
+    { label: 'Understanding', value: 90 },
+    { label: 'Hypothesis', value: 85 },
+    { label: 'Debugging', value: null },
+  ] }));
+  assert.match(html, /Debugging —/);
+  assert.doesNotMatch(html, /Understanding —/);
+});

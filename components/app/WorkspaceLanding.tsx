@@ -87,8 +87,8 @@ export function WorkspaceLanding() {
   const isResume = !!resume;
   const allSolved = all.length > 0 && all.every((e) => e.status === "solved");
 
-  // Weakest radar axis → a coaching tip.
-  const radar = dashQuery.data?.radar ?? [];
+  // Weakest observed radar axis → a coaching tip (not-applicable axes are not weaknesses).
+  const radar = (dashQuery.data?.radar ?? []).filter((r): r is { name: string; value: number } => r.value !== null);
   const weakest = radar.length ? radar.reduce((a, b) => (b.value < a.value ? b : a)) : null;
   const tip = weakest ? AXIS_TIP[locale][weakest.name] : null;
 

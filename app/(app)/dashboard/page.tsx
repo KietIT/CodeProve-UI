@@ -21,16 +21,16 @@ const radarLabels = [
   { name: "Debugging", x: 48, y: 100, anchor: "end" },
 ];
 
-// Compute radar polygon points from 0..100 values
+// Compute radar polygon points from 0..100 values (null = not applicable → centre)
 // angle_i = -90° + i*60° (start at top, clockwise)
-function computeRadarPoints(values: number[]): string {
+function computeRadarPoints(values: (number | null)[]): string {
   const cx = 160;
   const cy = 160;
   const maxR = 120;
   return values
     .map((v, i) => {
       const angle = ((-90 + i * 60) * Math.PI) / 180;
-      const r = (Math.min(Math.max(v, 0), 100) / 100) * maxR;
+      const r = (Math.min(Math.max(v ?? 0, 0), 100) / 100) * maxR;
       const x = cx + r * Math.cos(angle);
       const y = cy + r * Math.sin(angle);
       return `${x.toFixed(1)},${y.toFixed(1)}`;
@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const { locale } = useI18n();
   const t = appContent[locale].dashboard;
   const axesL = appContent[locale].axes as Record<string, string>;
+  const naLabel = appContent[locale].feedback.naLabel;
   const recentStatusL = appContent[locale].recentStatus as Record<string, string>;
   const { data, isLoading: loading, error: queryError } = useQuery({
     queryKey: ["dashboard"],
@@ -214,11 +215,23 @@ export default function DashboardPage() {
                       const [x, y] = pt.split(",").map(Number);
                       return <circle key={i} cx={x} cy={y} r="3.5" fill="rgb(var(--primary))" />;
                     })}
-                    {radarLabels.map((l) => (
-                      <text key={l.name} x={l.x} y={l.y} textAnchor={l.anchor as "start" | "middle" | "end"} className="fill-on-surface-variant font-label-mono" fontSize="10">
-                        {axesL[l.name] ?? l.name}
-                      </text>
-                    ))}
+                    {radarLabels.map((l) => {
+                      const v = data?.radar.find((r) => r.name === l.name)?.value;
+                      const label = axesL[l.name] ?? l.name;
+                      return (
+                        <text
+                          key={l.name}
+                          x={l.x}
+                          y={l.y}
+                          textAnchor={l.anchor as "start" | "middle" | "end"}
+                          className="fill-on-surface-variant font-label-mono"
+                          fontSize="10"
+                          opacity={v === null ? 0.45 : 1}
+                        >
+                          {v === null ? `${label} —` : label}
+                        </text>
+                      );
+                    })}
                   </svg>
                 </div>
               </section>
@@ -296,11 +309,19 @@ export default function DashboardPage() {
                     <div key={a.name}>
                       <div className="mb-1.5 flex justify-between font-label-mono text-label-mono">
                         <span className="text-on-surface-variant">{axesL[a.name] ?? a.name}</span>
-                        <span className="text-primary">{a.value.toFixed(0)}%</span>
+                        {a.value === null ? (
+                          <span className="text-on-surface-variant/40">{naLabel}</span>
+                        ) : (
+                          <span className="text-primary">{a.value.toFixed(0)}%</span>
+                        )}
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">
-                        <div className="animate-progress h-full bg-primary" style={{ ["--final-width" as string]: `${a.value}%` }} />
-                      </div>
+                      {a.value === null ? (
+                        <div className="h-1.5 w-full bg-surface-container-highest opacity-30" />
+                      ) : (
+                        <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">
+                          <div className="animate-progress h-full bg-primary" style={{ ["--final-width" as string]: `${a.value}%` }} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
