@@ -102,6 +102,7 @@ export const appContent = {
       askCiel: "Hỏi Ciel…",
       noActiveAttempt: "Chưa có lượt làm. Vui lòng tải lại trang.",
       pasteDisabled: "Dán (paste) đã bị tắt để đảm bảo bài làm là của chính bạn. Hãy tự gõ lời giải.",
+      loadingEditor: "Đang tải mã khởi đầu…",
       rubricLabels: ["Thấu hiểu", "Giả thuyết", "Đặt prompt", "Kiểm chứng", "Kiểm thử", "Gỡ lỗi"],
       promptItems: [
         "Giải thích độ phức tạp thời gian",
@@ -300,6 +301,7 @@ export const appContent = {
       askCiel: "Ask Ciel…",
       noActiveAttempt: "No active attempt. Please reload the page.",
       pasteDisabled: "Paste is disabled so your work stays genuinely yours. Please type your own solution.",
+      loadingEditor: "Loading starter code…",
       rubricLabels: ["Understanding", "Hypothesis", "Prompting", "Verification", "Testing", "Debugging"],
       promptItems: [
         "Explain the time complexity",

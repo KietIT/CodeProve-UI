@@ -504,6 +504,21 @@ export function studentStarterFromCode(source: string): string {
   return sawCallable ? out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() : source;
 }
 
+/**
+ * Pick the code the editor opens with. The API detail's `starter` is the source
+ * of truth and is already student-facing (debug starters have their comments
+ * stripped, implement starters are scaffolds), so it is used verbatim — the
+ * backend also compares runs against it to flag an untouched starter. The
+ * static copy is only an offline fallback, prepared the same way as before.
+ */
+export function resolveEditorStarter(
+  detailStarter: string | null | undefined,
+  fallback: Pick<Exercise, "kind" | "starter">,
+): string {
+  if (typeof detailStarter === "string" && detailStarter.trim() !== "") return detailStarter;
+  return fallback.kind === "debug" ? fallback.starter : studentStarterFromCode(fallback.starter);
+}
+
 // ── Lightweight syntax highlighting ─────────────────────────────────────────
 export type CodeToken = { t: string; c?: "kw" | "fn" | "com" };
 

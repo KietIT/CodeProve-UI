@@ -141,3 +141,25 @@ test('RadarChart marks not-applicable axes instead of plotting them as a score',
   assert.match(html, /Debugging —/);
   assert.doesNotMatch(html, /Understanding —/);
 });
+
+const { resolveEditorStarter } = require('../lib/exercises.ts');
+
+test('resolveEditorStarter uses the API starter verbatim when the detail loaded', () => {
+  // The backend already returns the student-facing starter: it must not be
+  // re-scaffolded (that would turn a debug starter into `pass` stubs).
+  const apiStarter = 'def sum_to_n(n):\n    total = 0\n    for i in range(n):\n        total += i\n    return total\n';
+  const fallback = { kind: 'implement', starter: 'def old(x):\n    # bug: leaks the answer\n    return x\n' };
+  assert.equal(resolveEditorStarter(apiStarter, fallback), apiStarter);
+});
+
+test('resolveEditorStarter falls back to the static starter when the detail is missing', () => {
+  const debug = { kind: 'debug', starter: 'def f(n):\n    return n\n' };
+  assert.equal(resolveEditorStarter(undefined, debug), debug.starter);
+  assert.equal(resolveEditorStarter('   \n', debug), debug.starter);
+
+  // Implement fallbacks are still scaffolded locally.
+  const implement = { starter: 'def f(n):\n    return n * 2\n' };
+  const scaffold = resolveEditorStarter(null, implement);
+  assert.match(scaffold, /def f\(n\):\n {4}pass/);
+  assert.doesNotMatch(scaffold, /n \* 2/);
+});
