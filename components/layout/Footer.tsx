@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
 import { Logo } from "@/components/ui/Logo";
+import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
 
 export function Footer() {
@@ -36,12 +38,22 @@ export function Footer() {
               <ul className="mt-4 space-y-3">
                 {col.links.map((link) => (
                   <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="cursor-pointer text-sm text-content/80 transition-colors duration-200 hover:text-teal"
-                    >
-                      {link.label}
-                    </Link>
+                    {isComingSoon(link.href) ? (
+                      <span
+                        aria-disabled="true"
+                        className="inline-flex cursor-not-allowed items-center gap-2 text-sm text-content/80 opacity-60"
+                      >
+                        {link.label}
+                        <ComingSoonBadge />
+                      </span>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="cursor-pointer text-sm text-content/80 transition-colors duration-200 hover:text-teal"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

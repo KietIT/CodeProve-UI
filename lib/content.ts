@@ -396,6 +396,7 @@ export const content = {
       backHome: "Về trang chủ",
       getStarted: "Bắt đầu",
       learnMore: "Tìm hiểu thêm",
+      comingSoon: "Coming soon",
     },
     pages: {
       students: {
@@ -900,6 +901,7 @@ export const content = {
       backHome: "Back to home",
       getStarted: "Get started",
       learnMore: "Learn more",
+      comingSoon: "Coming soon",
     },
     pages: {
       students: {

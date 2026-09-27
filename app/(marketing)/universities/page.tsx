@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-import { PersonaPage } from "@/components/sections/PersonaPage";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Dành cho trường học",
-  description:
-    "Phân biệt hiểu thật và copy AI bằng dữ liệu - dashboard giảng viên, rubric minh bạch, integrity badge.",
-};
-
+// Coming soon: the team is focusing on students first. Restore the PersonaPage
+// render (personaKey="universities") and its metadata when this audience launches.
 export default function UniversitiesPage() {
-  return <PersonaPage personaKey="universities" />;
+  redirect("/students");
 }

@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Briefcase, Check, GraduationCap, Users } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
+import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
+import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
 
 const icons = [GraduationCap, Users, Briefcase];
@@ -29,19 +31,24 @@ export function Personas() {
           <div className="inline-flex flex-wrap gap-1 rounded-pill border border-border bg-surface/50 p-1">
             {t.personas.tabs.map((p, i) => {
               const Icon = icons[i];
+              const locked = isComingSoon(p.href);
               return (
                 <button
                   key={p.key}
                   onClick={() => setActive(i)}
+                  disabled={locked}
                   aria-pressed={active === i}
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-pill px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                    active === i
-                      ? "bg-teal text-on-primary"
-                      : "text-muted hover:text-content"
+                  className={`inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                    locked
+                      ? "cursor-not-allowed text-muted opacity-60"
+                      : active === i
+                        ? "cursor-pointer bg-teal text-on-primary"
+                        : "cursor-pointer text-muted hover:text-content"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
                   {p.label}
+                  {locked && <ComingSoonBadge />}
                 </button>
               );
             })}

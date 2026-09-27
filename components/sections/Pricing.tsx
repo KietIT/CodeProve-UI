@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowRight, Check, Star } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
+import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
+import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
 
 type Tab = "personal" | "business";
@@ -163,10 +165,17 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
                 <p className="mt-5 font-mono text-xs uppercase tracking-wider text-teal">
                   {p.business.priceNote}
                 </p>
-                <Button href="/employers" size="lg" className="mt-5">
-                  {p.business.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                {isComingSoon("/employers") ? (
+                  <Button href="/employers" size="lg" className="mt-5" disabled>
+                    {p.business.cta}
+                    <ComingSoonBadge />
+                  </Button>
+                ) : (
+                  <Button href="/employers" size="lg" className="mt-5">
+                    {p.business.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
 
               <ul className="grid gap-3 lg:border-l lg:border-border lg:pl-10">
