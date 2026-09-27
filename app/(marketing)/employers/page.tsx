@@ -1,12 +1,7 @@
-import type { Metadata } from "next";
-import { PersonaPage } from "@/components/sections/PersonaPage";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Dành cho nhà tuyển dụng",
-  description:
-    "Employer Fluency Report - tuyển kỹ sư biết cộng tác với AI qua các tình huống thực chiến.",
-};
-
+// Coming soon: the team is focusing on students first. Restore the PersonaPage
+// render (personaKey="employers") and its metadata when this audience launches.
 export default function EmployersPage() {
-  return <PersonaPage personaKey="employers" />;
+  redirect("/students");
 }

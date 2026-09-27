@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const base = "https://codeprove.example";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/students", "/universities", "/employers", "/pricing", "/privacy", "/terms"];
+  const routes = ["", "/students", "/pricing", "/privacy", "/terms"];
   const now = new Date();
   return routes.map((r) => ({
     url: `${base}${r}`,

@@ -3,7 +3,9 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
+import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
 import { HeroPoster } from "@/components/three/HeroPoster";
+import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
 
 export function FinalCTA() {
@@ -40,8 +42,9 @@ export function FinalCTA() {
                 {t.finalCta.ctaPrimary}
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button href="/universities" variant="secondary" size="lg">
+              <Button href="/universities" variant="secondary" size="lg" disabled={isComingSoon("/universities")}>
                 {t.finalCta.ctaSecondary}
+                {isComingSoon("/universities") && <ComingSoonBadge />}
               </Button>
             </div>
           </div>

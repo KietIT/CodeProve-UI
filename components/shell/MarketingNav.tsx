@@ -6,7 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
+import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
 
 type NavItem = { label: string; href: string; desc?: string };
@@ -141,18 +143,33 @@ export function MarketingNav() {
                     role="menu"
                     className="absolute left-0 top-full mt-2 w-64 rounded-card border border-border bg-bg/95 p-2 shadow-card backdrop-blur-xl"
                   >
-                    {menu.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        role="menuitem"
-                        onClick={() => setOpenMenu(null)}
-                        className="block rounded-xl px-3 py-2.5 transition-colors hover:bg-surface"
-                      >
-                        <span className="block text-sm font-medium text-content">{item.label}</span>
-                        {item.desc && <span className="mt-0.5 block text-xs text-muted">{item.desc}</span>}
-                      </Link>
-                    ))}
+                    {menu.items.map((item) =>
+                      isComingSoon(item.href) ? (
+                        <div
+                          key={item.href}
+                          role="menuitem"
+                          aria-disabled="true"
+                          className="block cursor-not-allowed rounded-xl px-3 py-2.5 opacity-60"
+                        >
+                          <span className="flex items-center gap-2 text-sm font-medium text-content">
+                            {item.label}
+                            <ComingSoonBadge />
+                          </span>
+                          {item.desc && <span className="mt-0.5 block text-xs text-muted">{item.desc}</span>}
+                        </div>
+                      ) : (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          role="menuitem"
+                          onClick={() => setOpenMenu(null)}
+                          className="block rounded-xl px-3 py-2.5 transition-colors hover:bg-surface"
+                        >
+                          <span className="block text-sm font-medium text-content">{item.label}</span>
+                          {item.desc && <span className="mt-0.5 block text-xs text-muted">{item.desc}</span>}
+                        </Link>
+                      ),
+                    )}
                   </div>
                 )}
               </div>
@@ -201,16 +218,27 @@ export function MarketingNav() {
           {nav.menus.map((menu) => (
             <div key={menu.label} className="mb-3">
               <p className="px-3 pb-1 font-mono text-xs uppercase tracking-[0.16em] text-muted">{menu.label}</p>
-              {menu.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="block rounded-pill px-3 py-2.5 text-base text-content transition-colors hover:bg-surface"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {menu.items.map((item) =>
+                isComingSoon(item.href) ? (
+                  <div
+                    key={item.href}
+                    aria-disabled="true"
+                    className="flex cursor-not-allowed items-center gap-2 rounded-pill px-3 py-2.5 text-base text-content opacity-60"
+                  >
+                    {item.label}
+                    <ComingSoonBadge />
+                  </div>
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="block rounded-pill px-3 py-2.5 text-base text-content transition-colors hover:bg-surface"
+                  >
+                    {item.label}
+                  </Link>
+                ),
+              )}
             </div>
           ))}
           <div className="mb-1 flex flex-col gap-1">
