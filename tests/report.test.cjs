@@ -78,5 +78,6 @@ test('hidden and visible failures are split, order kept', () => {
 });
 
 test('exerciseHref opens the solve page like the level list does', () => {
-  assert.deepEqual(exerciseHref('CP-105'), { pathname: '/workspace/solve', query: { id: 'CP-105' } });
+  // The solve page lives at /solve (app/solve/page.tsx); /workspace/solve would hit /workspace/[level] and 404.
+  assert.deepEqual(exerciseHref('CP-105'), { pathname: '/solve', query: { id: 'CP-105' } });
 });

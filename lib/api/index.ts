@@ -17,7 +17,21 @@ export type { User, Me, AuthOut } from "@/lib/types/auth";
 export type { ExerciseSummary, LevelGroup, ExerciseDetail } from "@/lib/types/exercise";
 export type { RunCase, RunResult, AttemptState } from "@/lib/types/attempt";
 export type { MentorRequest, MentorReply } from "@/lib/types/ciel";
-export type { FeedbackItem, TimelineItem, ReportOut } from "@/lib/types/report";
+export type {
+  FeedbackItem,
+  TimelineItem,
+  ReportOut,
+  ScoreAxis,
+  AxisLevel,
+  AxisEvidence,
+  TestCategory,
+  Finding,
+  FindingText,
+  Diagnosis,
+  SubmitTests,
+  SubmitSummary,
+  TestFailure,
+} from "@/lib/types/report";
 export type { DashboardOut } from "@/lib/types/dashboard";
 export type { PromptLogEntry } from "@/lib/types/session";
 export type { VizValue, TraceFrame, TraceResponse } from "@/lib/types/trace";
