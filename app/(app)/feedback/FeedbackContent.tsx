@@ -3,10 +3,15 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getReport, type FeedbackItem, type ReportOut, type TimelineItem } from "@/lib/api";
+import { getReport, type ReportOut } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
 import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
+import { AxisLevels } from "@/components/report/AxisLevels";
+import { FindingsSection } from "@/components/report/FindingsSection";
+import { TestResults } from "@/components/report/TestResults";
+import { exerciseHref, levelOf, nextExercise } from "@/components/report/diagnosis";
+import { noteText, timelineText } from "@/components/report/reportText";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -39,65 +44,12 @@ function integrityLabel(status: ReportOut["integrity_status"], tf: FeedbackCopy)
 
 // ── Localisation helpers ──────────────────────────────────────────────────────
 
-function fill(template: string, params: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? ""));
-}
-
 // Axis display names: backend sends snake_case keys or English labels.
 function axisLabel(key: string): string {
   return key
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-// Strength/risk notes: prefer the stable `code`; reports stored before
-// localisation only carry the English `note`, so recover the code from it.
-function legacyNoteCode(note: string): string | undefined {
-  if (/^Strong .+\.$/.test(note)) return "strong";
-  if (/^Improve your .+\.$/.test(note)) return "improve";
-  if (note.startsWith("You accepted AI code")) return "accepted_buggy_ai";
-  if (note.startsWith("Some prompts were too short")) return "short_prompts";
-  return undefined;
-}
-
-function noteText(item: FeedbackItem, axisName: string, tf: FeedbackCopy): string {
-  const code = item.code ?? legacyNoteCode(item.note);
-  const template = code ? (tf.notes as Record<string, string>)[code] : undefined;
-  if (!template) return item.note;
-  return fill(template, { axis: axisName, axisLower: axisName.toLowerCase() });
-}
-
-// Timeline: prefer `key` + numeric params; fall back to parsing the English
-// desc for reports stored before localisation was added.
-type TimelineKey = "hypothesis" | "implementation" | "explain_back";
-
-function timelineKeyOf(t: TimelineItem): TimelineKey | undefined {
-  if (t.key) return t.key;
-  if (t.step.includes("Hypothesis")) return "hypothesis";
-  if (t.step.includes("Implementation")) return "implementation";
-  if (t.step.includes("Explain")) return "explain_back";
-  return undefined;
-}
-
-function timelineText(t: TimelineItem, tf: FeedbackCopy): { step: string; title: string; desc: string } {
-  const key = timelineKeyOf(t);
-  if (!key) return { step: t.step, title: t.title, desc: t.desc };
-  let desc = t.desc;
-  if (key === "hypothesis") {
-    desc = t.active ? tf.timelineDesc.hypothesisYes : tf.timelineDesc.hypothesisNo;
-  } else if (key === "implementation") {
-    if (!t.active) {
-      desc = tf.timelineDesc.noTests;
-    } else {
-      const pct = t.coverage_pct ?? Number(t.desc.match(/(\d+)%/)?.[1] ?? NaN);
-      desc = Number.isFinite(pct) ? fill(tf.timelineDesc.coverage, { pct }) : t.desc;
-    }
-  } else {
-    const score = t.explain_score ?? Number(t.desc.match(/(\d+)\s*\/\s*20/)?.[1] ?? NaN);
-    desc = Number.isFinite(score) ? fill(tf.timelineDesc.explain, { score }) : t.desc;
-  }
-  return { step: tf.timelineSteps[key], title: tf.timelineTitles[key], desc };
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -183,10 +135,33 @@ export function FeedbackContent() {
   const radarData = axisPctEntries.map(([key, pct]) => ({ label: axisName(key), value: pct }));
 
   // "Session pulse" from real timeline numbers only (no fabricated metrics).
-  const implItem = report.timeline.find((t) => timelineKeyOf(t) === "implementation");
-  const explainItem = report.timeline.find((t) => timelineKeyOf(t) === "explain_back");
-  const hypoItem = report.timeline.find((t) => timelineKeyOf(t) === "hypothesis");
+  const implItem = report.timeline.find((t) => t.key === "implementation");
+  const explainItem = report.timeline.find((t) => t.key === "explain_back");
+  const hypoItem = report.timeline.find((t) => t.key === "hypothesis");
   const pulse = PULSE_COPY[locale];
+
+  // Engine v2 levels; `undefined` on older reports, which keep the 0-20 / % display.
+  const understandingLevel = levelOf(report, "understanding");
+  const understandingName =
+    understandingLevel === undefined || understandingLevel === null
+      ? undefined
+      : tf.levelNames[understandingLevel];
+  const explainPulse =
+    understandingLevel === null
+      ? pulse.na
+      : understandingName ??
+        (explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na);
+  const diagnosis = report.feedback.diagnosis;
+  const findingAxisName = (axis: string) => (axis === "overall" ? tf.overallAxis : axisName(axis));
+  const nextCode = nextExercise(report);
+
+  const axisRows = axisPctEntries.map(([key, pct]) => ({
+    key,
+    label: axisName(key),
+    pct,
+    level: levelOf(report, key),
+    naReason: notApplicable[key] ? tf.naReasons[notApplicable[key]] : undefined,
+  }));
 
   return (
     <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
@@ -260,7 +235,7 @@ export function FeedbackContent() {
             {pulse.title}
           </h3>
           <PulseRow label={pulse.coverage} value={implItem?.coverage_pct != null ? `${Math.round(implItem.coverage_pct)}%` : pulse.na} />
-          <PulseRow label={pulse.explain} value={explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na} />
+          <PulseRow label={pulse.explain} value={explainPulse} />
           <PulseRow label={pulse.hypothesis} value={hypoItem ? (hypoItem.active ? pulse.yes : pulse.no) : pulse.na} />
         </div>
 
@@ -269,37 +244,10 @@ export function FeedbackContent() {
           <h3 className="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             {tf.byAxis}
           </h3>
-          {axisPctEntries.map(([key, pct]) => {
-            const label = axisName(key);
-            const isNull = pct === null;
-            return (
-              <div key={key}>
-                <div className="mb-2 flex justify-between font-label-mono text-label-mono">
-                  <span>{label}</span>
-                  {isNull ? (
-                    <span className="text-on-surface-variant/40">{tf.naLabel}</span>
-                  ) : (
-                    <span className="text-primary">{Math.round(pct)}%</span>
-                  )}
-                </div>
-                {isNull ? (
-                  <>
-                    <div className="h-1.5 w-full bg-surface-container-highest opacity-30" />
-                    {notApplicable[key] && (
-                      <p className="mt-1 text-xs text-on-surface-variant/60">{tf.naReasons[notApplicable[key]]}</p>
-                    )}
-                  </>
-                ) : (
-                  <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">
-                    <div
-                      className="animate-progress h-full bg-primary"
-                      style={{ ["--final-width" as string]: `${pct}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <AxisLevels
+            rows={axisRows}
+            copy={{ naLabel: tf.naLabel, levelNames: tf.levelNames, levelAria: tf.levelAria }}
+          />
         </div>
       </div>
 
@@ -312,7 +260,7 @@ export function FeedbackContent() {
           <div className="absolute bottom-0 left-4 top-0 w-px bg-primary/20" />
           <div className="space-y-8">
             {report.timeline.map((t) => {
-              const text = timelineText(t, tf);
+              const text = timelineText(t, tf, understandingName);
               return (
                 <div key={t.step} className="relative pl-12">
                   <div
@@ -340,58 +288,97 @@ export function FeedbackContent() {
         </div>
       </section>
 
-      {/* Strengths + risks */}
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Strengths */}
-        <div className="border border-primary/20 bg-primary/5 p-7">
-          <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
-            {tf.strengthsEyebrow}
-          </span>
-          <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.strengthsTitle}</h3>
-          {report.feedback.strengths.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">{tf.noStrengths}</p>
-          ) : (
-            <ul className="space-y-4">
-              {report.feedback.strengths.map((s, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Sym name="verified" className="mt-0.5 text-primary" />
-                  <div>
-                    <p className="font-medium">{axisName(s.axis)}</p>
-                    <p className="text-sm text-on-surface-variant">{noteText(s, axisName(s.axis), tf)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {/* Diagnosis findings (engine v2), else the older strengths + risks lists */}
+      {diagnosis ? (
+        <FindingsSection
+          diagnosis={diagnosis}
+          axisName={findingAxisName}
+          copy={{
+            severityNames: tf.severityNames,
+            findingFields: tf.findingFields,
+            openExercise: tf.openExercise,
+            risksEyebrow: tf.risksEyebrow,
+            risksTitle: tf.risksTitle,
+            noRisks: tf.noRisks,
+            strengthsEyebrow: tf.strengthsEyebrow,
+            strengthsTitle: tf.strengthsTitle,
+            noStrengths: tf.noStrengths,
+          }}
+        />
+      ) : (
+        <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Strengths */}
+          <div className="border border-primary/20 bg-primary/5 p-7">
+            <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
+              {tf.strengthsEyebrow}
+            </span>
+            <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.strengthsTitle}</h3>
+            {report.feedback.strengths.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">{tf.noStrengths}</p>
+            ) : (
+              <ul className="space-y-4">
+                {report.feedback.strengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Sym name="verified" className="mt-0.5 text-primary" />
+                    <div>
+                      <p className="font-medium">{axisName(s.axis)}</p>
+                      <p className="text-sm text-on-surface-variant">{noteText(s, axisName(s.axis), tf)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-        {/* Risks / focus areas */}
-        <div className="border border-error/20 bg-error/5 p-7">
-          <span className="font-label-caps text-label-caps uppercase tracking-widest text-error">
-            {tf.risksEyebrow}
-          </span>
-          <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.risksTitle}</h3>
-          {report.feedback.risks.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">{tf.noRisks}</p>
-          ) : (
-            <ul className="space-y-4">
-              {report.feedback.risks.map((r, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Sym name="science" className="mt-0.5 text-error" />
-                  <div>
-                    <p className="font-medium">{axisName(r.axis)}</p>
-                    <p className="text-sm text-on-surface-variant">{noteText(r, axisName(r.axis), tf)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* Risks / focus areas */}
+          <div className="border border-error/20 bg-error/5 p-7">
+            <span className="font-label-caps text-label-caps uppercase tracking-widest text-error">
+              {tf.risksEyebrow}
+            </span>
+            <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.risksTitle}</h3>
+            {report.feedback.risks.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">{tf.noRisks}</p>
+            ) : (
+              <ul className="space-y-4">
+                {report.feedback.risks.map((r, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Sym name="science" className="mt-0.5 text-error" />
+                    <div>
+                      <p className="font-medium">{axisName(r.axis)}</p>
+                      <p className="text-sm text-on-surface-variant">{noteText(r, axisName(r.axis), tf)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {report.feedback.submit_tests && (
+        <TestResults
+          tests={report.feedback.submit_tests}
+          copy={{
+            testsTitle: tf.testsTitle,
+            testsSummary: tf.testsSummary,
+            testsSummaryNoHidden: tf.testsSummaryNoHidden,
+            failedGroups: tf.failedGroups,
+            categoryNames: tf.categoryNames,
+            allPassed: tf.allPassed,
+            showMoreFailures: tf.showMoreFailures,
+            hiddenTag: tf.hiddenTag,
+            visibleTag: tf.visibleTag,
+            inputLabel: tf.inputLabel,
+            expectedLabel: tf.expectedLabel,
+            actualLabel: tf.actualLabel,
+            errorLabel: tf.errorLabel,
+          }}
+        />
+      )}
 
       <div className="flex flex-wrap gap-4">
         <Link
-          href="/workspace"
+          href={nextCode ? exerciseHref(nextCode) : "/workspace"}
           className="flex cursor-pointer items-center gap-2 bg-primary px-6 py-3 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
         >
           {tf.nextChallenge} <Sym name="arrow_forward" className="text-[16px]" />
