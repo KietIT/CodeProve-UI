@@ -298,3 +298,20 @@ test('the feedback page no longer parses English notes or timeline text', () => 
     assert.doesNotMatch(src, /legacyNoteCode|RegExp|\.match\(|\.test\(|\.includes\(/, file);
   }
 });
+
+test('the implementation step shows the submit pass ratio when the suite ran at submit', () => {
+  const impl = { key: 'implementation', coverage_pct: 12, step: 's', title: 't', desc: 'Passed 1/8 tests at submit.', active: true };
+  const submit = { passed: 1, total: 8, hidden_passed: 0, hidden_total: 6, failed_categories: ['edge'] };
+  assert.equal(timelineText(impl, vf, undefined, submit).desc, 'Pass 1/8 test khi nộp.');
+  assert.equal(timelineText(impl, appContent.en.feedback, undefined, submit).desc, 'Passed 1/8 tests at submit.');
+  // Older sessions without a suite keep the best-coverage line.
+  assert.equal(timelineText(impl, vf).desc, 'Coverage tốt nhất 12%.');
+  assert.equal(timelineText(impl, vf, undefined, { ...submit, passed: 0, total: 0 }).desc, 'Coverage tốt nhất 12%.');
+  const inactive = { key: 'implementation', step: 's', title: 't', desc: 'd', active: false };
+  assert.equal(timelineText(inactive, vf, undefined, submit).desc, vf.timelineDesc.noTests);
+});
+
+test('the pulse label for the submit pass ratio exists in both locales', () => {
+  assert.equal(appContent.vi.feedback.submitPulse, 'Pass khi nộp');
+  assert.equal(appContent.en.feedback.submitPulse, 'Passed at submit');
+});
