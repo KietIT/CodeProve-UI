@@ -315,3 +315,12 @@ test('the pulse label for the submit pass ratio exists in both locales', () => {
   assert.equal(appContent.vi.feedback.submitPulse, 'Pass khi nộp');
   assert.equal(appContent.en.feedback.submitPulse, 'Passed at submit');
 });
+
+test('the debugging N/A reason describes the rubric, not the code', () => {
+  // no_failure = no test run of the student's own code failed while working;
+  // the submit suite may still fail, so the text must not say the code never failed.
+  assert.doesNotMatch(appContent.vi.feedback.naReasons.no_failure, /không phát sinh lỗi/);
+  assert.doesNotMatch(appContent.en.feedback.naReasons.no_failure, /never failed/);
+  assert.match(appContent.vi.feedback.naReasons.no_failure, /lần chạy test/);
+  assert.match(appContent.en.feedback.naReasons.no_failure, /test run/);
+});

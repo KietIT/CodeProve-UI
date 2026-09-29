@@ -166,7 +166,7 @@ export const appContent = {
       byAxis: "Kết quả theo trục",
       naLabel: "Không áp dụng",
       naReasons: {
-        no_failure: "Code của bạn không phát sinh lỗi nên không có gì để debug.",
+        no_failure: "Không có lần chạy test nào thất bại trong lúc làm bài, nên trục này không được chấm.",
         no_ai_use: "Bạn không dùng Ciel trong lượt này.",
         no_ai_code: "Ciel không đưa code nào để bạn kiểm chứng.",
       },
@@ -395,7 +395,7 @@ export const appContent = {
       byAxis: "Performance by axis",
       naLabel: "Not applicable",
       naReasons: {
-        no_failure: "Your code never failed, so there was nothing to debug.",
+        no_failure: "No test run failed while you worked, so this axis was not scored.",
         no_ai_use: "You didn't use Ciel in this attempt.",
         no_ai_code: "Ciel gave you no code to verify.",
       },
