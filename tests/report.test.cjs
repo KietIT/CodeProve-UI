@@ -1,7 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const ts = require('typescript');
+
+// Resolve the "@/..." alias to the project root, matching tests/ui.test.cjs, so
+// components importing shared UI through the alias load in this harness.
+const Module = require('node:module');
+const origResolve = Module._resolveFilename;
+Module._resolveFilename = function (request, ...rest) {
+  if (request.startsWith('@/')) request = path.join(process.cwd(), request.slice(2));
+  return origResolve.call(this, request, ...rest);
+};
 
 // Transpile TS on require, matching tests/ui.test.cjs. Type-only imports are elided.
 for (const ext of ['.ts', '.tsx']) {
@@ -149,4 +159,62 @@ test('AxisLevels keeps the percentage bar for a report without levels', () => {
   const html = renderAxes([{ key: 'testing', label: 'Kiểm thử', pct: 62.5, level: undefined }]);
   assert.match(html, /63%/);
   assert.doesNotMatch(html, /data-filled/);
+});
+
+const { FindingCard } = require('../components/report/FindingCard.tsx');
+const { FindingsSection } = require('../components/report/FindingsSection.tsx');
+
+const vf = appContent.vi.feedback;
+const findingCopy = { severityNames: vf.severityNames, findingFields: vf.findingFields, openExercise: vf.openExercise };
+const sectionCopy = {
+  ...findingCopy,
+  strengthsEyebrow: vf.strengthsEyebrow, strengthsTitle: vf.strengthsTitle, noStrengths: vf.noStrengths,
+  risksEyebrow: vf.risksEyebrow, risksTitle: vf.risksTitle, noRisks: vf.noRisks,
+};
+const renderSection = (findings) => render(React.createElement(FindingsSection, {
+  diagnosis: { version: 1, locale: 'vi', findings }, axisName: (a) => `axis:${a}`, copy: sectionCopy,
+}));
+
+test('FindingsSection lists risks before strengths, keeping the backend order', () => {
+  const html = renderSection([
+    finding('explain_strong', 'strength', { text: { ...text, what_happened: 'S1' } }),
+    finding('bug_not_fixed', 'risk', { text: { ...text, what_happened: 'R1' } }),
+    finding('no_hypothesis', 'risk', { text: { ...text, what_happened: 'R2' } }),
+  ]);
+  const at = (s) => html.indexOf(s);
+  assert.ok(at('R1') > -1 && at('R1') < at('R2') && at('R2') < at('S1'));
+  assert.ok(at(vf.risksTitle) < at(vf.strengthsTitle));
+});
+
+test('FindingsSection shows the empty lines when a group has no findings', () => {
+  const html = renderSection([finding('bug_not_fixed', 'risk')]);
+  assert.match(html, new RegExp(vf.noStrengths));
+  assert.doesNotMatch(html, new RegExp(vf.noRisks));
+});
+
+test('FindingCard shows the axis, the severity chip, the four headings and the exercise link', () => {
+  const f = finding('hidden_edge_failed', 'risk', { severity: 'high', next_exercise: 'CP-105' });
+  const html = render(React.createElement(FindingCard, { finding: f, axisLabel: 'Kiểm thử', copy: findingCopy }));
+  assert.match(html, /Kiểm thử/);
+  assert.match(html, /Mức độ cao/);
+  for (const heading of Object.values(vf.findingFields)) assert.match(html, new RegExp(heading));
+  assert.match(html, /href="\/solve\?id=CP-105"/);
+  assert.match(html, /Mở bài CP-105/);
+});
+
+test('FindingCard has no severity chip for a strength and no link without next_exercise', () => {
+  const html = render(React.createElement(FindingCard, { finding: finding('quick_fix', 'strength'), axisLabel: 'Gỡ lỗi', copy: findingCopy }));
+  assert.doesNotMatch(html, /Mức độ/);
+  assert.doesNotMatch(html, /href=/);
+});
+
+test('FindingCard renders backend text as text, never as HTML', () => {
+  const evil = '<script>alert(1)</script>';
+  const f = finding('explain_shallow', 'risk', { text: { ...text, what_happened: evil } });
+  const html = render(React.createElement(FindingCard, { finding: f, axisLabel: 'x', copy: findingCopy }));
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(html, /&lt;script&gt;/);
+  for (const file of ['components/report/FindingCard.tsx', 'components/report/FindingsSection.tsx']) {
+    assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /dangerouslySetInnerHTML/);
+  }
 });

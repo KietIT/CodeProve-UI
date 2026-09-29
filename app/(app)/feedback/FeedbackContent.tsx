@@ -8,7 +8,8 @@ import { Sym } from "@/components/app/AppChrome";
 import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
 import { AxisLevels } from "@/components/report/AxisLevels";
-import { fill, levelOf } from "@/components/report/diagnosis";
+import { FindingsSection } from "@/components/report/FindingsSection";
+import { exerciseHref, fill, levelOf, nextExercise } from "@/components/report/diagnosis";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -204,6 +205,10 @@ export function FeedbackContent() {
       ? pulse.na
       : understandingName ??
         (explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na);
+  const diagnosis = report.feedback.diagnosis;
+  const findingAxisName = (axis: string) => (axis === "overall" ? tf.overallAxis : axisName(axis));
+  const nextCode = nextExercise(report);
+
   const axisRows = axisPctEntries.map(([key, pct]) => ({
     key,
     label: axisName(key),
@@ -337,58 +342,76 @@ export function FeedbackContent() {
         </div>
       </section>
 
-      {/* Strengths + risks */}
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Strengths */}
-        <div className="border border-primary/20 bg-primary/5 p-7">
-          <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
-            {tf.strengthsEyebrow}
-          </span>
-          <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.strengthsTitle}</h3>
-          {report.feedback.strengths.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">{tf.noStrengths}</p>
-          ) : (
-            <ul className="space-y-4">
-              {report.feedback.strengths.map((s, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Sym name="verified" className="mt-0.5 text-primary" />
-                  <div>
-                    <p className="font-medium">{axisName(s.axis)}</p>
-                    <p className="text-sm text-on-surface-variant">{noteText(s, axisName(s.axis), tf)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      {/* Diagnosis findings (engine v2), else the older strengths + risks lists */}
+      {diagnosis ? (
+        <FindingsSection
+          diagnosis={diagnosis}
+          axisName={findingAxisName}
+          copy={{
+            severityNames: tf.severityNames,
+            findingFields: tf.findingFields,
+            openExercise: tf.openExercise,
+            risksEyebrow: tf.risksEyebrow,
+            risksTitle: tf.risksTitle,
+            noRisks: tf.noRisks,
+            strengthsEyebrow: tf.strengthsEyebrow,
+            strengthsTitle: tf.strengthsTitle,
+            noStrengths: tf.noStrengths,
+          }}
+        />
+      ) : (
+        <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Strengths */}
+          <div className="border border-primary/20 bg-primary/5 p-7">
+            <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
+              {tf.strengthsEyebrow}
+            </span>
+            <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.strengthsTitle}</h3>
+            {report.feedback.strengths.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">{tf.noStrengths}</p>
+            ) : (
+              <ul className="space-y-4">
+                {report.feedback.strengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Sym name="verified" className="mt-0.5 text-primary" />
+                    <div>
+                      <p className="font-medium">{axisName(s.axis)}</p>
+                      <p className="text-sm text-on-surface-variant">{noteText(s, axisName(s.axis), tf)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-        {/* Risks / focus areas */}
-        <div className="border border-error/20 bg-error/5 p-7">
-          <span className="font-label-caps text-label-caps uppercase tracking-widest text-error">
-            {tf.risksEyebrow}
-          </span>
-          <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.risksTitle}</h3>
-          {report.feedback.risks.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">{tf.noRisks}</p>
-          ) : (
-            <ul className="space-y-4">
-              {report.feedback.risks.map((r, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <Sym name="science" className="mt-0.5 text-error" />
-                  <div>
-                    <p className="font-medium">{axisName(r.axis)}</p>
-                    <p className="text-sm text-on-surface-variant">{noteText(r, axisName(r.axis), tf)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* Risks / focus areas */}
+          <div className="border border-error/20 bg-error/5 p-7">
+            <span className="font-label-caps text-label-caps uppercase tracking-widest text-error">
+              {tf.risksEyebrow}
+            </span>
+            <h3 className="mb-5 mt-1 font-headline-lg-mobile text-headline-lg-mobile">{tf.risksTitle}</h3>
+            {report.feedback.risks.length === 0 ? (
+              <p className="text-sm text-on-surface-variant">{tf.noRisks}</p>
+            ) : (
+              <ul className="space-y-4">
+                {report.feedback.risks.map((r, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Sym name="science" className="mt-0.5 text-error" />
+                    <div>
+                      <p className="font-medium">{axisName(r.axis)}</p>
+                      <p className="text-sm text-on-surface-variant">{noteText(r, axisName(r.axis), tf)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex flex-wrap gap-4">
         <Link
-          href="/workspace"
+          href={nextCode ? exerciseHref(nextCode) : "/workspace"}
           className="flex cursor-pointer items-center gap-2 bg-primary px-6 py-3 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
         >
           {tf.nextChallenge} <Sym name="arrow_forward" className="text-[16px]" />
