@@ -1,8 +1,14 @@
 import { apiFetch } from "./client";
-import type { ReportOut } from "@/lib/types/report";
+import type { ReportOut, SubmitSummary } from "@/lib/types/report";
+
+export type SubmitOut = {
+  questions: string[];
+  /** Submit-suite counts; `null` when the exercise has no suite. */
+  tests?: SubmitSummary | null;
+};
 
 export const submitAttempt = (id: number, locale: string = "en") =>
-  apiFetch<{ questions: string[] }>(`/attempts/${id}/submit?locale=${locale}`, { method: "POST" });
+  apiFetch<SubmitOut>(`/attempts/${id}/submit?locale=${locale}`, { method: "POST" });
 
 export const explainBack = (
   id: number,
