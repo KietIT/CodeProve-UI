@@ -81,3 +81,30 @@ test('exerciseHref opens the solve page like the level list does', () => {
   // The solve page lives at /solve (app/solve/page.tsx); /workspace/solve would hit /workspace/[level] and 404.
   assert.deepEqual(exerciseHref('CP-105'), { pathname: '/solve', query: { id: 'CP-105' } });
 });
+
+const { appContent } = require('../lib/appContent.ts');
+
+// Nested key paths, so vi and en can be compared structurally.
+function keyPaths(value, prefix = '') {
+  if (value === null || typeof value !== 'object') return [prefix];
+  return Object.keys(value).flatMap((k) => keyPaths(value[k], prefix ? `${prefix}.${k}` : k)).sort();
+}
+
+test('feedback copy has the same keys in vi and en', () => {
+  assert.deepEqual(keyPaths(appContent.vi.feedback), keyPaths(appContent.en.feedback));
+});
+
+test('feedback copy covers levels, severities, categories, finding fields and tests', () => {
+  for (const locale of ['vi', 'en']) {
+    const f = appContent[locale].feedback;
+    assert.equal(f.levelNames.length, 4, locale);
+    assert.deepEqual(Object.keys(f.severityNames).sort(), ['high', 'low', 'medium']);
+    assert.deepEqual(Object.keys(f.categoryNames).sort(), ['boundary', 'edge', 'error', 'happy', 'uncategorized']);
+    assert.deepEqual(Object.keys(f.findingFields).sort(), ['how_to_improve', 'try_next', 'what_happened', 'why_it_matters']);
+    assert.match(f.openExercise, /\{code\}/);
+    assert.match(f.testsSummary, /\{passed\}.*\{total\}.*\{hidden_passed\}.*\{hidden_total\}/);
+    assert.match(f.failedGroups, /\{categories\}/);
+  }
+  assert.deepEqual([...appContent.vi.feedback.levelNames], ['Chưa đạt', 'Cơ bản', 'Khá', 'Tốt']);
+  assert.deepEqual([...appContent.en.feedback.levelNames], ['Not yet', 'Basic', 'Good', 'Strong']);
+});
