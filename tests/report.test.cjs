@@ -108,3 +108,45 @@ test('feedback copy covers levels, severities, categories, finding fields and te
   assert.deepEqual([...appContent.vi.feedback.levelNames], ['Chưa đạt', 'Cơ bản', 'Khá', 'Tốt']);
   assert.deepEqual([...appContent.en.feedback.levelNames], ['Not yet', 'Basic', 'Good', 'Strong']);
 });
+
+const React = require('react');
+const { renderToStaticMarkup: render } = require('react-dom/server');
+const { AxisLevels } = require('../components/report/AxisLevels.tsx');
+const { fill } = require('../components/report/diagnosis.ts');
+
+const levelCopy = {
+  naLabel: 'Không áp dụng',
+  levelNames: appContent.vi.feedback.levelNames,
+  levelAria: appContent.vi.feedback.levelAria,
+};
+const renderAxes = (rows) => render(React.createElement(AxisLevels, { rows, copy: levelCopy }));
+const filledCount = (html) => (html.match(/data-filled="true"/g) ?? []).length;
+
+test('fill replaces named placeholders and blanks unknown ones', () => {
+  assert.equal(fill('Mở bài {code}', { code: 'CP-105' }), 'Mở bài CP-105');
+  assert.equal(fill('{a}-{b}', { a: 1 }), '1-');
+});
+
+test('AxisLevels shows the level label and fills one segment per level', () => {
+  const html = renderAxes([{ key: 'understanding', label: 'Thấu hiểu', pct: 66.7, level: 2 }]);
+  assert.match(html, /Khá/);
+  assert.equal(filledCount(html), 2);
+  assert.match(html, /aria-label="Thấu hiểu: Khá \(2\/3\)"/);
+  assert.doesNotMatch(html, /%/); // no decimals once levels exist
+});
+
+test('AxisLevels tells level 0 apart from not applicable', () => {
+  const zero = renderAxes([{ key: 'testing', label: 'Kiểm thử', pct: 0, level: 0 }]);
+  assert.match(zero, /Chưa đạt/);
+  assert.equal(filledCount(zero), 0);
+  const na = renderAxes([{ key: 'debugging', label: 'Gỡ lỗi', pct: null, level: null, naReason: 'Không có gì để debug.' }]);
+  assert.match(na, /Không áp dụng/);
+  assert.match(na, /Không có gì để debug\./);
+  assert.doesNotMatch(na, /data-filled/);
+});
+
+test('AxisLevels keeps the percentage bar for a report without levels', () => {
+  const html = renderAxes([{ key: 'testing', label: 'Kiểm thử', pct: 62.5, level: undefined }]);
+  assert.match(html, /63%/);
+  assert.doesNotMatch(html, /data-filled/);
+});

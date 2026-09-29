@@ -7,6 +7,8 @@ import { getReport, type FeedbackItem, type ReportOut, type TimelineItem } from 
 import { Sym } from "@/components/app/AppChrome";
 import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
+import { AxisLevels } from "@/components/report/AxisLevels";
+import { fill, levelOf } from "@/components/report/diagnosis";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -38,10 +40,6 @@ function integrityLabel(status: ReportOut["integrity_status"], tf: FeedbackCopy)
 }
 
 // ── Localisation helpers ──────────────────────────────────────────────────────
-
-function fill(template: string, params: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? ""));
-}
 
 // Axis display names: backend sends snake_case keys or English labels.
 function axisLabel(key: string): string {
@@ -80,7 +78,12 @@ function timelineKeyOf(t: TimelineItem): TimelineKey | undefined {
   return undefined;
 }
 
-function timelineText(t: TimelineItem, tf: FeedbackCopy): { step: string; title: string; desc: string } {
+// `explainLevel` is the understanding level name (engine v2); it replaces the x/20 score.
+function timelineText(
+  t: TimelineItem,
+  tf: FeedbackCopy,
+  explainLevel?: string,
+): { step: string; title: string; desc: string } {
   const key = timelineKeyOf(t);
   if (!key) return { step: t.step, title: t.title, desc: t.desc };
   let desc = t.desc;
@@ -93,6 +96,8 @@ function timelineText(t: TimelineItem, tf: FeedbackCopy): { step: string; title:
       const pct = t.coverage_pct ?? Number(t.desc.match(/(\d+)%/)?.[1] ?? NaN);
       desc = Number.isFinite(pct) ? fill(tf.timelineDesc.coverage, { pct }) : t.desc;
     }
+  } else if (explainLevel) {
+    desc = fill(tf.timelineDesc.explainLevel, { level: explainLevel });
   } else {
     const score = t.explain_score ?? Number(t.desc.match(/(\d+)\s*\/\s*20/)?.[1] ?? NaN);
     desc = Number.isFinite(score) ? fill(tf.timelineDesc.explain, { score }) : t.desc;
@@ -188,6 +193,25 @@ export function FeedbackContent() {
   const hypoItem = report.timeline.find((t) => timelineKeyOf(t) === "hypothesis");
   const pulse = PULSE_COPY[locale];
 
+  // Engine v2 levels; `undefined` on older reports, which keep the 0-20 / % display.
+  const understandingLevel = levelOf(report, "understanding");
+  const understandingName =
+    understandingLevel === undefined || understandingLevel === null
+      ? undefined
+      : tf.levelNames[understandingLevel];
+  const explainPulse =
+    understandingLevel === null
+      ? pulse.na
+      : understandingName ??
+        (explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na);
+  const axisRows = axisPctEntries.map(([key, pct]) => ({
+    key,
+    label: axisName(key),
+    pct,
+    level: levelOf(report, key),
+    naReason: notApplicable[key] ? tf.naReasons[notApplicable[key]] : undefined,
+  }));
+
   return (
     <div className="mx-auto w-full max-w-container-max px-5 py-10 md:px-12">
       <header className="mb-10">
@@ -260,7 +284,7 @@ export function FeedbackContent() {
             {pulse.title}
           </h3>
           <PulseRow label={pulse.coverage} value={implItem?.coverage_pct != null ? `${Math.round(implItem.coverage_pct)}%` : pulse.na} />
-          <PulseRow label={pulse.explain} value={explainItem?.explain_score != null ? `${explainItem.explain_score}/20` : pulse.na} />
+          <PulseRow label={pulse.explain} value={explainPulse} />
           <PulseRow label={pulse.hypothesis} value={hypoItem ? (hypoItem.active ? pulse.yes : pulse.no) : pulse.na} />
         </div>
 
@@ -269,37 +293,10 @@ export function FeedbackContent() {
           <h3 className="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             {tf.byAxis}
           </h3>
-          {axisPctEntries.map(([key, pct]) => {
-            const label = axisName(key);
-            const isNull = pct === null;
-            return (
-              <div key={key}>
-                <div className="mb-2 flex justify-between font-label-mono text-label-mono">
-                  <span>{label}</span>
-                  {isNull ? (
-                    <span className="text-on-surface-variant/40">{tf.naLabel}</span>
-                  ) : (
-                    <span className="text-primary">{Math.round(pct)}%</span>
-                  )}
-                </div>
-                {isNull ? (
-                  <>
-                    <div className="h-1.5 w-full bg-surface-container-highest opacity-30" />
-                    {notApplicable[key] && (
-                      <p className="mt-1 text-xs text-on-surface-variant/60">{tf.naReasons[notApplicable[key]]}</p>
-                    )}
-                  </>
-                ) : (
-                  <div className="h-1.5 w-full overflow-hidden bg-surface-container-highest">
-                    <div
-                      className="animate-progress h-full bg-primary"
-                      style={{ ["--final-width" as string]: `${pct}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <AxisLevels
+            rows={axisRows}
+            copy={{ naLabel: tf.naLabel, levelNames: tf.levelNames, levelAria: tf.levelAria }}
+          />
         </div>
       </div>
 
@@ -312,7 +309,7 @@ export function FeedbackContent() {
           <div className="absolute bottom-0 left-4 top-0 w-px bg-primary/20" />
           <div className="space-y-8">
             {report.timeline.map((t) => {
-              const text = timelineText(t, tf);
+              const text = timelineText(t, tf, understandingName);
               return (
                 <div key={t.step} className="relative pl-12">
                   <div

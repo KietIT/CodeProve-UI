@@ -48,3 +48,8 @@ export function visibleFailures(tests?: SubmitTests): TestFailure[] {
 export function exerciseHref(code: string): { pathname: "/solve"; query: { id: string } } {
   return { pathname: "/solve", query: { id: code } };
 }
+
+/** Fills `{name}` placeholders of a copy template; unknown names become empty. */
+export function fill(template: string, params: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? ""));
+}
