@@ -21,6 +21,7 @@ import {
   submitAttempt,
   type ExerciseDetail,
   type RunResult,
+  type SubmitSummary,
 } from "@/lib/api";
 import { useCiel } from "@/hooks/useCiel";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
@@ -205,6 +206,7 @@ export function SolveWorkspace({
 
   // ── Explain-back modal state ───────────────────────────────────────────────
   const [explainQuestions, setExplainQuestions] = useState<string[] | null>(null);
+  const [submitTests, setSubmitTests] = useState<SubmitSummary | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -708,7 +710,8 @@ export function SolveWorkspace({
       } catch {
         /* telemetry flush is best-effort; ignore failures */
       }
-      const { questions } = await submitAttempt(id, locale);
+      const { questions, tests } = await submitAttempt(id, locale);
+      setSubmitTests(tests ?? null);
       setExplainQuestions(questions);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
@@ -1027,6 +1030,7 @@ export function SolveWorkspace({
         <ExplainBackModal
           attemptId={attemptIdRef.current}
           questions={explainQuestions}
+          tests={submitTests}
           onClose={() => setExplainQuestions(null)}
         />
       )}

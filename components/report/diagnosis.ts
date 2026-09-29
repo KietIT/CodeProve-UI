@@ -5,7 +5,9 @@ import type {
   Diagnosis,
   Finding,
   ReportOut,
+  SubmitSummary,
   SubmitTests,
+  TestCategory,
   TestFailure,
 } from "@/lib/types/report";
 
@@ -52,4 +54,33 @@ export function exerciseHref(code: string): { pathname: "/solve"; query: { id: s
 /** Fills `{name}` placeholders of a copy template; unknown names become empty. */
 export function fill(template: string, params: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? ""));
+}
+
+export type SubmitSummaryCopy = {
+  testsSummary: string;
+  testsSummaryNoHidden: string;
+  failedGroups: string;
+  categoryNames: Readonly<Record<TestCategory, string>>;
+};
+
+export function categoryName(
+  category: TestCategory | null,
+  names: Readonly<Record<TestCategory, string>>,
+): string {
+  return names[category ?? "uncategorized"] ?? names.uncategorized;
+}
+
+/**
+ * One-line suite result shown right after Submit: counts and failing
+ * categories only. Test inputs stay on the feedback page (P1.2 policy).
+ */
+export function submitSummaryLine(tests: SubmitSummary, copy: SubmitSummaryCopy): string {
+  const { passed, total, hidden_passed, hidden_total } = tests;
+  const counts = { passed, total, hidden_passed, hidden_total };
+  const parts = [fill(hidden_total > 0 ? copy.testsSummary : copy.testsSummaryNoHidden, counts)];
+  if (tests.failed_categories.length > 0) {
+    const categories = tests.failed_categories.map((c) => categoryName(c, copy.categoryNames)).join(", ");
+    parts.push(fill(copy.failedGroups, { categories }));
+  }
+  return parts.join(" · ");
 }

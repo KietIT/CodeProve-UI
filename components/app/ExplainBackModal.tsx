@@ -2,7 +2,8 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { explainBack } from "@/lib/api";
+import { explainBack, type SubmitSummary } from "@/lib/api";
+import { submitSummaryLine } from "@/components/report/diagnosis";
 import { Sym } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
@@ -10,13 +11,16 @@ import { appContent } from "@/lib/appContent";
 type Props = {
   attemptId: number;
   questions: string[];
+  /** Submit-suite counts from the submit response; categories only, never inputs. */
+  tests?: SubmitSummary | null;
   onClose: () => void;
 };
 
-export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
+export function ExplainBackModal({ attemptId, questions, tests, onClose }: Props) {
   const router = useRouter();
   const { locale } = useI18n();
   const tx = appContent[locale].solve.explainBack;
+  const tf = appContent[locale].feedback;
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +74,12 @@ export function ExplainBackModal({ attemptId, questions, onClose }: Props) {
             <p className="mt-1 text-sm text-on-surface-variant">
               {tx.subtitle}
             </p>
+            {tests && (
+              <p className="mt-3 flex items-center gap-2 font-label-mono text-label-mono text-on-surface">
+                <Sym name="rule" className="text-[16px] text-primary" />
+                {submitSummaryLine(tests, tf)}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}

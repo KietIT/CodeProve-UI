@@ -9,6 +9,7 @@ import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
 import { AxisLevels } from "@/components/report/AxisLevels";
 import { FindingsSection } from "@/components/report/FindingsSection";
+import { TestResults } from "@/components/report/TestResults";
 import { exerciseHref, fill, levelOf, nextExercise } from "@/components/report/diagnosis";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
@@ -407,6 +408,27 @@ export function FeedbackContent() {
             )}
           </div>
         </div>
+      )}
+
+      {report.feedback.submit_tests && (
+        <TestResults
+          tests={report.feedback.submit_tests}
+          copy={{
+            testsTitle: tf.testsTitle,
+            testsSummary: tf.testsSummary,
+            testsSummaryNoHidden: tf.testsSummaryNoHidden,
+            failedGroups: tf.failedGroups,
+            categoryNames: tf.categoryNames,
+            allPassed: tf.allPassed,
+            showMoreFailures: tf.showMoreFailures,
+            hiddenTag: tf.hiddenTag,
+            visibleTag: tf.visibleTag,
+            inputLabel: tf.inputLabel,
+            expectedLabel: tf.expectedLabel,
+            actualLabel: tf.actualLabel,
+            errorLabel: tf.errorLabel,
+          }}
+        />
       )}
 
       <div className="flex flex-wrap gap-4">

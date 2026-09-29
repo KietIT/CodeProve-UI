@@ -218,3 +218,56 @@ test('FindingCard renders backend text as text, never as HTML', () => {
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /dangerouslySetInnerHTML/);
   }
 });
+
+const { submitSummaryLine } = require('../components/report/diagnosis.ts');
+const { TestResults } = require('../components/report/TestResults.tsx');
+
+const testsCopy = {
+  testsTitle: vf.testsTitle, testsSummary: vf.testsSummary, testsSummaryNoHidden: vf.testsSummaryNoHidden,
+  failedGroups: vf.failedGroups, allPassed: vf.allPassed, showMoreFailures: vf.showMoreFailures,
+  hiddenTag: vf.hiddenTag, visibleTag: vf.visibleTag, inputLabel: vf.inputLabel,
+  expectedLabel: vf.expectedLabel, actualLabel: vf.actualLabel, errorLabel: vf.errorLabel,
+  categoryNames: vf.categoryNames,
+};
+const failure = (description, hidden, extra = {}) => ({
+  description, category: 'edge', hidden, input: `in-${description}`, expected: 'e', actual: 'a', error: null, ...extra,
+});
+const suite = (failures, extra = {}) => ({
+  passed: 6, total: 8, hidden_passed: 4, hidden_total: 6, failed_categories: ['boundary', 'edge'], failures, ...extra,
+});
+
+test('submitSummaryLine lists counts and category labels, never test inputs', () => {
+  const line = submitSummaryLine(suite([failure('secret', true)]), testsCopy);
+  assert.equal(line, 'Pass 6/8 · test ẩn 4/6 · nhóm chưa pass: giá trị biên, tình huống đặc biệt');
+  assert.doesNotMatch(line, /in-secret/);
+  const noHidden = submitSummaryLine({ passed: 3, total: 3, hidden_passed: 0, hidden_total: 0, failed_categories: [] }, testsCopy);
+  assert.equal(noHidden, 'Pass 3/3');
+});
+
+test('TestResults lists hidden failures before visible ones, with tags and details', () => {
+  const html = render(React.createElement(TestResults, {
+    tests: suite([failure('visible-case', false), failure('hidden-case', true, { actual: null, error: 'boom' })]), copy: testsCopy,
+  }));
+  assert.ok(html.indexOf('hidden-case') < html.indexOf('visible-case'));
+  assert.match(html, />test ẩn</); // the tag, not the summary line
+  assert.match(html, />test hiển thị</);
+  assert.match(html, /in-hidden-case/); // full inputs are shown on the feedback page
+  assert.match(html, /boom/);
+  assert.match(html, /tình huống đặc biệt/);
+  assert.doesNotMatch(html, /<details/);
+});
+
+test('TestResults collapses failures beyond the first three', () => {
+  const failures = ['case-1', 'case-2', 'case-3', 'case-4', 'case-5'].map((d) => failure(d, true));
+  const html = render(React.createElement(TestResults, { tests: suite(failures), copy: testsCopy }));
+  const details = html.indexOf('<details');
+  assert.ok(details > html.indexOf('case-3') && details < html.indexOf('case-4'));
+  assert.match(html, /Xem thêm 2 test chưa pass/);
+});
+
+test('TestResults says all passed when the suite is green', () => {
+  const html = render(React.createElement(TestResults, {
+    tests: suite([], { passed: 8, hidden_passed: 6, failed_categories: [] }), copy: testsCopy,
+  }));
+  assert.match(html, new RegExp(vf.allPassed));
+});
