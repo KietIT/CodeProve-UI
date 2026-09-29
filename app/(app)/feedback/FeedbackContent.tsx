@@ -139,6 +139,7 @@ export function FeedbackContent() {
   const explainItem = report.timeline.find((t) => t.key === "explain_back");
   const hypoItem = report.timeline.find((t) => t.key === "hypothesis");
   const pulse = PULSE_COPY[locale];
+  const submitTests = report.feedback.submit_tests;
 
   // Engine v2 levels; `undefined` on older reports, which keep the 0-20 / % display.
   const understandingLevel = levelOf(report, "understanding");
@@ -234,7 +235,11 @@ export function FeedbackContent() {
           <h3 className="font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             {pulse.title}
           </h3>
-          <PulseRow label={pulse.coverage} value={implItem?.coverage_pct != null ? `${Math.round(implItem.coverage_pct)}%` : pulse.na} />
+          {submitTests && submitTests.total > 0 ? (
+            <PulseRow label={tf.submitPulse} value={`${submitTests.passed}/${submitTests.total}`} />
+          ) : (
+            <PulseRow label={pulse.coverage} value={implItem?.coverage_pct != null ? `${Math.round(implItem.coverage_pct)}%` : pulse.na} />
+          )}
           <PulseRow label={pulse.explain} value={explainPulse} />
           <PulseRow label={pulse.hypothesis} value={hypoItem ? (hypoItem.active ? pulse.yes : pulse.no) : pulse.na} />
         </div>
@@ -260,7 +265,7 @@ export function FeedbackContent() {
           <div className="absolute bottom-0 left-4 top-0 w-px bg-primary/20" />
           <div className="space-y-8">
             {report.timeline.map((t) => {
-              const text = timelineText(t, tf, understandingName);
+              const text = timelineText(t, tf, understandingName, submitTests);
               return (
                 <div key={t.step} className="relative pl-12">
                   <div
@@ -355,9 +360,9 @@ export function FeedbackContent() {
         </div>
       )}
 
-      {report.feedback.submit_tests && (
+      {submitTests && (
         <TestResults
-          tests={report.feedback.submit_tests}
+          tests={submitTests}
           copy={{
             testsTitle: tf.testsTitle,
             testsSummary: tf.testsSummary,
