@@ -3,14 +3,15 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getReport, type FeedbackItem, type ReportOut, type TimelineItem } from "@/lib/api";
+import { getReport, type ReportOut } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
 import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
 import { AxisLevels } from "@/components/report/AxisLevels";
 import { FindingsSection } from "@/components/report/FindingsSection";
 import { TestResults } from "@/components/report/TestResults";
-import { exerciseHref, fill, levelOf, nextExercise } from "@/components/report/diagnosis";
+import { exerciseHref, levelOf, nextExercise } from "@/components/report/diagnosis";
+import { noteText, timelineText } from "@/components/report/reportText";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
 
@@ -49,62 +50,6 @@ function axisLabel(key: string): string {
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-// Strength/risk notes: prefer the stable `code`; reports stored before
-// localisation only carry the English `note`, so recover the code from it.
-function legacyNoteCode(note: string): string | undefined {
-  if (/^Strong .+\.$/.test(note)) return "strong";
-  if (/^Improve your .+\.$/.test(note)) return "improve";
-  if (note.startsWith("You accepted AI code")) return "accepted_buggy_ai";
-  if (note.startsWith("Some prompts were too short")) return "short_prompts";
-  return undefined;
-}
-
-function noteText(item: FeedbackItem, axisName: string, tf: FeedbackCopy): string {
-  const code = item.code ?? legacyNoteCode(item.note);
-  const template = code ? (tf.notes as Record<string, string>)[code] : undefined;
-  if (!template) return item.note;
-  return fill(template, { axis: axisName, axisLower: axisName.toLowerCase() });
-}
-
-// Timeline: prefer `key` + numeric params; fall back to parsing the English
-// desc for reports stored before localisation was added.
-type TimelineKey = "hypothesis" | "implementation" | "explain_back";
-
-function timelineKeyOf(t: TimelineItem): TimelineKey | undefined {
-  if (t.key) return t.key;
-  if (t.step.includes("Hypothesis")) return "hypothesis";
-  if (t.step.includes("Implementation")) return "implementation";
-  if (t.step.includes("Explain")) return "explain_back";
-  return undefined;
-}
-
-// `explainLevel` is the understanding level name (engine v2); it replaces the x/20 score.
-function timelineText(
-  t: TimelineItem,
-  tf: FeedbackCopy,
-  explainLevel?: string,
-): { step: string; title: string; desc: string } {
-  const key = timelineKeyOf(t);
-  if (!key) return { step: t.step, title: t.title, desc: t.desc };
-  let desc = t.desc;
-  if (key === "hypothesis") {
-    desc = t.active ? tf.timelineDesc.hypothesisYes : tf.timelineDesc.hypothesisNo;
-  } else if (key === "implementation") {
-    if (!t.active) {
-      desc = tf.timelineDesc.noTests;
-    } else {
-      const pct = t.coverage_pct ?? Number(t.desc.match(/(\d+)%/)?.[1] ?? NaN);
-      desc = Number.isFinite(pct) ? fill(tf.timelineDesc.coverage, { pct }) : t.desc;
-    }
-  } else if (explainLevel) {
-    desc = fill(tf.timelineDesc.explainLevel, { level: explainLevel });
-  } else {
-    const score = t.explain_score ?? Number(t.desc.match(/(\d+)\s*\/\s*20/)?.[1] ?? NaN);
-    desc = Number.isFinite(score) ? fill(tf.timelineDesc.explain, { score }) : t.desc;
-  }
-  return { step: tf.timelineSteps[key], title: tf.timelineTitles[key], desc };
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -190,9 +135,9 @@ export function FeedbackContent() {
   const radarData = axisPctEntries.map(([key, pct]) => ({ label: axisName(key), value: pct }));
 
   // "Session pulse" from real timeline numbers only (no fabricated metrics).
-  const implItem = report.timeline.find((t) => timelineKeyOf(t) === "implementation");
-  const explainItem = report.timeline.find((t) => timelineKeyOf(t) === "explain_back");
-  const hypoItem = report.timeline.find((t) => timelineKeyOf(t) === "hypothesis");
+  const implItem = report.timeline.find((t) => t.key === "implementation");
+  const explainItem = report.timeline.find((t) => t.key === "explain_back");
+  const hypoItem = report.timeline.find((t) => t.key === "hypothesis");
   const pulse = PULSE_COPY[locale];
 
   // Engine v2 levels; `undefined` on older reports, which keep the 0-20 / % display.

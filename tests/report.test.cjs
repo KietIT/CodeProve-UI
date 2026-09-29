@@ -271,3 +271,30 @@ test('TestResults says all passed when the suite is green', () => {
   }));
   assert.match(html, new RegExp(vf.allPassed));
 });
+
+const { noteText, timelineText } = require('../components/report/reportText.ts');
+
+test('noteText localises a known code and otherwise shows the stored note as is', () => {
+  assert.equal(noteText({ axis: 'testing', code: 'strong', note: 'Strong testing.' }, 'Kiểm thử', vf), 'Trục Kiểm thử tốt.');
+  assert.equal(noteText({ axis: 'testing', code: 'new_code', note: 'Server text.' }, 'Kiểm thử', vf), 'Server text.');
+  // No code: the English note is shown, never pattern-matched back into a code.
+  assert.equal(noteText({ axis: 'testing', note: 'Strong testing.' }, 'Kiểm thử', vf), 'Strong testing.');
+});
+
+test('timelineText builds each step from its key and shows keyless items as stored', () => {
+  const impl = { key: 'implementation', coverage_pct: 75, step: 'Step 2', title: 'T', desc: 'Passed 6/8 tests at submit.', active: true };
+  assert.deepEqual(timelineText(impl, vf), { step: vf.timelineSteps.implementation, title: vf.timelineTitles.implementation, desc: 'Coverage tốt nhất 75%.' });
+  const explain = { key: 'explain_back', explain_score: 14, step: 's', title: 't', desc: 'd', active: true };
+  assert.equal(timelineText(explain, vf).desc, 'Phần giải thích đạt 14/20.');
+  assert.equal(timelineText(explain, vf, 'Khá').desc, 'Mức giải thích: Khá.');
+  assert.equal(timelineText({ key: 'implementation', step: 's', title: 't', desc: 'd', active: false }, vf).desc, vf.timelineDesc.noTests);
+  const keyless = { step: 'Step 3 · Explain-back', title: 'Reasoning verified', desc: 'Explanation scored 12/20.', active: true };
+  assert.deepEqual(timelineText(keyless, vf), { step: keyless.step, title: keyless.title, desc: keyless.desc });
+});
+
+test('the feedback page no longer parses English notes or timeline text', () => {
+  for (const file of ['app/(app)/feedback/FeedbackContent.tsx', 'components/report/reportText.ts']) {
+    const src = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(src, /legacyNoteCode|RegExp|\.match\(|\.test\(|\.includes\(/, file);
+  }
+});
