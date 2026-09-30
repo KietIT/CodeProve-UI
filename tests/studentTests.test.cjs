@@ -16,7 +16,7 @@ Module._resolveFilename = function (request, ...rest) {
 for (const ext of ['.ts', '.tsx']) {
   require.extensions[ext] = (mod, filename) => {
     const result = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true },
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
       fileName: filename,
     });
     mod._compile(result.outputText, filename);
@@ -162,4 +162,109 @@ test('reportCounts counts written and valid tests', () => {
     reportCounts({ tests: [t(true), t(false), t(true)], categories: [], exercise_categories: [], killed: 0, total: 0, missed: [] }),
     { written: 3, valid: 2 },
   );
+});
+
+// ── Rendering (static markup) ────────────────────────────────────────────────
+const React = require('react');
+const { renderToStaticMarkup: render } = require('react-dom/server');
+const h = React.createElement;
+const { appContent } = require('../lib/appContent.ts');
+const { TestsPanel } = require('../components/studentTests/TestsPanel.tsx');
+const { StudentTestsSection } = require('../components/report/StudentTestsSection.tsx');
+
+function controller(drafts, extra = {}) {
+  const noop = () => undefined;
+  return {
+    drafts, saveState: 'saved', checks: {}, checking: [], runResults: {}, runSummary: null, running: false, error: null,
+    add: noop, remove: noop, update: noop, check: async () => undefined, run: async () => undefined, flush: async () => true,
+    ...extra,
+  };
+}
+
+const panel = (required, tests, locale = 'vi') =>
+  render(h(TestsPanel, {
+    exerciseCode: 'CP-001', required, tests, locale, copy: appContent[locale].solve.tests,
+    onBlockedPaste: () => undefined, onBlockedDrop: () => undefined,
+  }));
+
+test('TestsPanel: junior/senior see the 3-valid-tests rule, no learning mode', () => {
+  const html = panel(true, controller([draft('a')]));
+  assert.match(html, /cần ít nhất 3 test hợp lệ/);
+  assert.match(html, /Đã kiểm tra hợp lệ: 0\/3/);
+  assert.doesNotMatch(html, /Chế độ học/);
+  assert.doesNotMatch(html, /two_sum\(\[2, 7, 11, 15\], 9\)/, 'no worked example');
+});
+
+test('TestsPanel: fresher learning mode shows the worked example and missing-category hints', () => {
+  const html = panel(false, controller([draft('a')]));
+  assert.match(html, /Chế độ học/);
+  assert.match(html, /two_sum\(\[2, 7, 11, 15\], 9\)/);
+  assert.match(html, /Gợi ý cho nhóm còn thiếu/);
+  assert.match(html, /Giá trị biên:/);
+  assert.doesNotMatch(html, /Thông thường:<\/strong>/, 'happy is covered, so no hint for it');
+});
+
+test('TestsPanel: check verdicts, allow-list refusal and own-code run are shown', () => {
+  const a = draft('a');
+  const b = draft('b', { input: '__import__("os")' });
+  const c = draft('c', { input: 'add(2, 2)', expected: '5' });
+  const html = panel(true, controller([a, b, c], {
+    checks: {
+      a: { signature: testSignature(a), result: { status: 'valid', reason: null } },
+      b: { signature: testSignature(b), result: { status: 'error', reason: "name '__import__' is not allowed in a test" } },
+      c: { signature: testSignature(c), result: { status: 'wrong_expected', reason: null } },
+    },
+    runResults: { c: { signature: testSignature(c), result: { passed: false, actual: '4', error: null } } },
+    runSummary: { passed: 1, total: 2 },
+  }), 'en');
+  assert.match(html, /Valid: the reference solution gives this value/);
+  assert.match(html, /Input not allowed/);
+  assert.match(html, /name &#x27;__import__&#x27; is not allowed in a test/);
+  assert.match(html, /Wrong expected value/);
+  assert.match(html, /Your code: Fail/);
+  assert.match(html, /Your code passes 1\/2 of your tests/);
+  assert.match(html, /Checked valid: 1\/3/);
+});
+
+test('TestsPanel: add is disabled at 10 tests and rate limiting is explained', () => {
+  const list = Array.from({ length: MAX_STUDENT_TESTS }, (_, i) => draft(`k${i}`));
+  const html = panel(true, controller(list, { error: 'rate_limited' }), 'en');
+  assert.match(html, /At most 10 tests/);
+  assert.match(html, /Wait about a minute/);
+});
+
+test('StudentTestsSection: verdicts, categories, planted bugs and missed notes', () => {
+  const fb = appContent.vi.feedback;
+  const html = render(h(StudentTestsSection, {
+    report: {
+      tests: [
+        { category: 'happy', input: 'two_sum([3, 3], 6)', expected: '[0, 1]', why: 'trùng số', valid: true, reason: null },
+        { category: 'edge', input: 'two_sum([1], 1)', expected: '[0]', why: '', valid: false, reason: 'wrong_expected' },
+        { category: 'edge', input: '__import__("os")', expected: '1', why: '', valid: false, reason: "name '__import__' is not allowed in a test" },
+      ],
+      categories: ['happy'],
+      exercise_categories: ['boundary', 'edge', 'happy'],
+      killed: 2, total: 3,
+      missed: ['Quên trường hợp phần tử tự ghép với chính nó.'],
+    },
+    copy: { ...fb.studentTests, inputLabel: fb.inputLabel, expectedLabel: fb.expectedLabel, categoryNames: fb.categoryNames },
+  }));
+  assert.match(html, /1\/3 test hợp lệ/);
+  assert.match(html, /Bắt được 2\/3 lỗi cài sẵn/);
+  assert.match(html, /thông thường · đã có/);
+  assert.match(html, /giá trị biên · còn thiếu/);
+  assert.match(html, /Giá trị mong đợi không khớp/);
+  assert.match(html, /Đầu vào không được phép/);
+  assert.match(html, /Loại lỗi test chưa bắt được/);
+  assert.match(html, /Quên trường hợp phần tử tự ghép/);
+});
+
+test('StudentTestsSection: no tests and no mutants', () => {
+  const fb = appContent.en.feedback;
+  const html = render(h(StudentTestsSection, {
+    report: { tests: [], categories: [], exercise_categories: ['happy'], killed: 0, total: 0, missed: [] },
+    copy: { ...fb.studentTests, inputLabel: fb.inputLabel, expectedLabel: fb.expectedLabel, categoryNames: fb.categoryNames },
+  }));
+  assert.match(html, /You did not write any tests/);
+  assert.doesNotMatch(html, /planted bugs/);
 });

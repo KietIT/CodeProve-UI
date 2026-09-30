@@ -27,6 +27,7 @@ import {
   type ExerciseDetail,
   type RunResult,
   type SubmitSummary,
+  type TestsState,
 } from "@/lib/api";
 import { useCiel } from "@/hooks/useCiel";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
@@ -45,6 +46,9 @@ import {
   writeResume,
   type ResumeStore,
 } from "@/components/debug/locate";
+import { TestsPanel } from "@/components/studentTests/TestsPanel";
+import { hasTestsTab } from "@/components/studentTests/studentTests";
+import { useStudentTests } from "@/hooks/useStudentTests";
 import { useSessionStore } from "@/lib/stores/useSessionStore";
 import { useVisualizerStore } from "@/lib/stores/useVisualizerStore";
 import { createTelemetry } from "@/lib/telemetry";
@@ -97,7 +101,7 @@ const EDITOR_LINE_STYLE: React.CSSProperties = {
 const ATTEMPT_DURATION_MS = 45 * 60 * 1000;
 const AUTOSAVE_INTERVAL_MS = 12 * 1000;
 
-/** Per-tab storage for resuming a debug attempt; null where it is unavailable. */
+/** Per-tab storage for resuming an attempt (debug step or Tests tab); null where it is unavailable. */
 function sessionStore(): ResumeStore | null {
   try {
     return typeof window === "undefined" ? null : window.sessionStorage;
@@ -135,6 +139,39 @@ function ColResizeHandle() {
     <PanelResizeHandle className="group relative w-px flex-none bg-outline-variant/60 outline-none transition-colors data-[resize-handle-state=drag]:bg-primary data-[resize-handle-state=hover]:bg-primary/60">
       <span className="absolute inset-y-0 -left-1 -right-1 z-10" aria-hidden="true" />
     </PanelResizeHandle>
+  );
+}
+
+/** One tab of the centre header (the code file, the Tests tab). */
+function CenterTab({
+  active,
+  icon,
+  label,
+  badge,
+  onSelect,
+}: {
+  active: boolean;
+  icon: string;
+  label: string;
+  badge?: number;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onSelect}
+      className={`flex cursor-pointer items-center gap-2 border-r border-outline-variant/60 px-3 py-2.5 transition-colors sm:px-5 ${
+        active ? "bg-background text-on-surface" : "text-on-surface-variant hover:text-on-surface"
+      }`}
+    >
+      <Sym name={icon} className={`text-[16px] ${active ? "text-primary" : ""}`} />
+      <span className="font-label-mono text-label-mono">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="rounded-pill bg-primary/15 px-1.5 font-label-mono text-[11px] text-primary">{badge}</span>
+      )}
+    </button>
   );
 }
 
@@ -244,8 +281,18 @@ export function SolveWorkspace({
   const [locateSubmitting, setLocateSubmitting] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
   const [justLocated, setJustLocated] = useState(false);
-  // True while this debug attempt is remembered for a reload.
+  // True while this attempt (debug step or Tests tab) is remembered for a reload.
   const resumeActiveRef = useRef(false);
+
+  // ── Student tests (P2.3) ────────────────────────────────────────────────────
+  const [testsState, setTestsState] = useState<TestsState | null>(null);
+  const [centerTab, setCenterTab] = useState<"code" | "tests">("code");
+  const studentTests = useStudentTests({
+    attemptId,
+    initial: testsState,
+    getCode: () => editorCodeRef.current,
+  });
+  const flushStudentTests = studentTests.flush;
 
   // ── Visualizer (kept here so a trace survives the brief panel closing) ────
   const [traceCall, setTraceCall] = useState("");
@@ -297,7 +344,7 @@ export function SolveWorkspace({
     }
   });
 
-  // Keeps the debug attempt (and its snapshot counter) for a reload.
+  // Keeps the attempt (and its snapshot counter) for a reload.
   const rememberAttempt = useCallback(() => {
     const id = attemptIdRef.current;
     if (!resumeActiveRef.current || !id) return;
@@ -375,31 +422,34 @@ export function SolveWorkspace({
       const isDebug = (detail?.kind ?? initialExercise.kind) === "debug";
       setDebugState(null);
       setDebugResolved(!isDebug);
+      setTestsState(null);
+      setCenterTab("code");
       resumeActiveRef.current = false;
 
-      // A debug exercise reopens its attempt after a reload so the locate step
-      // (located or not, hints bought) is kept; other exercises start fresh.
+      // An attempt with a locate step (P2.2) or a Tests tab (P2.3) is reopened
+      // after a reload so the step, the bought hints, the saved tests and the
+      // code are kept; other exercises start fresh.
       let id: number | null = null;
       let debug: DebugState | null = null;
+      let tests: TestsState | null = null;
       let latestCode: string | null = null;
-      if (isDebug) {
-        const store = sessionStore();
-        const saved = readResume(store, code);
-        if (saved) {
-          try {
-            const state = await getAttempt(saved.attemptId, locale);
-            if (canResumeAttempt(state, code) && state.debug) {
-              id = state.id;
-              debug = state.debug;
-              latestCode = state.latest_code;
-              snapshotVersionRef.current = saved.snapshotVersion;
-            }
-          } catch {
-            // Gone or not ours any more: start a new attempt below.
+      const store = sessionStore();
+      const saved = readResume(store, code);
+      if (saved) {
+        try {
+          const state = await getAttempt(saved.attemptId, locale);
+          if (canResumeAttempt(state, code) && (state.debug || hasTestsTab(state.tests))) {
+            id = state.id;
+            debug = state.debug ?? null;
+            tests = hasTestsTab(state.tests) ? state.tests : null;
+            latestCode = state.latest_code;
+            snapshotVersionRef.current = saved.snapshotVersion;
           }
-          if (cancelled) return;
-          if (id === null) clearResume(store, code);
+        } catch {
+          // Gone or not ours any more: start a new attempt below.
         }
+        if (cancelled) return;
+        if (id === null) clearResume(store, code);
       }
 
       try {
@@ -408,25 +458,27 @@ export function SolveWorkspace({
           if (cancelled) return;
           id = resp.attempt_id;
           snapshotVersionRef.current = 0;
-          if (isDebug) {
-            try {
-              // A backend without P2.2 omits `debug`: no locate step then.
-              debug = (await getAttempt(id, locale)).debug ?? null;
-            } catch {
-              debug = null;
-            }
-            if (cancelled) return;
+          try {
+            // A backend without P2.2 / P2.3 omits `debug` / `tests`: no step, no tab.
+            const state = await getAttempt(id, locale);
+            debug = isDebug ? state.debug ?? null : null;
+            tests = hasTestsTab(state.tests) ? state.tests : null;
+          } catch {
+            debug = null;
+            tests = null;
           }
+          if (cancelled) return;
         }
         attemptIdRef.current = id;
         setAttemptId(id);
         // Fresh attempt → fresh prompt log for this session.
         startSession(id, code);
 
-        if (debug) {
+        if (debug || tests) {
           resumeActiveRef.current = true;
           rememberAttempt();
-          if (debug.located && latestCode) {
+          // A debug editor keeps the starter until the bug is located.
+          if (latestCode && (!debug || debug.located)) {
             editorCodeRef.current = latestCode;
             prevCodeLenRef.current = latestCode.length;
             lastAutosavedCodeRef.current = latestCode;
@@ -434,6 +486,7 @@ export function SolveWorkspace({
           }
         }
         setDebugState(debug);
+        setTestsState(tests);
 
         const telem = createTelemetry(id);
         telemetryRef.current = telem;
@@ -825,6 +878,8 @@ export function SolveWorkspace({
     setSubmitError(null);
     try {
       await performAutosave("submit", true);
+      // The server evaluates the saved tests: send pending edits first.
+      await flushStudentTests();
       // Flush telemetry before submitting - non-critical, so never let it block submit.
       try {
         await telemetryRef.current?.stop();
@@ -843,7 +898,7 @@ export function SolveWorkspace({
     }
     // Invoke optional external callback (used in tests / storybook).
     onSubmit?.();
-  }, [onSubmit, performAutosave, locale, t.noActiveAttempt, debugState, code]);
+  }, [onSubmit, performAutosave, flushStudentTests, locale, t.noActiveAttempt, debugState, code]);
 
   // ── Debug locate step ───────────────────────────────────────────────────────
   // After a 409 (another tab located, or the attempt moved on) the server state
@@ -943,6 +998,9 @@ export function SolveWorkspace({
   const locating = debugStep(debugState) === "locate";
   const hintLocked = !debugResolved || locating;
   const actionsLocked = !debugResolved || locating;
+  // The Tests tab opens with the editor (after the locate step on debug exercises).
+  const testsTabShown = testsState !== null && starterReady && debugResolved && !locating;
+  const showTests = testsTabShown && centerTab === "tests";
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -1048,12 +1106,25 @@ export function SolveWorkspace({
         <Panel id="editor" order={2} minSize={30}>
         <div className="flex h-full flex-col overflow-hidden">
           <div className="flex flex-none items-center justify-between border-b border-outline-variant/60 bg-surface-container-low pr-4">
+            {testsTabShown ? (
+              <div className="flex" role="tablist" aria-label={t.tests.title}>
+                <CenterTab active={!showTests} icon="code" label={exercise.filename} onSelect={() => setCenterTab("code")} />
+                <CenterTab
+                  active={showTests}
+                  icon="checklist"
+                  label={t.tests.tab}
+                  badge={studentTests.drafts.length}
+                  onSelect={() => setCenterTab("tests")}
+                />
+              </div>
+            ) : (
             <div className="flex">
               <div className="flex items-center gap-2 border-r border-outline-variant/60 bg-background px-5 py-2.5">
                 <Sym name={locating ? "lock" : "code"} className="text-[16px] text-primary" />
                 <span className="font-label-mono text-label-mono">{exercise.filename}</span>
               </div>
             </div>
+            )}
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className={`flex items-center gap-1.5 font-label-mono text-label-mono ${
@@ -1212,6 +1283,24 @@ export function SolveWorkspace({
                 )}
               </div>
             </div>
+            )}
+            {/* Tests tab, drawn over the editor so the editor stays mounted (undo history, scroll). */}
+            {showTests && testsState && (
+              <TestsPanel
+                exerciseCode={exercise.id}
+                required={testsState.required}
+                tests={studentTests}
+                locale={locale}
+                copy={t.tests}
+                onBlockedPaste={handleBlockedPaste}
+                onBlockedDrop={handleBlockedDrop}
+              />
+            )}
+            {showTests && pasteBlocked && (
+              <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-md border border-warning/40 bg-warning/15 px-3 py-1.5 font-label-mono text-label-mono text-warning shadow-lg backdrop-blur-sm">
+                <Sym name="content_paste_off" className="mr-1 align-middle text-[15px]" />
+                {t.pasteDisabled}
+              </div>
             )}
           </div>
 
