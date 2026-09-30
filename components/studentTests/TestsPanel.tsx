@@ -163,7 +163,7 @@ export function TestsPanel({
           )}
         </section>
 
-        <FormatHelp copy={copy} example={example} defaultOpen={!required} />
+        <FormatHelp copy={copy} defaultOpen={!required} />
 
         {drafts.length === 0 ? (
           <p className="text-sm text-on-surface-variant">{copy.empty}</p>
@@ -271,7 +271,8 @@ function LearningMode({
   );
 }
 
-function FormatHelp({ copy, example, defaultOpen }: { copy: TestsCopy; example: WorkedExample | null; defaultOpen: boolean }) {
+/** Format help with neutral names only: an example matching a real exercise would hand out a valid test. */
+function FormatHelp({ copy, defaultOpen }: { copy: TestsCopy; defaultOpen: boolean }) {
   return (
     <details open={defaultOpen} className="group border border-outline-variant/50 p-4">
       <summary className="flex cursor-pointer list-none items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-on-surface">
@@ -280,9 +281,10 @@ function FormatHelp({ copy, example, defaultOpen }: { copy: TestsCopy; example: 
       </summary>
       <div className="mt-3 space-y-2 text-sm leading-relaxed text-on-surface">
         <p>{copy.formatInput}</p>
-        <Code>{example ? example.input : "two_sum([3, 3], 6)"}</Code>
+        <Code>{copy.formatInputExample}</Code>
         <p>{copy.formatClass}</p>
-        <Code>{"(lambda c: (c.put(1, 1), c.get(1))[-1])(LRUCache(2))"}</Code>
+        <Code>{copy.formatClassExample}</Code>
+        <p className="text-on-surface-variant">{copy.formatRename}</p>
         <p>{copy.formatExpected}</p>
         <p className="text-on-surface-variant">{fill(copy.formatRules, { max: MAX_TEST_INPUT })}</p>
       </div>
