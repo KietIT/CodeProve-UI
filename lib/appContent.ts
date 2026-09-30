@@ -150,6 +150,7 @@ export const appContent = {
         failed: "Không ghi được. Vui lòng thử lại.",
         refused: "Hãy chọn ít nhất một dòng, và chỉ những dòng bạn thật sự nghi ngờ.",
         cielLocked: "Hãy tự tìm dòng lỗi trước. Gợi ý của bài sẽ mở sau bước tìm lỗi.",
+        cielHintOnly: "Ciel sẽ chỉ gợi ý cách tìm lỗi cho tới khi bạn chọn đúng dòng lỗi.",
       },
     },
     axes: {
@@ -429,6 +430,7 @@ export const appContent = {
         failed: "Could not save. Please try again.",
         refused: "Select at least one line, and only the lines you suspect.",
         cielLocked: "Find the buggy line yourself first. The exercise hint unlocks after this step.",
+        cielHintOnly: "Until you find the buggy line, Ciel will only give hints on how to find it.",
       },
     },
     axes: {

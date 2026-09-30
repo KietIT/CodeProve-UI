@@ -22,6 +22,8 @@ export type CielPanelProps = {
   onSuggestionClick: (suggestion: string) => void;
   suggestions: readonly string[];
   labels: CielPanelLabels;
+  /** One line shown above the input, e.g. Ciel's hint-only rule on a debug exercise. */
+  notice?: string;
 };
 
 /**
@@ -40,6 +42,7 @@ export function CielPanel({
   onSuggestionClick,
   suggestions,
   labels,
+  notice,
 }: CielPanelProps) {
   return (
     <aside className="flex h-full flex-col border-l border-outline-variant/60 bg-surface-container-low">
@@ -59,6 +62,12 @@ export function CielPanel({
         />
 
         <div className="border-t border-outline-variant/60 p-4">
+          {notice && (
+            <p className="mb-2 flex items-start gap-1.5 text-xs leading-snug text-on-surface-variant">
+              <Sym name="info" className="mt-px text-[14px] text-primary" />
+              <span>{notice}</span>
+            </p>
+          )}
           <div className="relative">
             <input
               value={input}
