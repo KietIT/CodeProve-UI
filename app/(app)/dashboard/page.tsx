@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Sym } from "@/components/app/AppChrome";
+import { RecommendedCard } from "@/components/dashboard/RecommendedCard";
 import { getDashboard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
@@ -129,6 +130,10 @@ export default function DashboardPage() {
             <Sym name="arrow_forward" className="text-[16px]" />
           </span>
         </Link>
+
+        {/* Next-exercise suggestions - shown in the empty state too, since a
+            brand-new student benefits most from a starting point. */}
+        {!loading && !error && <RecommendedCard items={data?.recommended} locale={locale} copy={t} />}
 
         {/* Loading state */}
         {loading && (
