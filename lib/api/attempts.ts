@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { AttemptState, RunResult } from "@/lib/types/attempt";
+import type { AttemptState, DebugHintOut, LocateIn, RunResult } from "@/lib/types/attempt";
 
 export const createAttempt = (exercise_code: string) =>
   apiFetch<{ attempt_id: number; started_at: string }>("/attempts", {
@@ -7,8 +7,9 @@ export const createAttempt = (exercise_code: string) =>
     body: { exercise_code },
   });
 
-export const getAttempt = (id: number) =>
-  apiFetch<AttemptState>(`/attempts/${id}`);
+/** `locale` picks the language of the debug hints already bought. */
+export const getAttempt = (id: number, locale: string = "en") =>
+  apiFetch<AttemptState>(`/attempts/${id}?locale=${locale}`);
 
 export const sendEvents = (id: number, events: unknown[]) =>
   apiFetch<{ ingested: number }>(`/attempts/${id}/events`, {
@@ -33,3 +34,11 @@ export const logHypothesis = (id: number, text: string) =>
     method: "POST",
     body: { text },
   });
+
+/** Buys the next hint of a debug exercise's locate step (at most 2). */
+export const takeDebugHint = (id: number, locale: string = "en") =>
+  apiFetch<DebugHintOut>(`/attempts/${id}/debug/hint?locale=${locale}`, { method: "POST" });
+
+/** Records the bug location (or a skip). The response never says whether it was right. */
+export const locateBug = (id: number, body: LocateIn) =>
+  apiFetch<{ ok: boolean }>(`/attempts/${id}/debug/locate`, { method: "POST", body });

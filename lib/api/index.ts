@@ -15,7 +15,14 @@ export * from "./practice";
 // Re-export the domain types so `@/lib/api` stays a one-stop import.
 export type { User, Me, AuthOut } from "@/lib/types/auth";
 export type { ExerciseSummary, LevelGroup, ExerciseDetail } from "@/lib/types/exercise";
-export type { RunCase, RunResult, AttemptState } from "@/lib/types/attempt";
+export type {
+  RunCase,
+  RunResult,
+  AttemptState,
+  DebugState,
+  DebugHintOut,
+  LocateIn,
+} from "@/lib/types/attempt";
 export type { MentorRequest, MentorReply } from "@/lib/types/ciel";
 export type {
   FeedbackItem,
@@ -31,6 +38,7 @@ export type {
   SubmitTests,
   SubmitSummary,
   TestFailure,
+  DebugReveal,
 } from "@/lib/types/report";
 export type { DashboardOut } from "@/lib/types/dashboard";
 export type { PromptLogEntry } from "@/lib/types/session";
