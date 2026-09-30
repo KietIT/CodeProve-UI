@@ -32,6 +32,7 @@ import { useCiel } from "@/hooks/useCiel";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
 import { HintAccordion } from "@/components/workspace/HintAccordion";
 import { WorkspaceVisualizer } from "@/components/workspace/WorkspaceVisualizer";
+import { visualizerSource } from "@/components/workspace/visualizerInput";
 import { CielPanel } from "@/components/workspace/CielPanel";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
 import { LocatePanel } from "@/components/debug/LocatePanel";
@@ -45,6 +46,7 @@ import {
   type ResumeStore,
 } from "@/components/debug/locate";
 import { useSessionStore } from "@/lib/stores/useSessionStore";
+import { useVisualizerStore } from "@/lib/stores/useVisualizerStore";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
 import { appContent } from "@/lib/appContent";
@@ -183,6 +185,9 @@ export function SolveWorkspace({
   // value without needing it in their dependency array.
   const editorCodeRef = useRef<string>("");
   editorCodeRef.current = editorCode;
+  // The starter as served (comments stripped on debug exercises): what the
+  // locate step shows, so the visualizer traces it while the editor is locked.
+  const servedStarterRef = useRef<string>("");
 
   // Anti-cheat: paste is blocked in the editor (and hypothesis / explain-back).
   // Show a short-lived banner when the user attempts a paste so the block is
@@ -241,6 +246,10 @@ export function SolveWorkspace({
   const [justLocated, setJustLocated] = useState(false);
   // True while this debug attempt is remembered for a reload.
   const resumeActiveRef = useRef(false);
+
+  // ── Visualizer (kept here so a trace survives the brief panel closing) ────
+  const [traceCall, setTraceCall] = useState("");
+  const [tracedCode, setTracedCode] = useState("");
 
   // ── Explain-back modal state ───────────────────────────────────────────────
   const [explainQuestions, setExplainQuestions] = useState<string[] | null>(null);
@@ -357,6 +366,7 @@ export function SolveWorkspace({
       }
 
       const starter = resolveEditorStarter(detail?.starter, initialExercise);
+      servedStarterRef.current = starter;
       editorCodeRef.current = starter;
       prevCodeLenRef.current = starter.length;
       setEditorCode(starter);
@@ -443,6 +453,13 @@ export function SolveWorkspace({
       void telemetryRef.current?.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
+  // The visualizer store is global: drop a trace left by another page or exercise.
+  useEffect(() => {
+    useVisualizerStore.getState().reset();
+    setTraceCall("");
+    setTracedCode("");
   }, [code]);
 
   useEffect(() => {
@@ -974,7 +991,15 @@ export function SolveWorkspace({
               <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
             {!hintLocked && <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />}
-            <WorkspaceVisualizer getCode={() => editorCodeRef.current} exerciseCode={exercise.id} />
+            <WorkspaceVisualizer
+              getCode={() => visualizerSource(actionsLocked, servedStarterRef.current, editorCodeRef.current)}
+              exerciseCode={exercise.id}
+              locked={locating}
+              call={traceCall}
+              onCallChange={setTraceCall}
+              tracedCode={tracedCode}
+              onTracedCodeChange={setTracedCode}
+            />
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
                 <Sym name="analytics" className="text-[16px]" /> {t.scoringRubric}
@@ -1232,6 +1257,7 @@ export function SolveWorkspace({
             onSend={() => void handleChatSend()}
             onSuggestionClick={handleSuggestionClick}
             suggestions={t.promptItems}
+            notice={locating ? t.debug.cielHintOnly : undefined}
             labels={{
               intro: t.cielIntro,
               verifyHint: t.verifyHint,
