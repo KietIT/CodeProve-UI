@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { CodeBlock } from "@/components/daily/CodeBlock";
+import { CodeBlock, type LineMark } from "@/components/daily/CodeBlock";
 import { stripPythonComments } from "@/components/daily/stripComments";
 import { useAuth } from "@/lib/auth";
 import {
@@ -39,6 +39,15 @@ const TIER_DOT: Record<Tier, string> = {
   yellow: "bg-[#febc2e]",
   red: "bg-[#ff5f57]",
 };
+
+// Reveal state always wins visually over the user's own pick, so a correct
+// guess and the revealed answer don't fight over the same line's colour.
+function dailyMarks(selectedLine: number | null, revealedLine: number | null): Map<number, LineMark> {
+  const marks = new Map<number, LineMark>();
+  if (selectedLine !== null) marks.set(selectedLine, "selected");
+  if (revealedLine !== null) marks.set(revealedLine, "bug");
+  return marks;
+}
 
 export function DailyBugHunt() {
   const { t, locale } = useI18n();
@@ -188,9 +197,8 @@ export function DailyBugHunt() {
       <div className="mt-6">
         <CodeBlock
           code={stripPythonComments(challenge.buggy_code)}
-          selectedLine={selectedLine}
+          marks={dailyMarks(selectedLine, phase === "revealed" ? result?.buggy_line ?? null : null)}
           onSelectLine={setSelectedLine}
-          revealedLine={phase === "revealed" ? result?.buggy_line ?? null : null}
           disabled={phase === "revealed" || submitting}
         />
       </div>
