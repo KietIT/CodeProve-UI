@@ -11,6 +11,7 @@ import { AxisLevels } from "@/components/report/AxisLevels";
 import { FindingsSection } from "@/components/report/FindingsSection";
 import { TestResults } from "@/components/report/TestResults";
 import { BugReveal } from "@/components/report/BugReveal";
+import { StudentTestsSection } from "@/components/report/StudentTestsSection";
 import { exerciseHref, levelOf, nextExercise } from "@/components/report/diagnosis";
 import { noteText, timelineText } from "@/components/report/reportText";
 import { useI18n } from "@/lib/i18n";
@@ -383,6 +384,18 @@ export function FeedbackContent() {
             )}
           </div>
         </div>
+      )}
+
+      {report.feedback.tests && (
+        <StudentTestsSection
+          report={report.feedback.tests}
+          copy={{
+            ...tf.studentTests,
+            inputLabel: tf.inputLabel,
+            expectedLabel: tf.expectedLabel,
+            categoryNames: tf.categoryNames,
+          }}
+        />
       )}
 
       {submitTests && (

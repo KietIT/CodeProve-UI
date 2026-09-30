@@ -22,6 +22,11 @@ export type {
   DebugState,
   DebugHintOut,
   LocateIn,
+  StudentTestCategory,
+  StudentTest,
+  TestsState,
+  TestCheckOut,
+  OwnTestResult,
 } from "@/lib/types/attempt";
 export type { MentorRequest, MentorReply } from "@/lib/types/ciel";
 export type {
@@ -39,6 +44,8 @@ export type {
   SubmitSummary,
   TestFailure,
   DebugReveal,
+  StudentTestReport,
+  StudentTestsReport,
 } from "@/lib/types/report";
 export type { DashboardOut } from "@/lib/types/dashboard";
 export type { PromptLogEntry } from "@/lib/types/session";
