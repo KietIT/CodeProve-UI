@@ -86,6 +86,22 @@ export type SubmitSummary = {
 /** Full submit-suite result stored on the report. */
 export type SubmitTests = SubmitSummary & { failures?: TestFailure[] };
 
+/**
+ * The locate step revealed after submit (P2.2). Line numbers are 1-based lines of
+ * the starter as served (comments stripped).
+ */
+export type DebugReveal = {
+  /** The real bug as groups of lines; several groups = several issues. */
+  regions: number[][];
+  selected: number[];
+  /** `hit[i]`: whether the selection touched `regions[i]`. */
+  hit: boolean[];
+  hints_used: number;
+  skipped: boolean;
+  /** In the report's locale. */
+  explanation: string;
+};
+
 export type ReportOut = {
   overall: number;
   tier: string;
@@ -105,6 +121,8 @@ export type ReportOut = {
     diagnosis?: Diagnosis;
     /** Present when the exercise has a submit suite. */
     submit_tests?: SubmitTests;
+    /** Debug exercises whose attempt has a location (P2.2); absent otherwise. */
+    debug?: DebugReveal;
   };
   integrity_status: "green" | "yellow" | "red";
   timeline: TimelineItem[];

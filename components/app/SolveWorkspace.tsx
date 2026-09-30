@@ -13,12 +13,17 @@ import {
   type LevelConfig,
 } from "@/lib/exercises";
 import {
+  ApiError,
   createAttempt,
+  getAttempt,
   getExerciseDetail,
+  locateBug,
   logHypothesis,
   runTests,
   saveSnapshot,
   submitAttempt,
+  takeDebugHint,
+  type DebugState,
   type ExerciseDetail,
   type RunResult,
   type SubmitSummary,
@@ -29,6 +34,16 @@ import { HintAccordion } from "@/components/workspace/HintAccordion";
 import { WorkspaceVisualizer } from "@/components/workspace/WorkspaceVisualizer";
 import { CielPanel } from "@/components/workspace/CielPanel";
 import { ExplainBackModal } from "@/components/app/ExplainBackModal";
+import { LocatePanel } from "@/components/debug/LocatePanel";
+import {
+  canResumeAttempt,
+  clearResume,
+  debugStep,
+  readResume,
+  toggleLine,
+  writeResume,
+  type ResumeStore,
+} from "@/components/debug/locate";
 import { useSessionStore } from "@/lib/stores/useSessionStore";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
@@ -79,6 +94,15 @@ const EDITOR_LINE_STYLE: React.CSSProperties = {
 
 const ATTEMPT_DURATION_MS = 45 * 60 * 1000;
 const AUTOSAVE_INTERVAL_MS = 12 * 1000;
+
+/** Per-tab storage for resuming a debug attempt; null where it is unavailable. */
+function sessionStore(): ResumeStore | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
@@ -204,6 +228,20 @@ export function SolveWorkspace({
   const [hypothesisSending, setHypothesisSending] = useState(false);
   const [hypothesisResult, setHypothesisResult] = useState<{ correct: boolean; note: string } | null>(null);
 
+  // ── Debug locate step (P2.2) ───────────────────────────────────────────────
+  // `debugResolved` stays false on a debug exercise until the attempt state is
+  // known, so neither the editor nor the free hint shows before the lock does.
+  const [debugState, setDebugState] = useState<DebugState | null>(null);
+  const [debugResolved, setDebugResolved] = useState(false);
+  const [locateLines, setLocateLines] = useState<number[]>([]);
+  const [locateReason, setLocateReason] = useState("");
+  const [hintLoading, setHintLoading] = useState(false);
+  const [locateSubmitting, setLocateSubmitting] = useState(false);
+  const [locateError, setLocateError] = useState<string | null>(null);
+  const [justLocated, setJustLocated] = useState(false);
+  // True while this debug attempt is remembered for a reload.
+  const resumeActiveRef = useRef(false);
+
   // ── Explain-back modal state ───────────────────────────────────────────────
   const [explainQuestions, setExplainQuestions] = useState<string[] | null>(null);
   const [submitTests, setSubmitTests] = useState<SubmitSummary | null>(null);
@@ -250,6 +288,13 @@ export function SolveWorkspace({
     }
   });
 
+  // Keeps the debug attempt (and its snapshot counter) for a reload.
+  const rememberAttempt = useCallback(() => {
+    const id = attemptIdRef.current;
+    if (!resumeActiveRef.current || !id) return;
+    writeResume(sessionStore(), code, { attemptId: id, snapshotVersion: snapshotVersionRef.current });
+  }, [code]);
+
   const performAutosave = useCallback(async (reason: string, force = false) => {
     const id = attemptIdRef.current;
     if (!id || autosaveInFlightRef.current) return;
@@ -261,6 +306,7 @@ export function SolveWorkspace({
     setAutosaveState("saving");
     const version = snapshotVersionRef.current + 1;
     snapshotVersionRef.current = version;
+    rememberAttempt();
 
     try {
       await saveSnapshot(id, version, source);
@@ -279,7 +325,7 @@ export function SolveWorkspace({
     } finally {
       autosaveInFlightRef.current = false;
     }
-  }, []);
+  }, [rememberAttempt]);
 
   // ── Mount: fetch detail from API (fallback to initialExercise) + attempt ──
   useEffect(() => {
@@ -316,21 +362,76 @@ export function SolveWorkspace({
       setEditorCode(starter);
       setStarterReady(true);
 
-      // Create attempt on backend.
+      const isDebug = (detail?.kind ?? initialExercise.kind) === "debug";
+      setDebugState(null);
+      setDebugResolved(!isDebug);
+      resumeActiveRef.current = false;
+
+      // A debug exercise reopens its attempt after a reload so the locate step
+      // (located or not, hints bought) is kept; other exercises start fresh.
+      let id: number | null = null;
+      let debug: DebugState | null = null;
+      let latestCode: string | null = null;
+      if (isDebug) {
+        const store = sessionStore();
+        const saved = readResume(store, code);
+        if (saved) {
+          try {
+            const state = await getAttempt(saved.attemptId, locale);
+            if (canResumeAttempt(state, code) && state.debug) {
+              id = state.id;
+              debug = state.debug;
+              latestCode = state.latest_code;
+              snapshotVersionRef.current = saved.snapshotVersion;
+            }
+          } catch {
+            // Gone or not ours any more: start a new attempt below.
+          }
+          if (cancelled) return;
+          if (id === null) clearResume(store, code);
+        }
+      }
+
       try {
-        const resp = await createAttempt(code);
-        if (cancelled) return;
-        const id = resp.attempt_id;
+        if (id === null) {
+          const resp = await createAttempt(code);
+          if (cancelled) return;
+          id = resp.attempt_id;
+          snapshotVersionRef.current = 0;
+          if (isDebug) {
+            try {
+              // A backend without P2.2 omits `debug`: no locate step then.
+              debug = (await getAttempt(id, locale)).debug ?? null;
+            } catch {
+              debug = null;
+            }
+            if (cancelled) return;
+          }
+        }
         attemptIdRef.current = id;
         setAttemptId(id);
         // Fresh attempt → fresh prompt log for this session.
         startSession(id, code);
+
+        if (debug) {
+          resumeActiveRef.current = true;
+          rememberAttempt();
+          if (debug.located && latestCode) {
+            editorCodeRef.current = latestCode;
+            prevCodeLenRef.current = latestCode.length;
+            lastAutosavedCodeRef.current = latestCode;
+            setEditorCode(latestCode);
+          }
+        }
+        setDebugState(debug);
 
         const telem = createTelemetry(id);
         telemetryRef.current = telem;
         telem.log("OPEN");
       } catch {
         // Backend not reachable: telemetry stays a no-op via the null checks below.
+      } finally {
+        if (!cancelled) setDebugResolved(true);
       }
     }
 
@@ -622,12 +723,14 @@ export function SolveWorkspace({
       setRunError(t.noActiveAttempt);
       return;
     }
+    if (debugStep(debugState) === "locate") return;
     setRunning(true);
     setRunError(null);
     setRunResult(null);
 
     try {
       snapshotVersionRef.current += 1;
+      rememberAttempt();
       await saveSnapshot(id, snapshotVersionRef.current, editorCode);
       const result = await runTests(id, editorCode);
       setRunResult(result);
@@ -636,7 +739,7 @@ export function SolveWorkspace({
     } finally {
       setRunning(false);
     }
-  }, [editorCode, t.noActiveAttempt]);
+  }, [editorCode, t.noActiveAttempt, debugState, rememberAttempt]);
 
   // ── Clear results ─────────────────────────────────────────────────────────
   const handleClear = useCallback(() => {
@@ -700,6 +803,7 @@ export function SolveWorkspace({
       setSubmitError(t.noActiveAttempt);
       return;
     }
+    if (debugStep(debugState) === "locate") return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -711,6 +815,8 @@ export function SolveWorkspace({
         /* telemetry flush is best-effort; ignore failures */
       }
       const { questions, tests } = await submitAttempt(id, locale);
+      resumeActiveRef.current = false;
+      clearResume(sessionStore(), code);
       setSubmitTests(tests ?? null);
       setExplainQuestions(questions);
     } catch (err) {
@@ -720,7 +826,70 @@ export function SolveWorkspace({
     }
     // Invoke optional external callback (used in tests / storybook).
     onSubmit?.();
-  }, [onSubmit, performAutosave, locale, t.noActiveAttempt]);
+  }, [onSubmit, performAutosave, locale, t.noActiveAttempt, debugState, code]);
+
+  // ── Debug locate step ───────────────────────────────────────────────────────
+  // After a 409 (another tab located, or the attempt moved on) the server state
+  // wins: reload it instead of guessing.
+  const refreshDebugState = useCallback(async () => {
+    const id = attemptIdRef.current;
+    if (!id) return;
+    try {
+      const state = await getAttempt(id, locale);
+      setDebugState(state.debug ?? null);
+    } catch {
+      // Keep the current step; the error message is already shown.
+    }
+  }, [locale]);
+
+  const handleTakeHint = useCallback(async () => {
+    const id = attemptIdRef.current;
+    if (!id || hintLoading) return;
+    setHintLoading(true);
+    setLocateError(null);
+    try {
+      const { text } = await takeDebugHint(id, locale);
+      setDebugState((prev) =>
+        prev ? { ...prev, hints_used: prev.hints_used + 1, hints: [...prev.hints, text] } : prev,
+      );
+    } catch (err) {
+      setLocateError(err instanceof Error ? err.message : t.debug.failed);
+      if (err instanceof ApiError && err.status === 409) await refreshDebugState();
+    } finally {
+      setHintLoading(false);
+    }
+  }, [hintLoading, locale, refreshDebugState, t.debug.failed]);
+
+  const sendLocation = useCallback(
+    async (skipped: boolean) => {
+      const id = attemptIdRef.current;
+      if (!id) {
+        setLocateError(t.noActiveAttempt);
+        return;
+      }
+      if (locateSubmitting) return;
+      setLocateSubmitting(true);
+      setLocateError(null);
+      try {
+        await locateBug(id, {
+          lines: skipped ? [] : locateLines,
+          reason: skipped ? "" : locateReason.trim(),
+          skipped,
+        });
+        setDebugState((prev) => (prev ? { ...prev, located: true } : prev));
+        setJustLocated(true);
+      } catch (err) {
+        // A 422 is the server refusing the selection (e.g. more lines than it
+        // allows); its detail is English-only, so show the localised sentence.
+        const refused = err instanceof ApiError && err.status === 422;
+        setLocateError(refused ? t.debug.refused : err instanceof Error ? err.message : t.debug.failed);
+        if (err instanceof ApiError && err.status === 409) await refreshDebugState();
+      } finally {
+        setLocateSubmitting(false);
+      }
+    },
+    [locateLines, locateReason, locateSubmitting, refreshDebugState, t.debug.failed, t.debug.refused, t.noActiveAttempt],
+  );
 
   // ── Derived display values ────────────────────────────────────────────────
   const codeLines = editorCode.split("\n");
@@ -750,6 +919,13 @@ export function SolveWorkspace({
   const viCopy = locale === "vi" ? exerciseContentVi[exercise.id] : undefined;
   const problemSummary = viCopy?.summary ?? exercise.summary;
   const problemHint = viCopy?.hint ?? exercise.hint;
+
+  // Debug exercises: locate first. Until the step is known or done, the editor,
+  // Run and Submit stay locked and the free hint stays hidden (several of them
+  // name the bug).
+  const locating = debugStep(debugState) === "locate";
+  const hintLocked = !debugResolved || locating;
+  const actionsLocked = !debugResolved || locating;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -797,7 +973,7 @@ export function SolveWorkspace({
               </h3>
               <p className="text-sm leading-relaxed text-on-surface-variant">{problemSummary}</p>
             </section>
-            <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />
+            {!hintLocked && <HintAccordion hint={problemHint} label={locale === "vi" ? "Gợi ý" : "Hint"} />}
             <WorkspaceVisualizer getCode={() => editorCodeRef.current} exerciseCode={exercise.id} />
             <section>
               <h3 className="mb-3 flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
@@ -849,7 +1025,7 @@ export function SolveWorkspace({
           <div className="flex flex-none items-center justify-between border-b border-outline-variant/60 bg-surface-container-low pr-4">
             <div className="flex">
               <div className="flex items-center gap-2 border-r border-outline-variant/60 bg-background px-5 py-2.5">
-                <Sym name="code" className="text-[16px] text-primary" />
+                <Sym name={locating ? "lock" : "code"} className="text-[16px] text-primary" />
                 <span className="font-label-mono text-label-mono">{exercise.filename}</span>
               </div>
             </div>
@@ -877,7 +1053,8 @@ export function SolveWorkspace({
               )}
               <button
                 onClick={() => void handleSubmit()}
-                disabled={submitting}
+                disabled={submitting || actionsLocked}
+                title={locating ? t.debug.actionsLocked : undefined}
                 className="flex cursor-pointer items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? t.submitting : t.submit}{" "}
@@ -890,9 +1067,49 @@ export function SolveWorkspace({
               its scroll position via handleEditorScroll. All three share the
               EDITOR_* metrics so highlighted glyphs and line numbers stay aligned
               with the real text even when scrolled deep into a long starter. */}
+          {justLocated && !locating && (
+            <div
+              role="status"
+              className="flex flex-none items-start justify-between gap-3 border-b border-primary/30 bg-primary/10 px-4 py-2 text-sm text-on-surface"
+            >
+              <span className="flex items-start gap-2">
+                <Sym name="lock_open" className="mt-px text-[16px] text-primary" />
+                {t.debug.located}
+              </span>
+              <button
+                type="button"
+                onClick={() => setJustLocated(false)}
+                aria-label={t.explainBack.close}
+                className="cursor-pointer text-on-surface-variant hover:text-primary"
+              >
+                <Sym name="close" className="text-[16px]" />
+              </button>
+            </div>
+          )}
           <div className="relative flex-1 overflow-hidden bg-surface-container-lowest/60">
             <div className="scanline" />
-            {!starterReady ? (
+            {starterReady && locating ? (
+              <LocatePanel
+                code={editorCode}
+                selected={locateLines}
+                onToggleLine={(line) => {
+                  setLocateLines((prev) => toggleLine(prev, line));
+                  setLocateError(null);
+                }}
+                reason={locateReason}
+                onReasonChange={setLocateReason}
+                hints={debugState?.hints ?? []}
+                hintLoading={hintLoading}
+                onTakeHint={() => void handleTakeHint()}
+                submitting={locateSubmitting}
+                onSubmit={() => void sendLocation(false)}
+                onSkip={() => void sendLocation(true)}
+                error={locateError}
+                onBlockedPaste={handleBlockedPaste}
+                onBlockedDrop={handleBlockedDrop}
+                copy={t.debug}
+              />
+            ) : !starterReady || !debugResolved ? (
               <div
                 role="status"
                 aria-live="polite"
@@ -973,7 +1190,8 @@ export function SolveWorkspace({
             )}
           </div>
 
-          {/* Terminal / Tests / Leaderboard */}
+          {/* Terminal / Tests / Leaderboard (hidden while locating: nothing can run yet) */}
+          {!locating && (
           <ResultTabs
             runResult={runResult}
             runError={runError}
@@ -981,6 +1199,7 @@ export function SolveWorkspace({
             tests={exercise.tests}
             onRun={() => void handleRunTests()}
             onClear={handleClear}
+            runLockedReason={actionsLocked ? t.debug.actionsLocked : undefined}
             labels={{
               testRunner: t.testRunner,
               running: t.running,
@@ -995,6 +1214,7 @@ export function SolveWorkspace({
               coverage: t.coverage,
             }}
           />
+          )}
         </div>
 
         </Panel>
@@ -1005,7 +1225,7 @@ export function SolveWorkspace({
         <ColResizeHandle />
         <Panel id="ciel" order={3} defaultSize={24} minSize={16} collapsible className="flex flex-col">
           <CielPanel
-            initialHint={problemHint}
+            initialHint={hintLocked ? t.debug.cielLocked : problemHint}
             input={chatInput}
             sending={chatSending}
             onInputChange={setChatInput}
