@@ -18,7 +18,8 @@ export type Exercise = {
   topics: string[];
   /**
    * "debug" = the task is to find/fix a flaw, so the buggy starter is shown
-   * verbatim. Absent/"implement" = starter is stripped to a stub.
+   * verbatim: it must carry no comment that names the bug. Absent/"implement"
+   * = starter is stripped to a stub.
    */
   kind?: "implement" | "debug";
   // ── Workspace content ──
@@ -103,7 +104,7 @@ export const LEVELS: Record<string, LevelConfig> = {
         filename: "solution.py", language: "python",
         starter: `def sum_to_n(n):
     total = 0
-    for i in range(1, n):   # bug: never adds n itself
+    for i in range(1, n):
         total += i
     return total`,
         hint: "Trace the loop by hand with n = 3. Which value never gets added to the total?",
@@ -146,7 +147,6 @@ def sanitize_username(raw):
         summary: "This function crashes when the user has no profile. Locate the null dereference and guard against it safely.",
         filename: "solution.py", language: "python",
         starter: `def display_name(user):
-    # crashes when "profile" is missing
     return user["profile"]["name"]`,
         hint: "Which key is not guaranteed to exist? Reach for .get() or an early return.",
         tests: ["test_has_profile", "test_missing_profile", "test_missing_name"],
@@ -189,7 +189,7 @@ def sanitize_username(raw):
 
 def increment():
     global counter
-    counter += 1   # read-modify-write is not atomic`,
+    counter += 1`,
         hint: "Why is += not atomic across threads? A lock or atomic primitive closes the gap.",
         tests: ["test_single_thread", "test_concurrent", "test_lock_held"],
       },
@@ -229,7 +229,7 @@ def increment():
 
 def memoize(key, compute):
     if key not in _cache:
-        _cache[key] = compute()   # nothing ever evicts this
+        _cache[key] = compute()
     return _cache[key]`,
         hint: "An unbounded dict is the leak. Add a max size or reach for functools.lru_cache.",
         tests: ["test_caches", "test_bounded_size", "test_eviction"],
@@ -274,7 +274,6 @@ def consumer(q):
         summary: "This query concatenates user input directly. Rewrite it to be injection-safe and explain the fix.",
         filename: "queries.py", language: "python",
         starter: `def find_user(db, name):
-    # vulnerable: string concatenation
     return db.execute(
         "SELECT * FROM users WHERE name = '" + name + "'"
     )`,
@@ -312,7 +311,7 @@ class Counter:
     try:
         return open(path).read()
     except Exception:
-        raise RuntimeError("load failed")   # original cause is lost`,
+        raise RuntimeError("load failed")`,
         hint: "What does 'raise ... from e' preserve that a bare re-raise throws away?",
         tests: ["test_success", "test_missing_file", "test_chained_cause"],
       },
@@ -366,7 +365,7 @@ def max_sliding_window(nums, k):
         filename: "middleware.py", language: "python",
         starter: `def require_auth(request, handler):
     token = request.headers.get("Authorization")
-    if token:                      # bug: present != valid
+    if token:
         return handler(request)
     return deny()`,
         hint: "A present token is not a valid token. What must you verify before calling the handler?",
@@ -404,7 +403,7 @@ def max_sliding_window(nums, k):
         filename: "solution.py", language: "python",
         starter: `def transfer(a, b, amount):
     with a.lock:
-        with b.lock:   # reversed order elsewhere -> deadlock
+        with b.lock:
             a.balance -= amount
             b.balance += amount`,
         hint: "Consistent lock ordering prevents the cycle. How can you order two arbitrary accounts deterministically?",
@@ -425,7 +424,6 @@ def max_sliding_window(nums, k):
         summary: "An upload handler trusts the client's filename and content-type. List the risks and fix them.",
         filename: "upload.py", language: "python",
         starter: `def save_upload(file):
-    # trusts client-provided name and type
     path = "/uploads/" + file.filename
     open(path, "wb").write(file.read())`,
         hint: "Path traversal, type spoofing, size limits - which risk do you close first, and why?",
