@@ -1,5 +1,13 @@
 import { apiFetch } from "./client";
-import type { AttemptState, DebugHintOut, LocateIn, RunResult } from "@/lib/types/attempt";
+import type {
+  AttemptState,
+  DebugHintOut,
+  LocateIn,
+  OwnTestResult,
+  RunResult,
+  StudentTest,
+  TestCheckOut,
+} from "@/lib/types/attempt";
 
 export const createAttempt = (exercise_code: string) =>
   apiFetch<{ attempt_id: number; started_at: string }>("/attempts", {
@@ -42,3 +50,18 @@ export const takeDebugHint = (id: number, locale: string = "en") =>
 /** Records the bug location (or a skip). The response never says whether it was right. */
 export const locateBug = (id: number, body: LocateIn) =>
   apiFetch<{ ok: boolean }>(`/attempts/${id}/debug/locate`, { method: "POST", body });
+
+/** Saves the student's tests (at most 10; latest save wins). 409 after submit. */
+export const saveStudentTests = (id: number, tests: StudentTest[]) =>
+  apiFetch<{ ok: boolean }>(`/attempts/${id}/tests`, { method: "PUT", body: { tests } });
+
+/** Checks one test against the reference solution. Shares the Run rate limit (429). */
+export const checkStudentTest = (id: number, test: StudentTest) =>
+  apiFetch<TestCheckOut>(`/attempts/${id}/tests/check`, { method: "POST", body: test });
+
+/** Runs the SAVED tests on the student's own code, in saved order. */
+export const runStudentTests = (id: number, source_code: string) =>
+  apiFetch<{ results: OwnTestResult[] }>(`/attempts/${id}/tests/run`, {
+    method: "POST",
+    body: { source_code },
+  });

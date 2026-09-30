@@ -1,3 +1,5 @@
+import type { StudentTest, StudentTestCategory } from "@/lib/types/attempt";
+
 // `code` / `key` are stable identifiers the frontend localises from; the
 // `note` / `step` / `title` / `desc` strings are English fallbacks (and the
 // only data present on reports stored before localisation was added).
@@ -102,6 +104,27 @@ export type DebugReveal = {
   explanation: string;
 };
 
+/** One student test as judged at submit (P2.3). */
+export type StudentTestReport = StudentTest & {
+  valid: boolean;
+  /** Invalid tests: `wrong_expected`, `error` or the allow-list reason; `null` when valid. */
+  reason: string | null;
+};
+
+/** The student's own tests after submit (P2.3); absent on exercises without the tab. */
+export type StudentTestsReport = {
+  tests: StudentTestReport[];
+  /** Distinct categories among the valid tests. */
+  categories: StudentTestCategory[];
+  /** Categories the exercise's own tests cover. */
+  exercise_categories: StudentTestCategory[];
+  /** Planted bugs (mutants) the valid tests caught, out of `total`. */
+  killed: number;
+  total: number;
+  /** One note per planted bug not caught, in the report locale (the kind of bug, never code). */
+  missed: string[];
+};
+
 export type ReportOut = {
   overall: number;
   tier: string;
@@ -123,6 +146,8 @@ export type ReportOut = {
     submit_tests?: SubmitTests;
     /** Debug exercises whose attempt has a location (P2.2); absent otherwise. */
     debug?: DebugReveal;
+    /** Exercises with the Tests tab (P2.3); absent otherwise. */
+    tests?: StudentTestsReport;
   };
   integrity_status: "green" | "yellow" | "red";
   timeline: TimelineItem[];
