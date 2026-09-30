@@ -153,7 +153,8 @@ export const appContent = {
         cielHintOnly: "Ciel sẽ chỉ gợi ý cách tìm lỗi cho tới khi bạn chọn đúng dòng lỗi.",
       },
       tests: {
-        tab: "Tests",
+        tab: "Test của bạn",
+        tabShort: "Test",
         title: "Test của bạn",
         count: "{n}/{max} test",
         saving: "Đang lưu…",
@@ -519,7 +520,8 @@ export const appContent = {
         cielHintOnly: "Until you find the buggy line, Ciel will only give hints on how to find it.",
       },
       tests: {
-        tab: "Tests",
+        tab: "Your tests",
+        tabShort: "Tests",
         title: "Your tests",
         count: "{n}/{max} tests",
         saving: "Saving…",

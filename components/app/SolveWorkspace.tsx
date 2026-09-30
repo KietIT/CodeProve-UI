@@ -142,17 +142,22 @@ function ColResizeHandle() {
   );
 }
 
-/** One tab of the centre header (the code file, the Tests tab). */
+/**
+ * One tab of the centre header (the code file, the Tests tab). Phones show
+ * `shortLabel` (icon only when empty) so the timer and Submit still fit.
+ */
 function CenterTab({
   active,
   icon,
   label,
+  shortLabel,
   badge,
   onSelect,
 }: {
   active: boolean;
   icon: string;
   label: string;
+  shortLabel: string;
   badge?: number;
   onSelect: () => void;
 }) {
@@ -161,13 +166,16 @@ function CenterTab({
       type="button"
       role="tab"
       aria-selected={active}
+      aria-label={label}
+      title={label}
       onClick={onSelect}
-      className={`flex cursor-pointer items-center gap-2 border-r border-outline-variant/60 px-3 py-2.5 transition-colors sm:px-5 ${
+      className={`flex cursor-pointer items-center gap-2 whitespace-nowrap border-r border-outline-variant/60 px-3 py-2.5 transition-colors sm:px-5 ${
         active ? "bg-background text-on-surface" : "text-on-surface-variant hover:text-on-surface"
       }`}
     >
       <Sym name={icon} className={`text-[16px] ${active ? "text-primary" : ""}`} />
-      <span className="font-label-mono text-label-mono">{label}</span>
+      {shortLabel && <span className="font-label-mono text-label-mono sm:hidden">{shortLabel}</span>}
+      <span className="hidden font-label-mono text-label-mono sm:inline">{label}</span>
       {badge !== undefined && badge > 0 && (
         <span className="rounded-pill bg-primary/15 px-1.5 font-label-mono text-[11px] text-primary">{badge}</span>
       )}
@@ -1108,11 +1116,18 @@ export function SolveWorkspace({
           <div className="flex flex-none items-center justify-between border-b border-outline-variant/60 bg-surface-container-low pr-4">
             {testsTabShown ? (
               <div className="flex" role="tablist" aria-label={t.tests.title}>
-                <CenterTab active={!showTests} icon="code" label={exercise.filename} onSelect={() => setCenterTab("code")} />
+                <CenterTab
+                  active={!showTests}
+                  icon="code"
+                  label={exercise.filename}
+                  shortLabel=""
+                  onSelect={() => setCenterTab("code")}
+                />
                 <CenterTab
                   active={showTests}
                   icon="checklist"
                   label={t.tests.tab}
+                  shortLabel={t.tests.tabShort}
                   badge={studentTests.drafts.length}
                   onSelect={() => setCenterTab("tests")}
                 />

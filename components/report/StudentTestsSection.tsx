@@ -133,7 +133,7 @@ function TestItem({ test, copy }: { test: StudentTestReport; copy: StudentTestsC
               ? copy.reasons.refused
               : copy.reasons.exception}
           {(reason.kind === "refused" || reason.kind === "exception") && reason.detail && (
-            <code className="ml-1 break-all font-label-mono text-label-mono">{reason.detail}</code>
+            <>: <code className="break-words font-label-mono text-label-mono">{reason.detail}</code></>
           )}
         </p>
       )}

@@ -361,32 +361,26 @@ function TestCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[3fr,2fr]">
         <label className="block min-w-0" htmlFor={`${id}-input`}>
           <span className={LABEL}>{copy.inputLabel}</span>
-          <input
+          <ExpressionField
             id={`${id}-input`}
             value={draft.input}
             maxLength={MAX_TEST_INPUT}
-            onChange={(e) => tests.update(draft.key, { input: e.target.value })}
+            onChange={(input) => tests.update(draft.key, { input })}
             placeholder={copy.inputPlaceholder}
-            spellCheck={false}
-            autoComplete="off"
-            className={MONO_FIELD}
             {...blockers}
           />
         </label>
         <label className="block min-w-0" htmlFor={`${id}-expected`}>
           <span className={LABEL}>{copy.expectedLabel}</span>
-          <input
+          <ExpressionField
             id={`${id}-expected`}
             value={draft.expected}
             maxLength={MAX_TEST_EXPECTED}
-            onChange={(e) => tests.update(draft.key, { expected: e.target.value })}
+            onChange={(expected) => tests.update(draft.key, { expected })}
             placeholder={copy.expectedPlaceholder}
-            spellCheck={false}
-            autoComplete="off"
-            className={MONO_FIELD}
             {...blockers}
           />
         </label>
@@ -425,6 +419,47 @@ function TestCard({
   );
 }
 
+/**
+ * A one-line Python expression that wraps instead of scrolling (class tests are
+ * long lambdas). Enter and pasted line breaks are dropped: it must stay one line.
+ */
+function ExpressionField({
+  id,
+  value,
+  maxLength,
+  onChange,
+  placeholder,
+  onPaste,
+  onDrop,
+}: {
+  id: string;
+  value: string;
+  maxLength: number;
+  onChange: (value: string) => void;
+  placeholder: string;
+  onPaste: (e: React.ClipboardEvent<HTMLElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLElement>) => void;
+}) {
+  return (
+    <textarea
+      id={id}
+      rows={2}
+      value={value}
+      maxLength={maxLength}
+      onChange={(e) => onChange(e.target.value.replace(/[\r\n]+/g, " "))}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.preventDefault();
+      }}
+      onPaste={onPaste}
+      onDrop={onDrop}
+      placeholder={placeholder}
+      spellCheck={false}
+      autoComplete="off"
+      className={`${MONO_FIELD} resize-none break-all`}
+    />
+  );
+}
+
 function CheckLine({ view, copy }: { view: CheckView; copy: TestsCopy }) {
   if (view.kind === "valid") {
     return (
@@ -447,7 +482,7 @@ function CheckLine({ view, copy }: { view: CheckView; copy: TestsCopy }) {
       <p className="font-label-mono text-label-mono text-error">
         <Sym name="bug_report" className="mr-1 align-middle text-[15px]" />
         {copy.checkException}
-        {view.detail && <code className="ml-1">{view.detail}</code>}
+        {view.detail && <>: <code>{view.detail}</code></>}
       </p>
     );
   }
@@ -457,7 +492,7 @@ function CheckLine({ view, copy }: { view: CheckView; copy: TestsCopy }) {
         <Sym name="block" className="mt-px text-[16px]" />
         {copy.checkRefused}
       </p>
-      <code className="mt-1 block break-all font-label-mono text-label-mono text-on-surface">{view.detail}</code>
+      <code className="mt-1 block break-words font-label-mono text-label-mono text-on-surface">{view.detail}</code>
       <p className="mt-1 text-on-surface-variant">{copy.checkRefusedHelp}</p>
     </div>
   );
