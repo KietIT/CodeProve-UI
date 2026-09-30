@@ -39,12 +39,15 @@ export function ResultTabs({
   onRun,
   onClear,
   labels,
+  runLockedReason,
 }: {
   runResult: RunResult | null;
   runError: string | null;
   running: boolean;
   tests: string[];
   onRun: () => void;
+  /** When set, Run is disabled and this text explains why (e.g. the debug locate step). */
+  runLockedReason?: string;
   onClear: () => void;
   labels: ResultLabels;
 }) {
@@ -81,7 +84,8 @@ export function ResultTabs({
         <div className="flex gap-2">
           <button
             onClick={onRun}
-            disabled={running}
+            disabled={running || Boolean(runLockedReason)}
+            title={runLockedReason}
             className="cursor-pointer bg-primary px-3 py-1 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {running ? labels.running : labels.runTests}

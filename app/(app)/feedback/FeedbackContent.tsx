@@ -3,13 +3,14 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { getReport, type ReportOut } from "@/lib/api";
+import { getAttempt, getExerciseDetail, getReport, type ReportOut } from "@/lib/api";
 import { Sym } from "@/components/app/AppChrome";
 import { RadarChart } from "@/components/report/RadarChart";
 import { IntegrityFlags } from "@/components/report/IntegrityFlags";
 import { AxisLevels } from "@/components/report/AxisLevels";
 import { FindingsSection } from "@/components/report/FindingsSection";
 import { TestResults } from "@/components/report/TestResults";
+import { BugReveal } from "@/components/report/BugReveal";
 import { exerciseHref, levelOf, nextExercise } from "@/components/report/diagnosis";
 import { noteText, timelineText } from "@/components/report/reportText";
 import { useI18n } from "@/lib/i18n";
@@ -70,6 +71,21 @@ export function FeedbackContent() {
     enabled: hasAttempt,
   });
   const report = query.data ?? null;
+
+  // The reveal marks lines of the starter as served; the report does not carry
+  // it, so it comes from the attempt's exercise (debug starters are served
+  // with comments stripped, the numbering the regions use).
+  const debugReveal = report?.feedback.debug;
+  const starterQuery = useQuery({
+    queryKey: ["debug-starter", attemptId],
+    queryFn: async () => {
+      const attempt = await getAttempt(attemptId!, locale);
+      return (await getExerciseDetail(attempt.exercise_code)).starter;
+    },
+    enabled: hasAttempt && Boolean(debugReveal),
+    staleTime: Infinity,
+    retry: 1,
+  });
   const loading = hasAttempt && query.isLoading;
   const error = query.error ? (query.error as Error).message : null;
 
@@ -292,6 +308,15 @@ export function FeedbackContent() {
           </div>
         </div>
       </section>
+
+      {debugReveal && (
+        <BugReveal
+          reveal={debugReveal}
+          code={starterQuery.data ?? null}
+          loading={starterQuery.isLoading}
+          copy={tf.debugReveal}
+        />
+      )}
 
       {/* Diagnosis findings (engine v2), else the older strengths + risks lists */}
       {diagnosis ? (
