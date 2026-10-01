@@ -1,6 +1,8 @@
 // Bilingual content dictionary (VN primary / EN). All product facts sourced from
 // "CodeProve - Build Specification v2.0" and the Marketing Website Design Proposal.
 
+import { privacyPolicy } from "./legal/privacyPolicy";
+
 export const content = {
   vi: {
     nav: {
@@ -456,30 +458,7 @@ export const content = {
           },
         ],
       },
-      privacy: {
-        title: "Chính sách quyền riêng tư",
-        updated: "Cập nhật lần cuối: 24/06/2026",
-        intro:
-          "CodeProve ghi nhận telemetry hành vi trong phiên làm bài để phục vụ chấm điểm và đảm bảo tính toàn vẹn. Trang này mô tả minh bạch dữ liệu chúng tôi thu thập và cách dùng (theo NFR-5).",
-        sections: [
-          {
-            h: "Dữ liệu chúng tôi thu thập",
-            p: "Các sự kiện trong phiên làm bài: prompt gửi cho Ciel, lần chạy code, giả thuyết, thao tác chỉnh sửa, tín hiệu focus/paste. Mọi sự kiện được lưu append-only để có thể replay khi rà soát.",
-          },
-          {
-            h: "Mục đích sử dụng",
-            p: "Dữ liệu chỉ dùng để: (1) chấm 6 trục năng lực, (2) tính Integrity Score, (3) hiển thị tiến bộ cho người học và giảng viên. Chúng tôi không bán dữ liệu cho bên thứ ba.",
-          },
-          {
-            h: "Minh bạch với người học",
-            p: "Telemetry hành vi được công khai với người học. Bạn có quyền biết tín hiệu nào được ghi và vì sao.",
-          },
-          {
-            h: "Lưu trữ & bảo mật",
-            p: "Sandbox thực thi cô lập, không mạng ngoài. Dữ liệu được bảo vệ theo các quy định bảo vệ dữ liệu áp dụng.",
-          },
-        ],
-      },
+      privacy: privacyPolicy.vi,
       terms: {
         title: "Điều khoản dịch vụ",
         updated: "Cập nhật lần cuối: 24/06/2026",
@@ -961,30 +940,7 @@ export const content = {
           },
         ],
       },
-      privacy: {
-        title: "Privacy Policy",
-        updated: "Last updated: Jun 24, 2026",
-        intro:
-          "CodeProve records behavioral telemetry during assessment sessions for scoring and integrity. This page transparently describes the data we collect and how we use it (per NFR-5).",
-        sections: [
-          {
-            h: "Data we collect",
-            p: "In-session events: prompts to the Ciel, code runs, hypotheses, edits, focus/paste signals. Every event is stored append-only so sessions can be replayed during review.",
-          },
-          {
-            h: "How we use it",
-            p: "Data is used only to: (1) grade the 6 competency axes, (2) compute the Integrity Score, (3) show progress to learners and instructors. We do not sell data to third parties.",
-          },
-          {
-            h: "Transparency with learners",
-            p: "Behavioral telemetry is disclosed to learners. You have the right to know which signals are recorded and why.",
-          },
-          {
-            h: "Storage & security",
-            p: "Execution runs in an isolated sandbox with no external network. Data is protected under applicable data-protection regulations.",
-          },
-        ],
-      },
+      privacy: privacyPolicy.en,
       terms: {
         title: "Terms of Service",
         updated: "Last updated: Jun 24, 2026",
