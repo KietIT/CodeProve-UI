@@ -1,6 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import type { AdminUser } from "./_data";
+import { useAdminCopy } from "./_copy";
 
 export const card = "rounded-2xl border border-outline-variant/60 bg-surface-container-lowest/80 shadow-sm";
 export const field = "min-h-10 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -12,7 +16,18 @@ export function PageHeading({ eyebrow, title, description, action }: { eyebrow: 
 }
 
 export function PreviewNotice() {
-  return <div role="note" className="mb-6 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-on-surface"><AlertCircle size={18} className="mt-0.5 shrink-0 text-warning" /><span><strong>Dữ liệu minh họa.</strong> Backend chưa có API quản trị; các con số và bản ghi trên trang này không phải dữ liệu thật.</span></div>;
+  const { t } = useAdminCopy();
+  return <div role="note" className="mb-6 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-on-surface"><AlertCircle size={18} className="mt-0.5 shrink-0 text-warning" /><span><strong>{t.common.previewTitle}</strong> {t.common.previewBody}</span></div>;
+}
+
+const planTone: Record<AdminUser["plan"], string> = {
+  free: "bg-surface-container-high text-on-surface-variant",
+  plus: "bg-primary/15 text-primary",
+  pro: "bg-secondary/20 text-secondary",
+};
+
+export function PlanBadge({ plan }: { plan: AdminUser["plan"] }) {
+  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${planTone[plan]}`}>{plan}</span>;
 }
 
 export function EmptyState({ title, description }: { title: string; description: string }) {
