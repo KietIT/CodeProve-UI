@@ -66,6 +66,7 @@ export function AppTopNav() {
   // "#" - analytics lives on the dashboard, so the dead link was dropped.
   const topLinks = [
     { label: nav.dashboard, href: "/dashboard" },
+    { label: nav.progress, href: "/progress" },
     { label: nav.workspace, href: "/workspace" },
     { label: nav.daily, href: "/daily" },
   ];
