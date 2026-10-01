@@ -47,7 +47,7 @@ const CONSENT = {
   message_vi: 'Bạn cần đồng ý với Chính sách quyền riêng tư trước khi dùng các tính năng AI.',
   message_en: 'Please accept the Privacy Policy before using the AI features.',
 };
-const STATE = { consented: true, version: '2026-10', current_version: '2026-10', ai_personalization: true };
+const STATE = { consented: true, version: '2026-10-2', current_version: '2026-10-2', ai_personalization: true };
 
 /** Runs `call` against one canned response; returns the request seen and the result or error. */
 async function withFetch(status, body, call) {
@@ -128,10 +128,10 @@ test('privacy endpoints use the backend contract', async () => {
   assert.equal(r.seen.method, 'GET');
   assert.deepEqual(r.value, STATE);
 
-  r = await withFetch(200, STATE, () => acceptPrivacy('2026-10'));
+  r = await withFetch(200, STATE, () => acceptPrivacy('2026-10-2'));
   assert.match(r.seen.url, /\/api\/me\/privacy\/consent$/);
   assert.equal(r.seen.method, 'POST');
-  assert.deepEqual(r.seen.body, { version: '2026-10' });
+  assert.deepEqual(r.seen.body, { version: '2026-10-2' });
 
   r = await withFetch(200, { ...STATE, ai_personalization: false }, () => updatePrivacy({ ai_personalization: false }));
   assert.match(r.seen.url, /\/api\/me\/privacy$/);
@@ -139,53 +139,69 @@ test('privacy endpoints use the backend contract', async () => {
   assert.deepEqual(r.seen.body, { ai_personalization: false });
 });
 
-test('tokenizeInline keeps draft gaps verbatim', () => {
-  assert.deepEqual(tokenizeInline('a **b** `c` [NHÓM ĐIỀN: d, e] [TEAM: f] [số] [x]'), [
+test('tokenizeInline reads bold, code and https links only', () => {
+  assert.deepEqual(tokenizeInline('a **b** `c` [d e](https://x.dev/p?q=1) [f](http://x.dev) [NHÓM ĐIỀN: g]'), [
     { kind: 'text', text: 'a ' },
     { kind: 'bold', text: 'b' },
     { kind: 'text', text: ' ' },
     { kind: 'code', text: 'c' },
     { kind: 'text', text: ' ' },
-    { kind: 'gap', text: '[NHÓM ĐIỀN: d, e]' },
-    { kind: 'text', text: ' ' },
-    { kind: 'gap', text: '[TEAM: f]' },
-    { kind: 'text', text: ' ' },
-    { kind: 'gap', text: '[số]' },
-    { kind: 'text', text: ' [x]' },
+    { kind: 'link', text: 'd e', href: 'https://x.dev/p?q=1' },
+    { kind: 'text', text: ' [f](http://x.dev) [NHÓM ĐIỀN: g]' },
   ]);
   assert.deepEqual(tokenizeInline('plain'), [{ kind: 'text', text: 'plain' }]);
 });
 
-test('the privacy page serves the 2026-10 draft, gaps still open, in both locales', () => {
-  assert.equal(PRIVACY_POLICY_VERSION, '2026-10');
+test('the privacy page serves the approved 2026-10-2 policy in both locales', () => {
+  assert.equal(PRIVACY_POLICY_VERSION, '2026-10-2');
   assert.equal(content.vi.pages.privacy, privacyPolicy.vi);
   assert.equal(content.en.pages.privacy, privacyPolicy.en);
-  const gaps = { vi: /\[NHÓM ĐIỀN: [^\]]+\]/g, en: /\[TEAM: [^\]]+\]/g };
-  const counts = {};
+  assert.equal(privacyPolicy.vi.updated, '**Cập nhật lần cuối:** 01/10/2026 · **Phiên bản:** 2026-10-2');
+  assert.equal(privacyPolicy.en.updated, '**Last updated:** 1 October 2026 · **Version:** 2026-10-2');
   for (const locale of ['vi', 'en']) {
     const doc = privacyPolicy[locale];
-    assert.match(doc.updated, /2026-10/);
-    assert.ok(doc.draftNote, `${locale}: the draft banner stays until the text is approved`);
-    const { draftNote, ...body } = doc;
-    counts[locale] = (JSON.stringify(body).match(gaps[locale]) ?? []).length;
-    assert.ok(JSON.stringify(doc).includes('trinhkiet2005@gmail.com'));
+    const text = JSON.stringify(doc);
+    assert.equal('draftNote' in doc, false, `${locale}: no draft banner`);
+    assert.doesNotMatch(text, /NHÓM ĐIỀN|TEAM:|\[số\]|\[number\]|trinhkiet2005/);
+    assert.ok(text.includes('**flux@codeprove.vn**'));
+    assert.ok(text.includes('(https://developers.openai.com/api/docs/guides/your-data)'));
     assert.equal(doc.sections.length, 8);
   }
-  assert.equal(counts.vi, 10);
-  assert.equal(counts.en, counts.vi);
+  assert.deepEqual(
+    privacyPolicy.vi.sections.map((s) => s.h),
+    [
+      '1. Dữ liệu chúng tôi thu thập',
+      '2. Mục đích sử dụng',
+      '3. Bên thứ ba xử lý dữ liệu',
+      '4. Thời gian lưu trữ',
+      '5. Quyền của bạn',
+      '6. Bảo mật',
+      '7. Độ tuổi',
+      '8. Thay đổi chính sách',
+    ],
+  );
+  assert.deepEqual(
+    privacyPolicy.en.sections.map((s) => s.h),
+    ['1. Data we collect', '2. Why we use it', '3. Processors', '4. Retention', '5. Your rights', '6. Security', '7. Age', '8. Changes'],
+  );
   // The terms page keeps its own text.
   assert.equal(content.vi.pages.terms.title, 'Điều khoản dịch vụ');
 });
 
-test('LegalPage renders the version, the draft banner and highlighted gaps', () => {
+test('LegalPage renders the version, date, tables and the OpenAI link, with no draft markers', () => {
   const { I18nProvider } = require('../lib/i18n.tsx');
   const { LegalPage } = require('../components/sections/LegalPage.tsx');
   const html = render(h(I18nProvider, null, h(LegalPage, { doc: 'privacy' })));
-  assert.match(html, /Phiên bản: 2026-10/);
-  assert.match(html, /BẢN NHÁP/);
-  assert.match(html, /<mark[^>]*>\[NHÓM ĐIỀN: ngày công bố\]<\/mark>/);
+  assert.match(html, /01\/10\/2026/);
+  assert.match(html, /Phiên bản:<\/strong><span> 2026-10-2<\/span>/);
+  assert.match(html, /<strong[^>]*>flux@codeprove\.vn<\/strong>/);
   assert.match(html, /<code[^>]*>store=false<\/code>/);
+  assert.match(
+    html,
+    /<a href="https:\/\/developers\.openai\.com\/api\/docs\/guides\/your-data" target="_blank" rel="noopener noreferrer"[^>]*>Điều khoản dữ liệu API của OpenAI<\/a>/,
+  );
   assert.match(html, /<table/);
+  assert.doesNotMatch(html, /<mark|BẢN NHÁP|NHÓM ĐIỀN|role="note"/);
 
   const terms = render(h(I18nProvider, null, h(LegalPage, { doc: 'terms' })));
   assert.doesNotMatch(terms, /<mark|BẢN NHÁP/);
@@ -194,7 +210,7 @@ test('LegalPage renders the version, the draft banner and highlighted gaps', () 
 test('the consent dialog summarises, links the policy in a new tab and offers Accept / Later', () => {
   const { I18nProvider } = require('../lib/i18n.tsx');
   const { PrivacyConsentDialog } = require('../components/privacy/PrivacyConsentDialog.tsx');
-  const props = { version: '2026-10', accepting: false, notice: null, onAccept() {}, onLater() {} };
+  const props = { version: '2026-10-2', accepting: false, notice: null, onAccept() {}, onLater() {} };
   const html = render(h(I18nProvider, null, h(PrivacyConsentDialog, props)));
   const t = appContent.vi.privacy.dialog;
   assert.match(html, /role="dialog"/);
@@ -203,7 +219,7 @@ test('the consent dialog summarises, links the policy in a new tab and offers Ac
   assert.match(html, /href="\/privacy" target="_blank" rel="noopener noreferrer"/);
   assert.ok(html.includes('>Đồng ý<'));
   assert.ok(html.includes('>Để sau<'));
-  assert.ok(html.includes('Phiên bản 2026-10'));
+  assert.ok(html.includes('Phiên bản 2026-10-2'));
 
   const outdated = render(h(I18nProvider, null, h(PrivacyConsentDialog, { ...props, notice: 'outdated' })));
   assert.ok(outdated.includes(t.outdated));
