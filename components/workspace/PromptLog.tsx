@@ -40,12 +40,12 @@ export function PromptLog({ initialHint, sending, labels }: PromptLogProps) {
   return (
     <div className="ice-scroll flex-1 space-y-4 overflow-y-auto p-4">
       {/* Opening hint bubble */}
-      <div className="border-l-2 border-primary bg-primary/5 p-3">
+      <div className="rounded-xl border-l-2 border-primary bg-primary/5 p-3">
         <p className="text-sm leading-relaxed text-on-surface">{initialHint}</p>
       </div>
 
       {entries.length === 0 && (
-        <div className="border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
+        <div className="rounded-xl border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3">
           <p className="text-sm leading-relaxed text-on-surface-variant">{labels.intro}</p>
         </div>
       )}
@@ -55,8 +55,8 @@ export function PromptLog({ initialHint, sending, labels }: PromptLogProps) {
           key={i}
           className={
             m.role === "user"
-              ? "border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3"
-              : "border-l-2 border-primary bg-primary/5 p-3"
+              ? "rounded-xl border-l-2 border-outline-variant/60 bg-surface-container-high/50 p-3"
+              : "rounded-xl border-l-2 border-primary bg-primary/5 p-3"
           }
         >
           {m.role === "assistant" ? (
@@ -71,7 +71,7 @@ export function PromptLog({ initialHint, sending, labels }: PromptLogProps) {
       ))}
 
       {sending && (
-        <div className="border-l-2 border-primary bg-primary/5 p-3">
+        <div className="rounded-xl border-l-2 border-primary bg-primary/5 p-3">
           <p className="animate-pulse text-sm text-on-surface-variant/60">{labels.thinking}</p>
         </div>
       )}

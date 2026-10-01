@@ -45,7 +45,7 @@ type TestsPanelProps = {
 };
 
 const FIELD =
-  "w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-2.5 py-2 text-on-surface outline-none focus:border-primary disabled:opacity-60";
+  "w-full rounded-xl border border-outline-variant/60 bg-surface-container-lowest/50 px-2.5 py-2 text-on-surface outline-none focus:border-primary disabled:opacity-60";
 const MONO_FIELD = `${FIELD} font-label-mono text-label-mono`;
 const LABEL = "mb-1 block font-label-caps text-[11px] uppercase tracking-widest text-on-surface-variant";
 
@@ -94,7 +94,7 @@ export function TestsPanel({
         </header>
 
         {error && (
-          <div role="alert" className="border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
+          <div role="alert" className="rounded-xl border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
             {copy.errors[error]}
           </div>
         )}
@@ -106,7 +106,7 @@ export function TestsPanel({
         )}
 
         {required ? (
-          <div className="flex items-start gap-2 border border-primary/40 bg-primary/5 px-3 py-2.5 text-sm text-on-surface">
+          <div className="rounded-xl flex items-start gap-2 border border-primary/40 bg-primary/5 px-3 py-2.5 text-sm text-on-surface">
             <Sym name="rule" className="mt-px text-[16px] text-primary" />
             <div>
               <p>{fill(copy.requiredNote, { n: REQUIRED_VALID_TESTS })}</p>
@@ -125,7 +125,7 @@ export function TestsPanel({
           />
         )}
 
-        <section aria-labelledby="tests-categories" className="border border-outline-variant/50 p-4">
+        <section aria-labelledby="tests-categories" className="rounded-2xl border border-outline-variant/50 p-4">
           <h3 id="tests-categories" className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
             {copy.categoriesTitle}
           </h3>
@@ -135,7 +135,7 @@ export function TestsPanel({
               return (
                 <li
                   key={c}
-                  className={`inline-flex items-center gap-1.5 border px-2.5 py-1 font-label-mono text-label-mono ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 font-label-mono text-label-mono ${
                     done ? "border-success/40 bg-success/10 text-success" : "border-outline-variant/60 text-on-surface-variant"
                   }`}
                 >
@@ -235,13 +235,13 @@ function LearningMode({
 }) {
   const [added, setAdded] = useState(false);
   return (
-    <section aria-labelledby="tests-learning" className="border border-primary/40 bg-primary/5 p-4">
+    <section aria-labelledby="tests-learning" className="rounded-2xl border border-primary/40 bg-primary/5 p-4">
       <h3 id="tests-learning" className="flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
         <Sym name="school" className="text-[16px]" /> {copy.learningTitle}
       </h3>
       <p className="mt-2 text-sm leading-relaxed text-on-surface">{copy.learningNote}</p>
       {example && (
-        <div className="mt-3 border border-outline-variant/60 bg-surface-container-low p-3">
+        <div className="rounded-xl mt-3 border border-outline-variant/60 bg-surface-container-low p-3">
           <p className="font-label-mono text-[11px] uppercase text-on-surface-variant">{copy.exampleTitle}</p>
           <dl className="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1.5 text-sm">
             <dt className="text-on-surface-variant">{copy.categoryLabel}</dt>
@@ -333,7 +333,7 @@ function TestCard({
           id={`${id}-category`}
           value={draft.category}
           onChange={(e) => tests.update(draft.key, { category: e.target.value as StudentTestCategory })}
-          className="border border-outline-variant/60 bg-surface-container-lowest px-2 py-1 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
+          className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest px-2 py-1 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
         >
           {STUDENT_TEST_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -489,7 +489,7 @@ function CheckLine({ view, copy }: { view: CheckView; copy: TestsCopy }) {
     );
   }
   return (
-    <div role="alert" className="border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-on-surface">
+    <div role="alert" className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-on-surface">
       <p className="flex items-start gap-1.5 font-medium text-warning">
         <Sym name="block" className="mt-px text-[16px]" />
         {copy.checkRefused}

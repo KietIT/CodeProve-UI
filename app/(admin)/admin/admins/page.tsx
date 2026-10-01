@@ -7,7 +7,7 @@ import { useAdminCopy } from "../_copy";
 import { card, field, PageHeading, primaryButton } from "../_ui";
 
 type AdminRow = AdminAccount & { online: boolean; last_seen_at: string | null };
-type AuditRow = { id: number; actor_user_id: number | null; target_user_id: number | null; action: string; detail: string | null; created_at: string };
+type AuditRow = { id: number; actor_user_id: number | null; target_user_id: number | null; target_exercise_code: string | null; action: string; detail: string | null; created_at: string };
 type AuditPage = { total: number; items: AuditRow[] };
 type TempResponse = { admin: AdminAccount; temporary_password: string };
 
@@ -38,16 +38,31 @@ const translations = {
   },
 } as const;
 
+const exerciseEvents = {
+  vi: {
+    exercise_draft_created: "Tạo bài nháp", exercise_draft_updated: "Sửa bài nháp",
+    exercise_submitted: "Gửi duyệt bài", exercise_approved: "Duyệt bài",
+    exercise_rejected: "Trả lại bài nháp", exercise_published: "Xuất bản bài",
+  },
+  en: {
+    exercise_draft_created: "Created draft", exercise_draft_updated: "Edited draft",
+    exercise_submitted: "Submitted for review", exercise_approved: "Approved exercise",
+    exercise_rejected: "Returned draft", exercise_published: "Published exercise",
+  },
+} as const;
+
 function message(error: unknown): string { return error instanceof Error ? error.message : "Request failed"; }
 
 export default function AdminManagementPage() {
   const { admin } = useAdminAuth();
   const { locale } = useAdminCopy();
   const t = translations[locale];
+  const auditEvents: Record<string, string> = { ...t.events, ...exerciseEvents[locale] };
   const [admins, setAdmins] = useState<AdminRow[]>([]);
   const [audit, setAudit] = useState<AuditPage>({ total: 0, items: [] });
   const [actor, setActor] = useState("");
   const [action, setAction] = useState("");
+  const [exerciseCode, setExerciseCode] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [temporary, setTemporary] = useState<{ email: string; password: string } | null>(null);
@@ -61,6 +76,7 @@ export default function AdminManagementPage() {
       const query = new URLSearchParams({ limit: "50" });
       if (actor) query.set("actor_id", actor);
       if (action) query.set("action", action);
+      if (exerciseCode.trim()) query.set("exercise_code", exerciseCode.trim().toUpperCase());
       const [roster, history] = await Promise.all([
         adminRequest<AdminRow[]>("/admin/admins"),
         adminRequest<AuditPage>(`/admin/audit?${query.toString()}`),
@@ -68,7 +84,7 @@ export default function AdminManagementPage() {
       setAdmins(roster); setAudit(history); setError("");
     } catch (cause) { setError(message(cause)); }
     finally { setLoading(false); }
-  }, [admin?.role, admin?.must_change_password, actor, action]);
+  }, [admin?.role, admin?.must_change_password, actor, action, exerciseCode]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -111,6 +127,7 @@ export default function AdminManagementPage() {
       const query = new URLSearchParams({ limit: "50", offset: String(audit.items.length) });
       if (actor) query.set("actor_id", actor);
       if (action) query.set("action", action);
+      if (exerciseCode.trim()) query.set("exercise_code", exerciseCode.trim().toUpperCase());
       const next = await adminRequest<AuditPage>(`/admin/audit?${query.toString()}`);
       setAudit((old) => ({ total: next.total, items: [...old.items, ...next.items] }));
     } catch (cause) { setError(message(cause)); }
@@ -124,6 +141,17 @@ export default function AdminManagementPage() {
     {temporary && <div className="rounded-xl border border-primary/40 bg-primary/10 p-5" role="status"><div className="flex items-start justify-between gap-4"><div><h2 className="flex items-center gap-2 font-bold"><KeyRound size={19} />{t.tempTitle}</h2><p className="mt-2 text-sm">{t.tempHelp}</p></div><button type="button" onClick={() => setTemporary(null)} className="text-sm font-semibold text-primary">{t.close}</button></div><p className="mt-4 font-semibold">{temporary.email}</p><code className="mt-2 block break-all rounded-lg bg-surface-container-lowest p-3 text-sm" data-testid="temporary-password">{temporary.password}</code></div>}
     <section className={`${card} p-5 sm:p-6`}><h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><UserPlus size={20} className="text-primary" />{t.add}</h2><form onSubmit={create} className="grid gap-3 sm:grid-cols-[1fr_1.3fr_auto]"><label className="text-sm font-semibold">{t.name}<input className={`${field} mt-1`} value={name} onChange={(event) => setName(event.target.value)} minLength={2} required /></label><label className="text-sm font-semibold">{t.email}<input type="email" className={`${field} mt-1`} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@codeprove.production" required /></label><button className={`${primaryButton} self-end`} type="submit" disabled={busy}>{busy ? t.creating : t.create}</button></form></section>
     <section className={`${card} overflow-hidden`}><div className="border-b border-outline-variant/60 p-5"><h2 className="flex items-center gap-2 text-lg font-bold"><ShieldCheck size={20} className="text-primary" />{t.roster}</h2><p className="mt-1 text-sm text-on-surface-variant">{t.resetHelp}</p></div><div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-surface-container text-xs uppercase text-on-surface-variant"><tr><th className="px-5 py-3">{t.name}</th><th className="px-5 py-3">{t.role}</th><th className="px-5 py-3">{t.state}</th><th className="px-5 py-3">{t.activity}</th><th className="px-5 py-3">{t.actions}</th></tr></thead><tbody>{admins.map((row) => <tr key={row.id} className="border-t border-outline-variant/50"><td className="px-5 py-4"><strong>{row.full_name}</strong><div className="text-xs text-on-surface-variant">{row.email}</div></td><td className="px-5 py-4">{row.role === "super_admin" ? t.super : t.regular}</td><td className="px-5 py-4">{!row.is_active ? t.disabled : row.online ? t.online : t.offline}</td><td className="px-5 py-4">{date(row.last_seen_at)}</td><td className="px-5 py-4">{row.role === "admin" && <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => void changeStatus(row)} className="rounded-lg border border-outline-variant px-3 py-1.5 font-semibold text-primary disabled:opacity-50">{row.is_active ? t.disable : t.enable}</button><button type="button" disabled={busy} onClick={() => void reset(row)} className="rounded-lg border border-outline-variant px-3 py-1.5 font-semibold text-primary disabled:opacity-50">{t.reset}</button></div>}</td></tr>)}</tbody></table>{loading && <p className="p-5 text-sm text-on-surface-variant">...</p>}{!loading && admins.length === 0 && <p className="p-5 text-sm text-on-surface-variant">{t.empty}</p>}</div></section>
-    <section className={`${card} overflow-hidden`}><div className="flex flex-wrap items-end justify-between gap-4 border-b border-outline-variant/60 p-5"><h2 className="text-lg font-bold">{t.audit}</h2><div className="flex gap-2"><label className="text-xs">{t.actor}<select className={`${field} mt-1`} value={actor} onChange={(event) => setActor(event.target.value)}><option value="">{t.all}</option>{admins.map((row) => <option key={row.id} value={row.id}>{row.full_name}</option>)}</select></label><label className="text-xs">{t.event}<select className={`${field} mt-1`} value={action} onChange={(event) => setAction(event.target.value)}><option value="">{t.all}</option>{Object.entries(t.events).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label></div></div><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead className="bg-surface-container text-xs uppercase text-on-surface-variant"><tr><th className="px-5 py-3">{t.time}</th><th className="px-5 py-3">{t.actor}</th><th className="px-5 py-3">{t.event}</th><th className="px-5 py-3">{t.target}</th></tr></thead><tbody>{audit.items.map((row) => <tr key={row.id} className="border-t border-outline-variant/50"><td className="px-5 py-3">{date(row.created_at)}</td><td className="px-5 py-3">{row.actor_user_id ? names.get(row.actor_user_id) ?? `#${row.actor_user_id}` : row.action === "login_failed" ? t.unknown : t.system}</td><td className="px-5 py-3">{t.events[row.action as keyof typeof t.events] ?? row.action}</td><td className="px-5 py-3">{row.target_user_id ? names.get(row.target_user_id) ?? `#${row.target_user_id}` : "—"}</td></tr>)}</tbody></table>{audit.items.length === 0 && <p className="p-5 text-sm text-on-surface-variant">{t.empty}</p>}</div>{audit.items.length < audit.total && <div className="border-t border-outline-variant/60 p-4 text-center"><button type="button" onClick={() => void more()} className="font-semibold text-primary">{t.showMore}</button></div>}</section>
+    <section className={`${card} overflow-hidden`}>
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-outline-variant/60 p-5">
+        <h2 className="text-lg font-bold">{t.audit}</h2>
+        <div className="flex flex-wrap gap-2">
+          <label className="text-xs">{t.actor}<select className={`${field} mt-1`} value={actor} onChange={(event) => setActor(event.target.value)}><option value="">{t.all}</option>{admins.map((row) => <option key={row.id} value={row.id}>{row.full_name}</option>)}</select></label>
+          <label className="text-xs">{t.event}<select className={`${field} mt-1`} value={action} onChange={(event) => setAction(event.target.value)}><option value="">{t.all}</option>{Object.entries(auditEvents).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></label>
+          <label className="text-xs">{locale === "vi" ? "Mã bài" : "Exercise code"}<input className={`${field} mt-1`} value={exerciseCode} onChange={(event) => setExerciseCode(event.target.value)} placeholder="CP-001" /></label>
+        </div>
+      </div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-surface-container text-xs uppercase text-on-surface-variant"><tr><th className="px-5 py-3">{t.time}</th><th className="px-5 py-3">{t.actor}</th><th className="px-5 py-3">{t.event}</th><th className="px-5 py-3">{t.target}</th></tr></thead><tbody>{audit.items.map((row) => <tr key={row.id} className="border-t border-outline-variant/50"><td className="px-5 py-3">{date(row.created_at)}</td><td className="px-5 py-3">{row.actor_user_id ? names.get(row.actor_user_id) ?? `#${row.actor_user_id}` : row.action === "login_failed" ? t.unknown : t.system}</td><td className="px-5 py-3">{auditEvents[row.action] ?? row.action}{row.detail && <div className="text-xs text-on-surface-variant">{row.detail}</div>}</td><td className="px-5 py-3">{row.target_exercise_code ?? (row.target_user_id ? names.get(row.target_user_id) ?? `#${row.target_user_id}` : "—")}</td></tr>)}</tbody></table>{audit.items.length === 0 && <p className="p-5 text-sm text-on-surface-variant">{t.empty}</p>}</div>
+      {audit.items.length < audit.total && <div className="border-t border-outline-variant/60 p-4 text-center"><button type="button" onClick={() => void more()} className="font-semibold text-primary">{t.showMore}</button></div>}
+    </section>
   </div>;
 }

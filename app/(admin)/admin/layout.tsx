@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const signOut = async () => { try { await logout(); } catch { /* Session may already have expired. */ } finally { router.replace("/admin-login"); } };
 
   return <div className="min-h-screen bg-background text-on-surface lg:flex">
-    {mobileOpen && <button type="button" aria-label={t.common.closeMenu} onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-black/55 lg:hidden" />}
+    {mobileOpen && <button type="button" aria-label={t.common.closeMenu} onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 rounded-none bg-black/55 lg:hidden" />}
     <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-outline-variant/60 bg-surface-container-lowest px-4 py-5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="flex items-center justify-between px-3"><Link href={`/admin${suffix}`} className="text-xl font-bold tracking-tight">Code<span className="text-primary">Prove</span><span className="ml-2 rounded-md bg-primary/15 px-2 py-1 align-middle text-[10px] font-bold uppercase tracking-widest text-primary">Admin</span></Link><button type="button" aria-label={t.common.closeMenu} onClick={() => setMobileOpen(false)} className="rounded-lg p-2 lg:hidden"><X size={20} /></button></div>
       <p className="mb-5 mt-8 px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">{t.common.navigation}</p>

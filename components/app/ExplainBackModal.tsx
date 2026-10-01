@@ -107,7 +107,7 @@ export function ExplainBackModal({ attemptId, questions, tests, onClose }: Props
                 onDrop={(e) => e.preventDefault()}
                 disabled={submitting}
                 rows={4}
-                className="w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-3 font-label-mono text-label-mono text-on-surface outline-none transition-colors focus:border-primary disabled:opacity-50"
+                className="rounded-xl w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-3 font-label-mono text-label-mono text-on-surface outline-none transition-colors focus:border-primary disabled:opacity-50"
                 placeholder={tx.placeholder}
               />
             </div>
@@ -116,7 +116,7 @@ export function ExplainBackModal({ attemptId, questions, tests, onClose }: Props
 
         {/* Paste-blocked notice */}
         {pasteBlocked && (
-          <div className="flex items-center gap-2 border border-warning/40 bg-warning/10 p-3 font-label-mono text-label-mono text-warning">
+          <div className="rounded-xl flex items-center gap-2 border border-warning/40 bg-warning/10 p-3 font-label-mono text-label-mono text-warning">
             <Sym name="content_paste_off" className="text-[16px]" />
             {appContent[locale].solve.pasteDisabled}
           </div>
@@ -124,7 +124,7 @@ export function ExplainBackModal({ attemptId, questions, tests, onClose }: Props
 
         {/* Error */}
         {error && (
-          <div className="border border-error/30 bg-error/5 p-3 font-label-mono text-label-mono text-error">
+          <div className="rounded-xl border border-error/30 bg-error/5 p-3 font-label-mono text-label-mono text-error">
             {error}
           </div>
         )}

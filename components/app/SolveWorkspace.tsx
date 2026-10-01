@@ -1134,7 +1134,7 @@ export function SolveWorkspace({
             >
               <Sym name="arrow_back" className="text-[15px]" /> {levelConfig.name} {t.exercisesSuffix}
             </Link>
-            <span className="inline-block bg-primary px-2 py-0.5 font-label-mono text-label-mono text-on-primary">
+              <span className="inline-block rounded-xl bg-primary px-2 py-0.5 font-label-mono text-label-mono text-on-primary">
               {exercise.id} · {exercise.difficulty.toUpperCase()}
             </span>
             <h2 className="mt-2 font-headline-lg-mobile text-headline-lg-mobile">{exercise.title}</h2>
@@ -1188,7 +1188,7 @@ export function SolveWorkspace({
                 maxLength={HYPOTHESIS_MAX}
                 onPaste={handleBlockedPaste}
                 onDrop={handleBlockedDrop}
-                className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
+                className="rounded-xl h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
                 placeholder={t.hypothesisPlaceholder}
               />
               {nearCap(hypothesis.length, HYPOTHESIS_MAX) && (
@@ -1504,7 +1504,7 @@ export function SolveWorkspace({
 
       {fullscreenLocked && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-background/92 px-5 backdrop-blur-md">
-          <div className="w-full max-w-md border border-outline-variant/70 bg-surface-container-low p-6 shadow-card">
+          <div className="rounded-2xl w-full max-w-md border border-outline-variant/70 bg-surface-container-low p-6 shadow-card">
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
               <Sym name={hasStartedFullscreen ? "fullscreen_exit" : "fullscreen"} className="text-[24px]" />
             </div>
@@ -1515,7 +1515,7 @@ export function SolveWorkspace({
               {fullscreenBody}
             </p>
             {fullscreenError && (
-              <div className="mt-4 border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
+              <div className="rounded-xl mt-4 border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
                 {fullscreenError}
               </div>
             )}
