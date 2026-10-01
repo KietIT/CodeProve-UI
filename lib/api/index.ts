@@ -11,6 +11,7 @@ export * from "./ciel";
 export * from "./report";
 export * from "./dashboard";
 export * from "./practice";
+export * from "./learner";
 
 // Re-export the domain types so `@/lib/api` stays a one-stop import.
 export type { User, Me, AuthOut } from "@/lib/types/auth";
@@ -48,5 +49,6 @@ export type {
   StudentTestsReport,
 } from "@/lib/types/report";
 export type { DashboardOut } from "@/lib/types/dashboard";
+export type { LearnerOut } from "@/lib/types/learner";
 export type { PromptLogEntry } from "@/lib/types/session";
 export type { VizValue, TraceFrame, TraceResponse } from "@/lib/types/trace";
