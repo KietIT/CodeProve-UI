@@ -83,7 +83,7 @@ const copy = {
     terms: "Bằng việc tiếp tục, bạn đồng ý với",
     termsLink: "Điều khoản",
     termsAnd: "và",
-    privacyLink: "Chính sách bảo mật",
+    privacyLink: "Chính sách quyền riêng tư",
     backHome: "Về trang chủ",
   },
   en: {

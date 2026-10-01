@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/ui/Reveal";
 import { useI18n } from "@/lib/i18n";
 import { tokenizeInline } from "@/lib/legal/inline";
@@ -28,17 +28,6 @@ export function LegalPage({ doc }: { doc: "privacy" | "terms" }) {
           <p className="mt-2 font-mono text-xs text-muted">
             <Inline text={page.updated} />
           </p>
-          {page.draftNote && (
-            <p
-              role="note"
-              className="mt-5 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm leading-relaxed text-content"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-warning" />
-              <span>
-                <Inline text={page.draftNote} />
-              </span>
-            </p>
-          )}
           {intro.map((p) => (
             <p key={p} className="mt-6 text-base leading-relaxed text-muted">
               <Inline text={p} />
@@ -143,7 +132,7 @@ function Block({ block }: { block: LegalBlock }) {
 // Three-column legal tables: short label, short role, long details.
 const COL_WIDTHS = ["w-[24%]", "w-[30%]"];
 
-/** Renders **bold**, `code` and draft gaps; gaps keep their exact text, highlighted. */
+/** Renders **bold**, `code` and external links (opened in a new tab). */
 function Inline({ text }: { text: string }) {
   return (
     <>
@@ -156,11 +145,17 @@ function Inline({ text }: { text: string }) {
             </code>
           );
         }
-        if (tok.kind === "gap") {
+        if (tok.kind === "link") {
           return (
-            <mark key={i} className="rounded bg-warning/15 px-1 text-warning [box-decoration-break:clone]">
+            <a
+              key={i}
+              href={tok.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-content underline underline-offset-2 hover:opacity-80"
+            >
               {tok.text}
-            </mark>
+            </a>
           );
         }
         return <span key={i}>{tok.text}</span>;

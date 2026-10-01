@@ -1,6 +1,5 @@
 // Shape of a legal page rendered by components/sections/LegalPage. Strings may
-// use **bold** and `code`; draft gaps like [NHÓM ĐIỀN: …] / [TEAM: …] are shown
-// highlighted, verbatim (see lib/legal/inline.ts).
+// use **bold**, `code` and [label](https://…) links (see lib/legal/inline.ts).
 
 export type LegalListItem = string | { readonly text: string; readonly items: readonly string[] };
 
@@ -20,8 +19,6 @@ export type LegalSection = {
 export type LegalDoc = {
   readonly title: string;
   readonly updated: string;
-  /** Shown as a warning banner while the text is not approved yet. */
-  readonly draftNote?: string;
   readonly intro: string | readonly string[];
   readonly sections: readonly LegalSection[];
 };
