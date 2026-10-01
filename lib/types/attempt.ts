@@ -1,3 +1,5 @@
+import type { CielQuota } from "./ciel";
+
 export type RunCase = {
   name: string;
   passed: boolean;
@@ -68,6 +70,8 @@ export type AttemptState = {
   debug?: DebugState | null;
   /** Absent on backends without P2.3; treat a missing value as `null`. */
   tests?: TestsState | null;
+  /** Ciel messages left (P3.6); absent on backends without it. */
+  ciel?: CielQuota;
 };
 
 export type DebugHintOut = { step: 1 | 2; text: string };

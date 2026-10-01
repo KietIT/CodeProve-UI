@@ -17,14 +17,17 @@ import {
   createAttempt,
   getAttempt,
   getExerciseDetail,
+  limitErrorOf,
   locateBug,
   logHypothesis,
   runTests,
   saveSnapshot,
   submitAttempt,
   takeDebugHint,
+  type CielQuota,
   type DebugState,
   type ExerciseDetail,
+  type LimitDetail,
   type RunResult,
   type SubmitSummary,
   type TestsState,
@@ -53,6 +56,14 @@ import { useSessionStore } from "@/lib/stores/useSessionStore";
 import { useVisualizerStore } from "@/lib/stores/useVisualizerStore";
 import { createTelemetry } from "@/lib/telemetry";
 import { useI18n } from "@/lib/i18n";
+import {
+  CIEL_MESSAGE_MAX,
+  DEFAULT_RETRY_AFTER_SECONDS,
+  HYPOTHESIS_MAX,
+  cielRemaining,
+  nearCap,
+  showRemaining,
+} from "@/lib/cielQuota";
 import { appContent } from "@/lib/appContent";
 import { exerciseContentVi } from "@/lib/exerciseContentVi";
 
@@ -268,6 +279,16 @@ export function SolveWorkspace({
   const [chatSending, setChatSending] = useState(false);
   const startSession = useSessionStore((s) => s.startSession);
   const addPromptEntry = useSessionStore((s) => s.addPromptEntry);
+  const removePromptEntry = useSessionStore((s) => s.removePromptEntry);
+  // Cost limits (P3.6). `cielQuota` starts from the attempt state and follows
+  // each reply; `cielLimit` holds a 429 message while sending is blocked
+  // (a `rate_limited` one is cleared again after Retry-After).
+  const [cielQuota, setCielQuota] = useState<CielQuota | null>(null);
+  const [cielLimit, setCielLimit] = useState<LimitDetail | null>(null);
+  const rateLimitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (rateLimitTimerRef.current) clearTimeout(rateLimitTimerRef.current);
+  }, []);
   // Ciel goes through the shared mutation hook (Phase 2) rather than calling the
   // service directly. Same request/response shape as before; mutateAsync is a
   // stable reference. `chatSending` still drives the local send UI.
@@ -277,6 +298,7 @@ export function SolveWorkspace({
   const [hypothesis, setHypothesis] = useState<string>("");
   const [hypothesisSending, setHypothesisSending] = useState(false);
   const [hypothesisResult, setHypothesisResult] = useState<{ correct: boolean; note: string } | null>(null);
+  const [hypothesisLimit, setHypothesisLimit] = useState<LimitDetail | null>(null);
 
   // ── Debug locate step (P2.2) ───────────────────────────────────────────────
   // `debugResolved` stays false on a debug exercise until the attempt state is
@@ -433,6 +455,9 @@ export function SolveWorkspace({
       setTestsState(null);
       setCenterTab("code");
       resumeActiveRef.current = false;
+      setCielQuota(null);
+      setCielLimit(null);
+      setHypothesisLimit(null);
 
       // An attempt with a locate step (P2.2) or a Tests tab (P2.3) is reopened
       // after a reload so the step, the bought hints, the saved tests and the
@@ -441,6 +466,8 @@ export function SolveWorkspace({
       let debug: DebugState | null = null;
       let tests: TestsState | null = null;
       let latestCode: string | null = null;
+      // A backend without P3.6 omits `ciel`: no count is shown and nothing is blocked.
+      let ciel: CielQuota | null = null;
       const store = sessionStore();
       const saved = readResume(store, code);
       if (saved) {
@@ -451,6 +478,7 @@ export function SolveWorkspace({
             debug = state.debug ?? null;
             tests = hasTestsTab(state.tests) ? state.tests : null;
             latestCode = state.latest_code;
+            ciel = state.ciel ?? null;
             snapshotVersionRef.current = saved.snapshotVersion;
           }
         } catch {
@@ -471,6 +499,7 @@ export function SolveWorkspace({
             const state = await getAttempt(id, locale);
             debug = isDebug ? state.debug ?? null : null;
             tests = hasTestsTab(state.tests) ? state.tests : null;
+            ciel = state.ciel ?? null;
           } catch {
             debug = null;
             tests = null;
@@ -495,6 +524,7 @@ export function SolveWorkspace({
         }
         setDebugState(debug);
         setTestsState(tests);
+        setCielQuota(ciel);
 
         const telem = createTelemetry(id);
         telemetryRef.current = telem;
@@ -825,16 +855,28 @@ export function SolveWorkspace({
     setRunError(null);
   }, []);
 
+  // ── Ciel quota (P3.6) ──────────────────────────────────────────────────────
+  const cielLeft = cielRemaining(cielQuota);
+  const cielBlocked = cielLimit !== null || cielLeft === 0;
+  const cielLimitNotice = cielLimit
+    ? (locale === "vi" ? cielLimit.message_vi : cielLimit.message_en)
+    : cielLeft === 0
+      ? t.quota.cielOut
+      : undefined;
+  const cielRemainingLine =
+    showRemaining(cielLeft) && cielLeft > 0 ? t.quota.cielLeft.replace("{n}", String(cielLeft)) : undefined;
+
   // ── Chat send ─────────────────────────────────────────────────────────────
   // Turns are appended to the session prompt log; PromptLog renders from there.
   const handleChatSend = useCallback(async (text?: string) => {
-    const msg = (text ?? chatInput).trim();
-    if (!msg || chatSending) return;
+    const msg = (text ?? chatInput).trim().slice(0, CIEL_MESSAGE_MAX);
+    if (!msg || chatSending || cielBlocked) return;
     const id = attemptIdRef.current;
     if (!id) return;
 
     setChatInput("");
-    addPromptEntry({ role: "user", text: msg });
+    const askedAt = Date.now();
+    addPromptEntry({ role: "user", text: msg, ts: askedAt });
     setChatSending(true);
 
     try {
@@ -842,13 +884,36 @@ export function SolveWorkspace({
       // "this exercise" and what they have written so far.
       const res = await askCiel({ message: msg, code: editorCodeRef.current });
       addPromptEntry({ role: "assistant", text: res.reply });
+      if (res.ciel) setCielQuota(res.ciel);
     } catch (err) {
-      const errText = err instanceof Error ? err.message : "Failed to reach Ciel.";
-      addPromptEntry({ role: "assistant", text: `[Error] ${errText}` });
+      const limit = limitErrorOf(err);
+      if (limit && limit.code !== "hypothesis_limit") {
+        // The backend did not take the question: drop it from the log and
+        // give it back in the input so nothing typed is lost.
+        removePromptEntry(askedAt);
+        setChatInput(msg);
+        setCielLimit(limit);
+        // Our count was stale: zero the quota the backend says is used up.
+        if (limit.code === "ciel_attempt_limit") {
+          setCielQuota((q) => ({ attempt_left: 0, day_left: q?.day_left ?? 0 }));
+        } else if (limit.code === "ciel_daily_limit") {
+          setCielQuota((q) => ({ attempt_left: q?.attempt_left ?? 0, day_left: 0 }));
+        } else if (limit.code === "rate_limited") {
+          const wait = (err instanceof ApiError ? err.retryAfter : undefined) ?? DEFAULT_RETRY_AFTER_SECONDS;
+          if (rateLimitTimerRef.current) clearTimeout(rateLimitTimerRef.current);
+          rateLimitTimerRef.current = setTimeout(() => {
+            rateLimitTimerRef.current = null;
+            setCielLimit((cur) => (cur?.code === "rate_limited" ? null : cur));
+          }, wait * 1000);
+        }
+      } else {
+        const errText = err instanceof Error ? err.message : "Failed to reach Ciel.";
+        addPromptEntry({ role: "assistant", text: `[Error] ${errText}` });
+      }
     } finally {
       setChatSending(false);
     }
-  }, [chatInput, chatSending, askCiel, addPromptEntry]);
+  }, [chatInput, chatSending, cielBlocked, askCiel, addPromptEntry, removePromptEntry]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     void handleChatSend(suggestion);
@@ -856,7 +921,7 @@ export function SolveWorkspace({
 
   // ── Hypothesis log ────────────────────────────────────────────────────────
   const handleLogHypothesis = useCallback(async () => {
-    if (!hypothesis.trim() || hypothesisSending) return;
+    if (!hypothesis.trim() || hypothesisSending || hypothesisLimit) return;
     const id = attemptIdRef.current;
     if (!id) return;
 
@@ -864,15 +929,20 @@ export function SolveWorkspace({
     setHypothesisResult(null);
 
     try {
-      const res = await logHypothesis(id, hypothesis);
+      const res = await logHypothesis(id, hypothesis.slice(0, HYPOTHESIS_MAX));
       setHypothesisResult(res);
-    } catch {
-      // Show a neutral error without crashing.
-      setHypothesisResult({ correct: false, note: "Failed to log hypothesis. Try again." });
+    } catch (err) {
+      const limit = limitErrorOf(err);
+      if (limit?.code === "hypothesis_limit") {
+        setHypothesisLimit(limit);
+      } else {
+        // Show a neutral error without crashing.
+        setHypothesisResult({ correct: false, note: "Failed to log hypothesis. Try again." });
+      }
     } finally {
       setHypothesisSending(false);
     }
-  }, [hypothesis, hypothesisSending]);
+  }, [hypothesis, hypothesisSending, hypothesisLimit]);
 
   // ── Submit → explain-back modal ───────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
@@ -1085,19 +1155,29 @@ export function SolveWorkspace({
               <textarea
                 value={hypothesis}
                 onChange={(e) => setHypothesis(e.target.value)}
+                maxLength={HYPOTHESIS_MAX}
                 onPaste={handleBlockedPaste}
                 onDrop={handleBlockedDrop}
                 className="h-28 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
                 placeholder={t.hypothesisPlaceholder}
               />
-              {hypothesisResult && (
+              {nearCap(hypothesis.length, HYPOTHESIS_MAX) && (
+                <p aria-live="polite" className="mt-1 text-right font-label-mono text-[11px] text-on-surface-variant">
+                  {hypothesis.length}/{HYPOTHESIS_MAX}
+                </p>
+              )}
+              {hypothesisLimit ? (
+                <div role="status" className="mt-2 p-2 font-label-mono text-label-mono text-sm text-error">
+                  {locale === "vi" ? hypothesisLimit.message_vi : hypothesisLimit.message_en}
+                </div>
+              ) : hypothesisResult && (
                 <div className={`mt-2 p-2 font-label-mono text-label-mono text-sm ${hypothesisResult.correct ? "text-primary" : "text-error"}`}>
                   {hypothesisResult.correct ? "✓" : "✗"} {hypothesisResult.note}
                 </div>
               )}
               <button
                 onClick={() => void handleLogHypothesis()}
-                disabled={hypothesisSending || !hypothesis.trim()}
+                disabled={hypothesisSending || hypothesisLimit !== null || !hypothesis.trim()}
                 className="mt-2 w-full cursor-pointer bg-primary py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {hypothesisSending ? t.logging : t.logHypothesis}
@@ -1362,6 +1442,9 @@ export function SolveWorkspace({
             onSuggestionClick={handleSuggestionClick}
             suggestions={t.promptItems}
             notice={locating ? t.debug.cielHintOnly : undefined}
+            remainingLine={cielRemainingLine}
+            limitNotice={cielLimitNotice}
+            blocked={cielBlocked}
             labels={{
               intro: t.cielIntro,
               verifyHint: t.verifyHint,

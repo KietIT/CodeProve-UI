@@ -29,7 +29,7 @@ export type {
   TestCheckOut,
   OwnTestResult,
 } from "@/lib/types/attempt";
-export type { MentorRequest, MentorReply } from "@/lib/types/ciel";
+export type { MentorRequest, MentorReply, CielQuota } from "@/lib/types/ciel";
 export type {
   FeedbackItem,
   TimelineItem,
