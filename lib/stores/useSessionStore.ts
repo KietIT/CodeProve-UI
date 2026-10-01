@@ -9,6 +9,8 @@ type SessionState = {
   promptLog: PromptLogEntry[];
   startSession: (attemptId: number, exerciseCode: string) => void;
   addPromptEntry: (entry: Omit<PromptLogEntry, "ts"> & { ts?: number }) => void;
+  /** Drops the entry with this timestamp, e.g. a question the backend refused to take. */
+  removePromptEntry: (ts: number) => void;
   clear: () => void;
 };
 
@@ -22,5 +24,7 @@ export const useSessionStore = create<SessionState>((set) => ({
     set((s) => ({
       promptLog: [...s.promptLog, { ...entry, ts: entry.ts ?? Date.now() }],
     })),
+  removePromptEntry: (ts) =>
+    set((s) => ({ promptLog: s.promptLog.filter((e) => e.ts !== ts) })),
   clear: () => set({ attemptId: null, exerciseCode: null, promptLog: [] }),
 }));

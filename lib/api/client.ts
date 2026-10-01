@@ -14,13 +14,21 @@ export function clearToken(): void {
   if (typeof window !== "undefined") localStorage.removeItem(TOKEN_KEY);
 }
 
-/** Thrown on a non-2xx response; carries the HTTP status for callers/UI. */
+/**
+ * Thrown on a non-2xx response; carries the HTTP status for callers/UI, the
+ * parsed `detail` (string, validation array or object) and, when the server
+ * sent one, the `Retry-After` header in seconds.
+ */
 export class ApiError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  readonly detail?: unknown;
+  readonly retryAfter?: number;
+  constructor(message: string, status: number, detail?: unknown, retryAfter?: number) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.detail = detail;
+    this.retryAfter = retryAfter;
     // Keep instanceof reliable even when down-levelled below ES2015.
     Object.setPrototypeOf(this, ApiError.prototype);
   }
@@ -41,10 +49,20 @@ export async function apiFetch<T>(path: string, opts: ApiFetchOptions = {}): Pro
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) {
-    const detail = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new ApiError(formatApiError(detail, res.status), res.status);
+    const payload: unknown = await res.json().catch(() => ({ detail: res.statusText }));
+    const detail = payload && typeof payload === "object" ? (payload as { detail?: unknown }).detail : undefined;
+    // `headers` is optional chained for minimal fetch stand-ins (tests, mocks).
+    const retryAfter = parseRetryAfter(res.headers?.get("Retry-After") ?? null);
+    throw new ApiError(formatApiError(payload, res.status), res.status, detail, retryAfter);
   }
   return res.json() as Promise<T>;
+}
+
+/** `Retry-After` in whole seconds; our backend never sends the HTTP-date form. */
+export function parseRetryAfter(header: string | null): number | undefined {
+  if (header == null || header.trim() === "") return undefined;
+  const seconds = Number(header);
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.ceil(seconds) : undefined;
 }
 
 function formatApiError(payload: unknown, status: number): string {
@@ -64,5 +82,29 @@ function formatApiError(payload: unknown, status: number): string {
       .filter(Boolean);
     if (messages.length > 0) return messages.join(". ");
   }
+  const limit = readLimitDetail(detail);
+  if (limit) return limit.message_en;
   return `Request failed: ${status}`;
+}
+
+/** Codes the backend sends with a 429 when a cost limit (P3.6) is reached. */
+export type LimitCode = "ciel_attempt_limit" | "ciel_daily_limit" | "hypothesis_limit" | "rate_limited";
+
+/** Object `detail` of a limit response; the messages are ready to show as-is. */
+export type LimitDetail = { code: LimitCode; message_vi: string; message_en: string };
+
+const LIMIT_CODES: readonly string[] = ["ciel_attempt_limit", "ciel_daily_limit", "hypothesis_limit", "rate_limited"];
+
+/** Reads `{code, message_vi, message_en}` from a raw `detail`, or `null` when it is not one. */
+export function readLimitDetail(detail: unknown): LimitDetail | null {
+  if (!detail || typeof detail !== "object" || Array.isArray(detail)) return null;
+  const { code, message_vi, message_en } = detail as Record<string, unknown>;
+  if (typeof code !== "string" || !LIMIT_CODES.includes(code)) return null;
+  if (typeof message_vi !== "string" || typeof message_en !== "string") return null;
+  return { code: code as LimitCode, message_vi, message_en };
+}
+
+/** The limit detail carried by a thrown error, or `null` for any other error. */
+export function limitErrorOf(err: unknown): LimitDetail | null {
+  return err instanceof ApiError ? readLimitDetail(err.detail) : null;
 }

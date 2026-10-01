@@ -2,6 +2,7 @@
 
 import { Sym } from "@/components/app/AppChrome";
 import { PromptLog, type PromptLogLabels } from "@/components/workspace/PromptLog";
+import { CIEL_MESSAGE_MAX, nearCap } from "@/lib/cielQuota";
 
 export type CielPanelLabels = PromptLogLabels & {
   /** Input placeholder. */
@@ -24,6 +25,12 @@ export type CielPanelProps = {
   labels: CielPanelLabels;
   /** One line shown above the input, e.g. Ciel's hint-only rule on a debug exercise. */
   notice?: string;
+  /** Small "N messages left" line; set only when few are left. */
+  remainingLine?: string;
+  /** Limit or rate-limit message from the backend, in the current locale. */
+  limitNotice?: string;
+  /** True while sending is not allowed (limit reached or rate limited). The log stays visible. */
+  blocked?: boolean;
 };
 
 /**
@@ -43,7 +50,11 @@ export function CielPanel({
   suggestions,
   labels,
   notice,
+  remainingLine,
+  limitNotice,
+  blocked = false,
 }: CielPanelProps) {
+  const inputDisabled = sending || blocked;
   return (
     <aside className="flex h-full flex-col border-l border-outline-variant/60 bg-surface-container-low">
       <div className="flex flex-1 flex-col overflow-hidden border-b border-outline-variant/60">
@@ -68,9 +79,16 @@ export function CielPanel({
               <span>{notice}</span>
             </p>
           )}
+          {limitNotice && (
+            <p role="status" className="mb-2 flex items-start gap-1.5 text-xs leading-snug text-error">
+              <Sym name="block" className="mt-px text-[14px]" />
+              <span>{limitNotice}</span>
+            </p>
+          )}
           <div className="relative">
             <input
               value={input}
+              maxLength={CIEL_MESSAGE_MAX}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -78,7 +96,7 @@ export function CielPanel({
                   onSend();
                 }
               }}
-              disabled={sending}
+              disabled={inputDisabled}
               className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
               placeholder={labels.ask}
               type="text"
@@ -86,12 +104,22 @@ export function CielPanel({
             <button
               aria-label="Send"
               onClick={onSend}
-              disabled={sending || !input.trim()}
+              disabled={inputDisabled || !input.trim()}
               className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-primary disabled:opacity-40"
             >
               <Sym name="send" className="text-[18px]" />
             </button>
           </div>
+          {(remainingLine || nearCap(input.length, CIEL_MESSAGE_MAX)) && (
+            <div className="mt-1.5 flex items-center justify-between gap-2 font-label-mono text-[11px] text-on-surface-variant">
+              <span>{remainingLine}</span>
+              {nearCap(input.length, CIEL_MESSAGE_MAX) && (
+                <span aria-live="polite">
+                  {input.length}/{CIEL_MESSAGE_MAX}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -104,7 +132,7 @@ export function CielPanel({
             <button
               key={p}
               onClick={() => onSuggestionClick(p)}
-              disabled={sending}
+              disabled={inputDisabled}
               className="w-full cursor-pointer border border-outline-variant/50 p-2 text-left font-label-mono text-label-mono text-on-surface-variant transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
             >
               {p}

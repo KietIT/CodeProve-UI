@@ -146,6 +146,11 @@ export const appContent = {
         submitError: "Gửi câu trả lời thất bại. Vui lòng thử lại.",
         close: "Đóng",
       },
+      // Cost limits (P3.6). Only the remaining count is shown, never the configured caps.
+      quota: {
+        cielLeft: "Còn {n} tin nhắn với Ciel",
+        cielOut: "Bạn đã dùng hết lượt nhắn với Ciel.",
+      },
       debug: {
         stepEyebrow: "Bước 1 · Tìm lỗi",
         title: "Khoanh vùng lỗi trước khi sửa",
@@ -541,6 +546,10 @@ export const appContent = {
         cancel: "Cancel",
         submitError: "Failed to submit answers. Please try again.",
         close: "Close",
+      },
+      quota: {
+        cielLeft: "{n} Ciel messages left",
+        cielOut: "You have no Ciel messages left.",
       },
       debug: {
         stepEyebrow: "Step 1 · Find the bug",
