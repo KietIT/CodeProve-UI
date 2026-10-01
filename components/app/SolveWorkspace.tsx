@@ -14,6 +14,7 @@ import {
 } from "@/lib/exercises";
 import {
   ApiError,
+  consentMessageOf,
   createAttempt,
   getAttempt,
   getExerciseDetail,
@@ -33,6 +34,7 @@ import {
   type TestsState,
 } from "@/lib/api";
 import { useCiel } from "@/hooks/useCiel";
+import { usePrivacyConsent } from "@/lib/privacyConsent";
 import { ResultTabs } from "@/components/workspace/ResultTabs";
 import { HintAccordion } from "@/components/workspace/HintAccordion";
 import { WorkspaceVisualizer } from "@/components/workspace/WorkspaceVisualizer";
@@ -299,6 +301,19 @@ export function SolveWorkspace({
   const [hypothesisSending, setHypothesisSending] = useState(false);
   const [hypothesisResult, setHypothesisResult] = useState<{ correct: boolean; note: string } | null>(null);
   const [hypothesisLimit, setHypothesisLimit] = useState<LimitDetail | null>(null);
+
+  // ── Privacy consent (P3.7) ───────────────────────────────────────────────
+  // A 403 `privacy_consent_required` opens the consent dialog (see
+  // lib/privacyConsent); the backend's message stays next to the refused
+  // action, nothing typed is lost, and accepting clears it so the student can
+  // simply try again.
+  const [consentNotice, setConsentNotice] = useState<
+    { where: "ciel" | "hypothesis" | "submit"; message: string } | null
+  >(null);
+  const consented = usePrivacyConsent().privacy?.consented ?? false;
+  useEffect(() => {
+    if (consented) setConsentNotice(null);
+  }, [consented]);
 
   // ── Debug locate step (P2.2) ───────────────────────────────────────────────
   // `debugResolved` stays false on a debug exercise until the attempt state is
@@ -885,9 +900,16 @@ export function SolveWorkspace({
       const res = await askCiel({ message: msg, code: editorCodeRef.current });
       addPromptEntry({ role: "assistant", text: res.reply });
       if (res.ciel) setCielQuota(res.ciel);
+      setConsentNotice((cur) => (cur?.where === "ciel" ? null : cur));
     } catch (err) {
       const limit = limitErrorOf(err);
-      if (limit && limit.code !== "hypothesis_limit") {
+      const consentMessage = consentMessageOf(err, locale);
+      if (consentMessage) {
+        // Not taken either: give the question back for after consent.
+        removePromptEntry(askedAt);
+        setChatInput(msg);
+        setConsentNotice({ where: "ciel", message: consentMessage });
+      } else if (limit && limit.code !== "hypothesis_limit") {
         // The backend did not take the question: drop it from the log and
         // give it back in the input so nothing typed is lost.
         removePromptEntry(askedAt);
@@ -913,7 +935,7 @@ export function SolveWorkspace({
     } finally {
       setChatSending(false);
     }
-  }, [chatInput, chatSending, cielBlocked, askCiel, addPromptEntry, removePromptEntry]);
+  }, [chatInput, chatSending, cielBlocked, askCiel, addPromptEntry, removePromptEntry, locale]);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
     void handleChatSend(suggestion);
@@ -931,9 +953,13 @@ export function SolveWorkspace({
     try {
       const res = await logHypothesis(id, hypothesis.slice(0, HYPOTHESIS_MAX));
       setHypothesisResult(res);
+      setConsentNotice((cur) => (cur?.where === "hypothesis" ? null : cur));
     } catch (err) {
       const limit = limitErrorOf(err);
-      if (limit?.code === "hypothesis_limit") {
+      const consentMessage = consentMessageOf(err, locale);
+      if (consentMessage) {
+        setConsentNotice({ where: "hypothesis", message: consentMessage });
+      } else if (limit?.code === "hypothesis_limit") {
         setHypothesisLimit(limit);
       } else {
         // Show a neutral error without crashing.
@@ -942,7 +968,7 @@ export function SolveWorkspace({
     } finally {
       setHypothesisSending(false);
     }
-  }, [hypothesis, hypothesisSending, hypothesisLimit]);
+  }, [hypothesis, hypothesisSending, hypothesisLimit, locale]);
 
   // ── Submit → explain-back modal ───────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
@@ -969,8 +995,11 @@ export function SolveWorkspace({
       clearResume(sessionStore(), code);
       setSubmitTests(tests ?? null);
       setExplainQuestions(questions);
+      setConsentNotice((cur) => (cur?.where === "submit" ? null : cur));
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
+      const consentMessage = consentMessageOf(err, locale);
+      if (consentMessage) setConsentNotice({ where: "submit", message: consentMessage });
+      else setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -1042,6 +1071,7 @@ export function SolveWorkspace({
   );
 
   // ── Derived display values ────────────────────────────────────────────────
+  const submitNotice = submitError ?? (consentNotice?.where === "submit" ? consentNotice.message : null);
   const codeLines = editorCode.split("\n");
   const backSlug = level ?? levelConfig.slug;
   const fullscreenLocked = !fullscreenActive;
@@ -1170,6 +1200,10 @@ export function SolveWorkspace({
                 <div role="status" className="mt-2 p-2 font-label-mono text-label-mono text-sm text-error">
                   {locale === "vi" ? hypothesisLimit.message_vi : hypothesisLimit.message_en}
                 </div>
+              ) : consentNotice?.where === "hypothesis" ? (
+                <div role="status" className="mt-2 p-2 font-label-mono text-label-mono text-sm text-error">
+                  {consentNotice.message}
+                </div>
               ) : hypothesisResult && (
                 <div className={`mt-2 p-2 font-label-mono text-label-mono text-sm ${hypothesisResult.correct ? "text-primary" : "text-error"}`}>
                   {hypothesisResult.correct ? "✓" : "✗"} {hypothesisResult.note}
@@ -1237,9 +1271,9 @@ export function SolveWorkspace({
                 <Sym name={autosaveState === "saving" ? "sync" : "save"} className="text-[16px]" />
                 <span>{autosaveLabel}</span>
               </div>
-              {submitError && (
-                <span className="max-w-56 truncate font-label-mono text-label-mono text-sm text-error">
-                  {submitError}
+              {submitNotice && (
+                <span title={submitNotice} className="max-w-56 truncate font-label-mono text-label-mono text-sm text-error">
+                  {submitNotice}
                 </span>
               )}
               <button
@@ -1443,7 +1477,7 @@ export function SolveWorkspace({
             suggestions={t.promptItems}
             notice={locating ? t.debug.cielHintOnly : undefined}
             remainingLine={cielRemainingLine}
-            limitNotice={cielLimitNotice}
+            limitNotice={cielLimitNotice ?? (consentNotice?.where === "ciel" ? consentNotice.message : undefined)}
             blocked={cielBlocked}
             labels={{
               intro: t.cielIntro,

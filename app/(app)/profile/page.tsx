@@ -7,11 +7,13 @@ import { Sym } from "@/components/app/AppChrome";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { appContent } from "@/lib/appContent";
+import { usePrivacyConsent } from "@/lib/privacyConsent";
 
 // Max avatar size before base64 encoding (keeps the DB row small).
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
-type Section = "account" | "settings" | "integrations";
+type Section = "account" | "settings" | "privacy" | "integrations";
 
 const copy = {
   vi: {
@@ -204,6 +206,7 @@ export default function ProfilePage() {
   const navItems: { key: Section; icon: string; label: string }[] = [
     { key: "account", icon: "badge", label: t.nav.account },
     { key: "settings", icon: "settings", label: t.nav.settings },
+    { key: "privacy", icon: "shield_person", label: appContent[locale].privacy.profile.nav },
     { key: "integrations", icon: "extension", label: t.nav.integrations },
   ];
 
@@ -396,6 +399,8 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              {section === "privacy" && <PrivacySection />}
+
               {section === "integrations" && (
                 <div className="ice-card space-y-4 p-6">
                   <div>
@@ -439,6 +444,119 @@ export default function ProfilePage() {
   );
 }
 
+/** Consent status and the AI personalisation switch (P3.7). */
+function PrivacySection() {
+  const { locale } = useI18n();
+  const t = appContent[locale].privacy.profile;
+  const { privacy, loadFailed, reload, openDialog, setAiPersonalization } = usePrivacyConsent();
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+
+  async function toggleAi() {
+    if (!privacy || saving) return;
+    setSaving(true);
+    setSaveFailed(false);
+    try {
+      await setAiPersonalization(!privacy.ai_personalization);
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="ice-card space-y-1 p-6">
+      <h2 className="flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
+        <Sym name="shield_person" className="text-[18px]" /> {t.title}
+      </h2>
+      <p className="pb-2 text-sm text-on-surface-variant/70">{t.sub}</p>
+
+      {!privacy && !loadFailed && (
+        <div className="flex items-center gap-3 py-6 text-sm text-on-surface-variant">
+          <Sym name="progress_activity" className="animate-spin text-[20px] text-primary" />
+          {t.loading}
+        </div>
+      )}
+
+      {!privacy && loadFailed && (
+        <div className="flex flex-wrap items-center gap-3 py-6 text-sm text-error">
+          {t.loadFailed}
+          <button
+            type="button"
+            onClick={() => void reload()}
+            className="cursor-pointer border border-outline-variant/60 px-3 py-1.5 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+          >
+            {t.retry}
+          </button>
+        </div>
+      )}
+
+      {privacy && (
+        <>
+          {/* Consent status */}
+          <div className="flex flex-col gap-3 border-t border-outline-variant/40 py-4 first:border-t-0 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <span
+                className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-surface-container-highest ${
+                  privacy.consented ? "text-primary" : "text-error"
+                }`}
+              >
+                <Sym name={privacy.consented ? "verified_user" : "gpp_maybe"} className="text-[20px]" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-medium text-on-surface">{t.consentTitle}</p>
+                <p className="text-sm text-on-surface-variant/70">
+                  {privacy.consented
+                    ? t.consentAccepted.replace("{version}", privacy.version ?? privacy.current_version)
+                    : t.consentMissing.replace("{version}", privacy.current_version)}
+                </p>
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
+                >
+                  {t.policyLink}
+                  <Sym name="open_in_new" className="text-[14px]" />
+                  <span className="sr-only">{appContent[locale].privacy.newTab}</span>
+                </a>
+              </div>
+            </div>
+            {!privacy.consented && (
+              <button
+                type="button"
+                onClick={openDialog}
+                className="flex-none cursor-pointer bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90 sm:self-center"
+              >
+                {t.consentOpen}
+              </button>
+            )}
+          </div>
+
+          {/* AI personalisation */}
+          <div className="flex items-start gap-3 border-t border-outline-variant/40 py-4">
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-surface-container-highest text-on-surface-variant">
+              <Sym name="psychology" className="text-[20px]" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p id="ai-personalization-label" className="font-medium text-on-surface">{t.aiTitle}</p>
+              <p className="text-sm text-on-surface-variant/70">{t.aiHelp}</p>
+              {saveFailed && <p className="mt-1 text-sm text-error">{t.saveFailed}</p>}
+            </div>
+            <Toggle
+              checked={privacy.ai_personalization}
+              onClick={() => void toggleAi()}
+              disabled={saving}
+              labelledBy="ai-personalization-label"
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function SettingRow({ icon, title, sub, children }: { icon: string; title: string; sub: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 border-t border-outline-variant/40 py-4 first:border-t-0">
@@ -454,14 +572,26 @@ function SettingRow({ icon, title, sub, children }: { icon: string; title: strin
   );
 }
 
-function Toggle({ checked, onClick }: { checked: boolean; onClick: () => void }) {
+function Toggle({
+  checked,
+  onClick,
+  disabled = false,
+  labelledBy,
+}: {
+  checked: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  labelledBy?: string;
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-labelledby={labelledBy}
       onClick={onClick}
-      className={`relative inline-flex h-6 w-11 flex-none cursor-pointer items-center rounded-full transition-colors ${
+      disabled={disabled}
+      className={`relative inline-flex h-6 w-11 flex-none cursor-pointer items-center rounded-full transition-colors disabled:cursor-wait disabled:opacity-60 ${
         checked ? "bg-primary" : "bg-outline-variant"
       }`}
     >

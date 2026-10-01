@@ -53,6 +53,7 @@ export async function apiFetch<T>(path: string, opts: ApiFetchOptions = {}): Pro
     const detail = payload && typeof payload === "object" ? (payload as { detail?: unknown }).detail : undefined;
     // `headers` is optional chained for minimal fetch stand-ins (tests, mocks).
     const retryAfter = parseRetryAfter(res.headers?.get("Retry-After") ?? null);
+    if (res.status === 403 && readConsentDetail(detail)) notifyConsentRequired();
     throw new ApiError(formatApiError(payload, res.status), res.status, detail, retryAfter);
   }
   return res.json() as Promise<T>;
@@ -82,8 +83,8 @@ function formatApiError(payload: unknown, status: number): string {
       .filter(Boolean);
     if (messages.length > 0) return messages.join(". ");
   }
-  const limit = readLimitDetail(detail);
-  if (limit) return limit.message_en;
+  const coded = readLimitDetail(detail) ?? readConsentDetail(detail);
+  if (coded) return coded.message_en;
   return `Request failed: ${status}`;
 }
 
@@ -107,4 +108,55 @@ export function readLimitDetail(detail: unknown): LimitDetail | null {
 /** The limit detail carried by a thrown error, or `null` for any other error. */
 export function limitErrorOf(err: unknown): LimitDetail | null {
   return err instanceof ApiError ? readLimitDetail(err.detail) : null;
+}
+
+/** Object `detail` of the 403 the AI endpoints send until the current policy is accepted (P3.7). */
+export type ConsentDetail = { code: "privacy_consent_required"; message_vi: string; message_en: string };
+
+/** Reads the consent-required `detail`, or `null` when it is not one. */
+export function readConsentDetail(detail: unknown): ConsentDetail | null {
+  if (!detail || typeof detail !== "object" || Array.isArray(detail)) return null;
+  const { code, message_vi, message_en } = detail as Record<string, unknown>;
+  if (code !== "privacy_consent_required") return null;
+  if (typeof message_vi !== "string" || typeof message_en !== "string") return null;
+  return { code, message_vi, message_en };
+}
+
+/** The consent detail carried by a thrown error, or `null` for any other error. */
+export function consentErrorOf(err: unknown): ConsentDetail | null {
+  return err instanceof ApiError && err.status === 403 ? readConsentDetail(err.detail) : null;
+}
+
+/** The backend's message for a consent error in the given locale, or `null` for any other error. */
+export function consentMessageOf(err: unknown, locale: "vi" | "en"): string | null {
+  const consent = consentErrorOf(err);
+  if (!consent) return null;
+  return locale === "vi" ? consent.message_vi : consent.message_en;
+}
+
+/** The newer `current_version` from a 409 `privacy_version_outdated`, or `null` for any other error. */
+export function outdatedVersionOf(err: unknown): string | null {
+  if (!(err instanceof ApiError) || err.status !== 409) return null;
+  const detail = err.detail;
+  if (!detail || typeof detail !== "object" || Array.isArray(detail)) return null;
+  const { code, current_version } = detail as Record<string, unknown>;
+  return code === "privacy_version_outdated" && typeof current_version === "string" ? current_version : null;
+}
+
+type ConsentListener = () => void;
+const consentListeners = new Set<ConsentListener>();
+
+/**
+ * Subscribes to every 403 `privacy_consent_required`, whichever call got it, so
+ * one place (the consent dialog) can ask for consent. Returns the unsubscribe.
+ */
+export function onConsentRequired(listener: ConsentListener): () => void {
+  consentListeners.add(listener);
+  return () => {
+    consentListeners.delete(listener);
+  };
+}
+
+function notifyConsentRequired(): void {
+  consentListeners.forEach((listener) => listener());
 }

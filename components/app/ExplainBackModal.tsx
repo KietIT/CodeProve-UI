@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { explainBack, type SubmitSummary } from "@/lib/api";
+import { consentMessageOf, explainBack, type SubmitSummary } from "@/lib/api";
 import { submitSummaryLine } from "@/components/report/diagnosis";
 import { Sym } from "@/components/app/AppChrome";
 import { useI18n } from "@/lib/i18n";
@@ -54,7 +54,9 @@ export function ExplainBackModal({ attemptId, questions, tests, onClose }: Props
       );
       router.push(`/feedback?attempt=${attemptId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : tx.submitError);
+      // A 403 for missing consent also opens the consent dialog; the answers
+      // stay, so the student submits again once they accepted.
+      setError(consentMessageOf(err, locale) ?? (err instanceof Error ? err.message : tx.submitError));
       setSubmitting(false);
     }
   }

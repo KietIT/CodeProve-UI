@@ -3,7 +3,7 @@ import { LegalPage } from "@/components/sections/LegalPage";
 
 export const metadata: Metadata = {
   title: "Quyền riêng tư",
-  description: "CodeProve thu thập telemetry hành vi minh bạch để chấm điểm và đảm bảo tính toàn vẹn.",
+  description: "CodeProve thu thập dữ liệu gì, dùng để làm gì, chia sẻ với ai và bạn có những quyền gì.",
 };
 
 export default function PrivacyPage() {

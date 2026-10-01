@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
+import { PrivacyConsentProvider } from "@/lib/privacyConsent";
 import { QueryProvider } from "@/lib/query/QueryProvider";
 
 const inter = Inter({
@@ -63,7 +64,9 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <I18nProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <AuthProvider>
+                <PrivacyConsentProvider>{children}</PrivacyConsentProvider>
+              </AuthProvider>
             </I18nProvider>
           </ThemeProvider>
         </QueryProvider>

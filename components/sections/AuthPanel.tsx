@@ -20,6 +20,7 @@ import { HeroPoster } from "@/components/three/HeroPoster";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
+import { appContent } from "@/lib/appContent";
 
 type Mode = "login" | "signup";
 
@@ -176,6 +177,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const router = useRouter();
   const reduce = useReducedMotion();
   const c = copy[locale];
+  const tp = appContent[locale].privacy;
   const m = c[mode];
 
   const [name, setName] = useState("");
@@ -184,6 +186,8 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
+  // The backend refuses an email signup without consent to the privacy policy (P3.7).
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -218,6 +222,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setServerError("");
+    if (mode === "signup" && !acceptPrivacy) return;
     if (!validate()) return;
     setSubmitting(true);
     try {
@@ -439,8 +444,38 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 </label>
               )}
 
+              {mode === "signup" && (
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm leading-snug text-muted">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={acceptPrivacy}
+                    onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 flex-none cursor-pointer rounded border-border bg-bg/60 text-primary accent-primary focus:ring-2 focus:ring-primary/25"
+                  />
+                  <span>
+                    {tp.signupAgree}{" "}
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-teal underline underline-offset-2 hover:opacity-80"
+                    >
+                      {tp.signupPolicyLink}
+                      <span className="sr-only"> {tp.newTab}</span>
+                    </a>
+                    .
+                  </span>
+                </label>
+              )}
+
               {serverError && <p className="text-sm text-error">{serverError}</p>}
-              <Button type="submit" size="lg" className="mt-2 w-full" disabled={submitting}>
+              <Button
+                type="submit"
+                size="lg"
+                className="mt-2 w-full"
+                disabled={submitting || (mode === "signup" && !acceptPrivacy)}
+              >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
