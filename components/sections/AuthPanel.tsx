@@ -20,6 +20,7 @@ import { HeroPoster } from "@/components/three/HeroPoster";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
+import { adminRequest, isAdminLoginId, type AdminAccount } from "@/lib/adminClient";
 import { appContent } from "@/lib/appContent";
 
 type Mode = "login" | "signup";
@@ -73,6 +74,10 @@ const copy = {
       google: "Google",
       github: "GitHub",
       comingSoon: "Đăng nhập bằng {provider} sắp ra mắt - hiện hãy dùng email nhé.",
+    },
+    admin: {
+      notice: "Tài khoản quản trị sẽ mở khu vực admin. Mật khẩu tạm cần được đổi sau khi đăng nhập.",
+      forgot: "Quên mật khẩu? Liên hệ super-admin để được cấp mật khẩu tạm.",
     },
     errors: {
       email: "Vui lòng nhập email hợp lệ.",
@@ -133,6 +138,10 @@ const copy = {
       github: "GitHub",
       comingSoon: "{provider} sign-in is coming soon - please use email for now.",
     },
+    admin: {
+      notice: "Admin accounts open the admin area. A temporary password must be changed after sign in.",
+      forgot: "Forgot your password? Contact the super admin for a temporary password.",
+    },
     errors: {
       email: "Please enter a valid email.",
       password: "Password must be at least 8 characters.",
@@ -192,7 +201,8 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const [ssoNotice, setSsoNotice] = useState("");
-  const { login, signup } = useAuth();
+  const { login, signup, logout } = useAuth();
+  const adminEmail = mode === "login" && isAdminLoginId(email);
 
   // Social sign-in UI is in place; the OAuth backend flow is not wired yet, so
   // GitHub is still pending; Google is wired through the backend OAuth flow.
@@ -226,9 +236,20 @@ export function AuthPanel({ mode }: { mode: Mode }) {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      if (mode === "signup") await signup(name.trim(), email, password);
-      else await login(email, password);
-      router.push("/dashboard");
+      if (mode === "signup") {
+        await signup(name.trim(), email, password);
+        router.push("/dashboard");
+      } else if (adminEmail) {
+        const account = await adminRequest<AdminAccount>("/auth/admin/login", {
+          method: "POST", body: { email: email.trim().toLowerCase(), password },
+        });
+        logout();
+        setPassword("");
+        router.replace(account.must_change_password ? "/admin/change-password" : "/admin");
+      } else {
+        await login(email, password);
+        router.push("/dashboard");
+      }
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -377,6 +398,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                   className={inputCls}
                 />
               </Field>
+              {adminEmail && <p role="status" className="rounded-xl bg-teal/10 px-3 py-2 text-xs text-teal">{c.admin.notice}</p>}
 
               <Field
                 id="password"
@@ -384,7 +406,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 icon={<Lock className="h-4 w-4" />}
                 error={errors.password}
                 action={
-                  mode === "login" ? (
+                  mode === "login" && !adminEmail ? (
                     <span
                       title="Coming soon"
                       className="cursor-not-allowed text-xs font-medium text-teal/40 select-none"
@@ -412,6 +434,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </Field>
+              {adminEmail && <p className="text-xs text-muted">{c.admin.forgot}</p>}
 
               {mode === "signup" && (
                 <Field
@@ -432,7 +455,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 </Field>
               )}
 
-              {mode === "login" && (
+              {mode === "login" && !adminEmail && (
                 <label className="flex cursor-pointer items-center gap-2.5 text-sm text-muted">
                   <input
                     type="checkbox"
@@ -487,45 +510,37 @@ export function AuthPanel({ mode }: { mode: Mode }) {
               </Button>
             </form>
 
-            {/* Divider */}
-            <div className="my-6 flex items-center gap-3">
-              <span className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted">{c.social.divider}</span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
+            {!adminEmail && (
+              <>
+                <div className="my-6 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted">{c.social.divider}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
 
-            {/* SSO - interactive; OAuth backend not wired yet so clicks show a notice */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                className={ssoCls}
-              >
-                <GoogleIcon className="h-4 w-4" />
-                {c.social.google}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSso(c.social.github)}
-                className={ssoCls}
-              >
-                <Github className="h-4 w-4" />
-                {c.social.github}
-              </button>
-            </div>
-            {ssoNotice && (
-              <p role="status" className="mt-3 text-center text-xs text-muted">
-                {ssoNotice}
-              </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={handleGoogleSignIn} className={ssoCls}>
+                    <GoogleIcon className="h-4 w-4" />
+                    {c.social.google}
+                  </button>
+                  <button type="button" onClick={() => handleSso(c.social.github)} className={ssoCls}>
+                    <Github className="h-4 w-4" />
+                    {c.social.github}
+                  </button>
+                </div>
+                {ssoNotice && <p role="status" className="mt-3 text-center text-xs text-muted">{ssoNotice}</p>}
+              </>
             )}
 
             {/* Switch + back */}
-            <p className="mt-7 text-center text-sm text-muted">
-              {m.switchLabel}{" "}
-              <Link href={m.switchHref} className="font-semibold text-teal transition-colors hover:opacity-80">
-                {m.switchCta}
-              </Link>
-            </p>
+            {!adminEmail && (
+              <p className="mt-7 text-center text-sm text-muted">
+                {m.switchLabel}{" "}
+                <Link href={m.switchHref} className="font-semibold text-teal transition-colors hover:opacity-80">
+                  {m.switchCta}
+                </Link>
+              </p>
+            )}
             <p className="mt-2 text-center text-[11px] leading-relaxed text-muted/70">
               {c.terms}{" "}
               <Link href="/terms" className="underline underline-offset-2 hover:text-content">

@@ -5,6 +5,7 @@ import { useI18n } from "@/lib/i18n";
 export const adminCopy = {
   vi: {
     common: {
+      activity: "Lịch sử hoạt động",
       overview: "Tổng quan", users: "Người dùng", exercises: "Bài tập", adminManagement: "Quản lý admin", account: "Tài khoản",
       navigation: "Điều hướng", changePassword: "Đổi mật khẩu", signOut: "Đăng xuất",
       localDemo: "Demo local", loadingAuth: "Đang xác thực...", deniedTitle: "Không có quyền truy cập",
@@ -96,6 +97,7 @@ export const adminCopy = {
   },
   en: {
     common: {
+      activity: "Activity history",
       overview: "Overview", users: "Users", exercises: "Exercises", adminManagement: "Manage admins", account: "Account",
       navigation: "Navigation", changePassword: "Change password", signOut: "Sign out",
       localDemo: "Local demo", loadingAuth: "Checking your account...", deniedTitle: "Access denied",

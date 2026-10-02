@@ -1,8 +1,12 @@
 # Admin UI
 
-Routes: `/admin-login`, `/admin`, `/admin/admins` (super admin only), `/admin/users`, `/admin/users/[id]`, `/admin/exercises`, `/admin/exercises/new`, `/admin/exercises/[code]`, `/admin/change-password`.
+Routes: `/login`, `/admin-login` (legacy direct entry), `/admin`, `/admin/admins` (super admin only), `/admin/activity`, `/admin/users`, `/admin/users/[id]`, `/admin/exercises`, `/admin/exercises/new`, `/admin/exercises/[code]`, `/admin/change-password`.
 
 Admin sign-in uses `POST /api/auth/admin/login` and a separate HttpOnly cookie session; the admin UI never stores a token in localStorage. Browser requests pass through the same-origin `/api/admin-gateway` route, which forwards only admin endpoints to `NEXT_PUBLIC_API_URL`. `GET /api/auth/admin/me` returns the role and `must_change_password`. Both `admin` and `super_admin` must change a temporary password before entering admin pages. The backend enforces this on every admin API. Google login and public signup are unavailable for admin IDs.
+
+The public `/login` form routes IDs ending in `@codeprove.production` to admin sign-in. A successful admin sign-in clears any learner token and opens `/admin/change-password` for a temporary password, or `/admin` otherwise. Other emails keep the learner login flow. The backend, not the email suffix in the UI, verifies admin credentials and role. Admin sign-out and unauthenticated `/admin` visits return to `/login`.
+
+The account menu links to `/admin/activity`. Regular admins read `GET /api/admin/audit/me`, which derives the actor ID from their session. Super admins read `GET /api/admin/audit` and can filter by actor. Both views read the same audit records; no duplicate log is written for the personal view. Failed sign-in attempts have no authenticated actor and therefore appear only in the super-admin log.
 
 To review the overview and user UI without backend data, run the app in development and open `/admin?demo=1`. This local preview shows the fixtures in `admin/_data.ts`; it does not enable access in a production build. `/admin/admins` and the exercise workflow require a real admin session.
 

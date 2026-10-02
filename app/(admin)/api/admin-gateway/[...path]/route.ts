@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 async function proxy(request: NextRequest, context: { params: { path: string[] } }) {
   const segments = context.params.path;
   const route = segments.join("/");
-  const allowed = /^(auth\/admin\/(login|me|change-password|logout)|admin\/(admins(\/\d+\/(status|reset-password))?|audit))$/.test(route)
+  const allowed = /^(auth\/admin\/(login|me|change-password|logout)|admin\/(admins(\/\d+\/(status|reset-password))?|audit(?:\/me)?))$/.test(route)
     || /^admin\/exercises(?:\/CP-\d{3}(?:\/draft)?)?$/.test(route)
     || /^admin\/exercises\/drafts(?:\/CP-\d{3}(?:\/(?:validate|submit|approve|reject|publish))?)?$/.test(route);
   if (!allowed) {
