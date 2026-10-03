@@ -98,7 +98,7 @@ export function BugReveal({
         </p>
       )}
 
-      <div className="mt-5 border-l-2 border-primary bg-primary/5 p-4">
+      <div className="rounded-xl mt-5 border-l-2 border-primary bg-primary/5 p-4">
         <p className="mb-1 font-label-caps text-label-caps uppercase tracking-widest text-primary">
           {copy.explanationLabel}
         </p>

@@ -69,7 +69,7 @@ export function StudentTestsSection({ report, copy }: { report: StudentTestsRepo
               return (
                 <li
                   key={c}
-                  className={`inline-flex items-center gap-1.5 border px-2.5 py-1 font-label-mono text-label-mono ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1 font-label-mono text-label-mono ${
                     done ? "border-success/40 bg-success/10 text-success" : "border-error/40 bg-error/5 text-error"
                   }`}
                 >
@@ -93,7 +93,7 @@ export function StudentTestsSection({ report, copy }: { report: StudentTestsRepo
       )}
 
       {report.missed.length > 0 && (
-        <div className="border-l-2 border-warning bg-warning/5 p-4">
+        <div className="rounded-xl border-l-2 border-warning bg-warning/5 p-4">
           <h4 className="mb-2 flex items-center gap-1.5 font-label-caps text-label-caps uppercase tracking-widest text-warning">
             <Sym name="bug_report" className="text-[16px]" /> {copy.missedTitle}
           </h4>
@@ -111,7 +111,7 @@ export function StudentTestsSection({ report, copy }: { report: StudentTestsRepo
 function TestItem({ test, copy }: { test: StudentTestReport; copy: StudentTestsCopy }) {
   const reason = test.valid ? null : reportReasonView(test.reason);
   return (
-    <li className={`border-l-2 bg-surface-container-lowest/40 p-4 ${test.valid ? "border-l-success" : "border-l-error"}`}>
+    <li className={`rounded-xl border-l-2 bg-surface-container-lowest/40 p-4 ${test.valid ? "border-l-success" : "border-l-error"}`}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <Badge tone={test.valid ? "success" : "danger"}>{test.valid ? copy.validTag : copy.invalidTag}</Badge>
         <Badge>{copy.categoryNames[test.category] ?? test.category}</Badge>

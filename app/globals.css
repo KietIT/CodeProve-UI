@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Default for page actions; explicit circle and segmented controls can override it. */
+  button {
+    border-radius: 0.75rem;
+  }
+}
+
 :root {
   /* Geist was dropped: its CSS @import render-blocked every route and no
      component used the font-geist classes. Inter (self-hosted via next/font)
@@ -164,6 +171,7 @@ body {
 
 /* Glassmorphic card with a refracted top-left edge highlight */
 .ice-card {
+  border-radius: 1rem;
   background: rgb(var(--surface-container-lowest) / 0.55);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -171,6 +179,7 @@ body {
   box-shadow: inset 1px 1px 0 rgb(var(--color-white) / 0.1);
 }
 .ice-panel {
+  border-radius: 1rem;
   background: rgb(var(--surface-container-low));
   border: 1px solid rgb(var(--outline-variant) / 0.6);
 }

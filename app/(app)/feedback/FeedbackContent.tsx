@@ -112,7 +112,7 @@ export function FeedbackContent() {
           <p className="mb-6 text-sm text-on-surface-variant">{tf.noAttemptDesc}</p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 bg-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+            className="rounded-xl inline-flex items-center gap-2 bg-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
           >
             {tf.backToDashboard} <Sym name="arrow_forward" className="text-[16px]" />
           </Link>
@@ -131,7 +131,7 @@ export function FeedbackContent() {
           <p className="mb-6 text-sm text-on-surface-variant">{error ?? tf.unknownError}</p>
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 bg-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+            className="rounded-xl inline-flex items-center gap-2 bg-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
           >
             {tf.backToDashboard} <Sym name="arrow_forward" className="text-[16px]" />
           </Link>
@@ -339,7 +339,7 @@ export function FeedbackContent() {
       ) : (
         <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Strengths */}
-          <div className="border border-primary/20 bg-primary/5 p-7">
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-7">
             <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary">
               {tf.strengthsEyebrow}
             </span>
@@ -362,7 +362,7 @@ export function FeedbackContent() {
           </div>
 
           {/* Risks / focus areas */}
-          <div className="border border-error/20 bg-error/5 p-7">
+          <div className="rounded-2xl border border-error/20 bg-error/5 p-7">
             <span className="font-label-caps text-label-caps uppercase tracking-widest text-error">
               {tf.risksEyebrow}
             </span>
@@ -422,13 +422,13 @@ export function FeedbackContent() {
       <div className="flex flex-wrap gap-4">
         <Link
           href={nextCode ? exerciseHref(nextCode) : "/workspace"}
-          className="flex cursor-pointer items-center gap-2 bg-primary px-6 py-3 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+          className="rounded-xl flex cursor-pointer items-center gap-2 bg-primary px-6 py-3 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
         >
           {tf.nextChallenge} <Sym name="arrow_forward" className="text-[16px]" />
         </Link>
         <Link
           href="/dashboard"
-          className="flex cursor-pointer items-center gap-2 border border-outline-variant/60 px-6 py-3 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+          className="rounded-xl flex cursor-pointer items-center gap-2 border border-outline-variant/60 px-6 py-3 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
         >
           {tf.backToDashboard}
         </Link>

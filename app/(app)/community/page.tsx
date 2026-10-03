@@ -174,7 +174,7 @@ export default function CommunityPage() {
           </div>
 
           {composing && (
-            <div className="mb-4 border border-outline-variant/60 bg-surface-container-high/40 p-3">
+            <div className="rounded-xl mb-4 border border-outline-variant/60 bg-surface-container-high/40 p-3">
               <textarea
                 value={postTitle}
                 onChange={(e) => setPostTitle(e.target.value)}

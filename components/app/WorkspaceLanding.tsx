@@ -126,7 +126,7 @@ export function WorkspaceLanding() {
               </div>
               <Link
                 href={{ pathname: "/solve", query: { id: continueEx.code, level: continueEx.level } }}
-                className="inline-flex w-fit items-center gap-2 bg-primary px-5 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+                className="rounded-xl inline-flex w-fit items-center gap-2 bg-primary px-5 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
               >
                 {isResume ? t.resumeCta : t.startCta} <Sym name="arrow_forward" className="text-[16px]" />
               </Link>
@@ -206,13 +206,13 @@ export function WorkspaceLanding() {
       <section>
         <div className="mb-5 flex items-center gap-4">
           <h2 className="font-headline-lg-mobile text-headline-lg-mobile">{w.businessProblems}</h2>
-          <span className="border border-primary/30 bg-primary/5 px-2 py-0.5 font-label-mono text-label-mono uppercase text-primary">{w.comingSoon}</span>
+          <span className="rounded-xl border border-primary/30 bg-primary/5 px-2 py-0.5 font-label-mono text-label-mono uppercase text-primary">{w.comingSoon}</span>
           <div className="h-px flex-1 bg-outline-variant/60" />
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {business.map((b) => (
             <div key={b} className="ice-card flex cursor-not-allowed flex-col p-5 opacity-70">
-              <div className="mb-4 flex h-24 items-center justify-center border border-dashed border-outline-variant/60 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant/50">
+              <div className="mb-4 flex h-24 items-center justify-center rounded-xl border border-dashed border-outline-variant/60 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant/50">
                 <Sym name="lock" className="text-[28px]" />
               </div>
               <div className="font-label-mono text-label-mono uppercase text-on-surface-variant">{b}</div>

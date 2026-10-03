@@ -71,7 +71,7 @@ export function WorkspaceVisualizer({
   const example = callPlaceholder(getCode());
 
   return (
-    <section className="border border-outline-variant/50">
+    <section className="rounded-2xl border border-outline-variant/50">
       <div className="flex items-center justify-between gap-2 border-b border-outline-variant/40 px-4 py-3">
         <span className="flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
           <Sym name="animation" className="text-[16px]" /> {c.title}
@@ -98,7 +98,7 @@ export function WorkspaceVisualizer({
           }}
           spellCheck={false}
           placeholder={example}
-          className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-2.5 py-1.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
+          className="rounded-xl w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-2.5 py-1.5 font-label-mono text-label-mono text-on-surface outline-none focus:border-primary"
         />
         <span className="mt-1 block text-[11px] text-on-surface-variant/70">{c.callDefault}</span>
       </label>

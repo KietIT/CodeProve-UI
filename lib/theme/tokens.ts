@@ -479,7 +479,7 @@ export const fontSize: NonNullable<Config["theme"]>["fontSize"] = {
 };
 
 export const borderRadius = {
-  "card": "22px",
+  "card": "16px",
   "pill": "12px"
 };
 export const maxWidth = {

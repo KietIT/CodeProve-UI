@@ -9,7 +9,7 @@ export function HintAccordion({ hint, label }: { hint: string; label: string }) 
   if (!hint) return null;
 
   return (
-    <section className="border border-outline-variant/50">
+    <section className="rounded-2xl border border-outline-variant/50">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}

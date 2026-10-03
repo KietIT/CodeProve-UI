@@ -79,7 +79,7 @@ export function LocatePanel({
 
         <div
           role="status"
-          className="flex items-start gap-2 border border-outline-variant/60 bg-surface-container-low px-3 py-2 font-label-mono text-label-mono text-on-surface-variant"
+          className="rounded-xl flex items-start gap-2 border border-outline-variant/60 bg-surface-container-low px-3 py-2 font-label-mono text-label-mono text-on-surface-variant"
         >
           <Sym name="lock" className="mt-px text-[16px] text-primary" />
           <span>{copy.editorLocked}</span>
@@ -116,21 +116,21 @@ export function LocatePanel({
             onDrop={onBlockedDrop}
             disabled={submitting}
             placeholder={copy.reasonPlaceholder}
-            className="h-24 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 text-sm text-on-surface outline-none focus:border-primary disabled:opacity-60"
+            className="rounded-xl h-24 w-full resize-none border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 text-sm text-on-surface outline-none focus:border-primary disabled:opacity-60"
           />
           <span className="mt-1 block text-right font-label-mono text-[11px] text-on-surface-variant/70">
             {reason.length}/{MAX_REASON_CHARS}
           </span>
         </label>
 
-        <section className="border border-outline-variant/50 p-4">
+        <section className="rounded-2xl border border-outline-variant/50 p-4">
           <h3 className="flex items-center gap-2 font-label-caps text-label-caps uppercase tracking-widest text-primary">
             <Sym name="lightbulb" className="text-[16px]" /> {copy.hintsTitle}
           </h3>
           {hints.length > 0 && (
             <ol className="mt-3 space-y-2">
               {hints.map((text, i) => (
-                <li key={i} className="border-l-2 border-primary bg-primary/5 px-3 py-2 text-sm text-on-surface">
+                <li key={i} className="rounded-xl border-l-2 border-primary bg-primary/5 px-3 py-2 text-sm text-on-surface">
                   <span className="mr-2 font-label-mono text-[11px] uppercase text-primary">
                     {fill(copy.hintLabel, { step: i + 1 })}
                   </span>
@@ -161,7 +161,7 @@ export function LocatePanel({
         </section>
 
         {error && (
-          <div role="alert" className="border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
+          <div role="alert" className="rounded-xl border border-error/40 bg-error/10 p-3 font-label-mono text-label-mono text-error">
             {error}
           </div>
         )}
@@ -196,7 +196,7 @@ export function LocatePanel({
             onKeyDown={(e) => {
               if (e.key === "Escape") setConfirmSkip(false);
             }}
-            className="w-full max-w-sm border border-outline-variant/70 bg-surface-container-low p-6 shadow-card"
+            className="rounded-2xl w-full max-w-sm border border-outline-variant/70 bg-surface-container-low p-6 shadow-card"
           >
             <h2 id="skip-locate-title" className="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">
               {copy.skipTitle}

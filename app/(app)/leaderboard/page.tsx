@@ -114,7 +114,7 @@ export default function LeaderboardPage() {
             <p className="mt-1 text-sm text-on-surface-variant/70">{t.yourRankSub}</p>
             <Link
               href="/workspace"
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 bg-primary px-4 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
+              className="rounded-xl mt-4 inline-flex w-full items-center justify-center gap-2 bg-primary px-4 py-2.5 font-label-mono text-label-mono uppercase text-on-primary transition-opacity hover:opacity-90"
             >
               {t.startPracticing} <Sym name="arrow_forward" className="text-[16px]" />
             </Link>

@@ -43,7 +43,7 @@ export function PrivacyConsentDialog({ version, accepting, notice, onAccept, onL
         aria-modal="true"
         aria-labelledby="privacy-consent-title"
         aria-describedby="privacy-consent-intro"
-        className="flex max-h-full w-full max-w-lg flex-col overflow-y-auto border border-outline-variant/70 bg-surface-container-low p-5 text-on-surface shadow-card sm:p-6"
+        className="rounded-2xl flex max-h-full w-full max-w-lg flex-col overflow-y-auto border border-outline-variant/70 bg-surface-container-low p-5 text-on-surface shadow-card sm:p-6"
       >
         <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary">
           <ShieldCheck className="h-5 w-5" />
@@ -78,7 +78,7 @@ export function PrivacyConsentDialog({ version, accepting, notice, onAccept, onL
         </div>
 
         {notice && (
-          <p role="alert" className="mt-4 border border-error/40 bg-error/10 p-3 text-sm text-error">
+          <p role="alert" className="mt-4 rounded-xl border border-error/40 bg-error/10 p-3 text-sm text-error">
             {notice === "outdated" ? t.outdated : t.failed}
           </p>
         )}

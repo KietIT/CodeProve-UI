@@ -97,7 +97,7 @@ export function CielPanel({
                 }
               }}
               disabled={inputDisabled}
-              className="w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
+              className="rounded-xl w-full border border-outline-variant/60 bg-surface-container-lowest/50 p-2.5 pr-10 font-label-mono text-label-mono outline-none focus:border-primary disabled:opacity-50"
               placeholder={labels.ask}
               type="text"
             />

@@ -231,7 +231,7 @@ export default function ProfilePage() {
             <p className="text-on-surface-variant">{t.notLoggedIn}</p>
             <Link
               href="/login"
-              className="flex items-center gap-2 border border-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-primary transition-colors hover:bg-primary/10"
+              className="rounded-xl flex items-center gap-2 border border-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-primary transition-colors hover:bg-primary/10"
             >
               {t.goLogin} <Sym name="arrow_forward" className="text-[16px]" />
             </Link>
@@ -325,7 +325,7 @@ export default function ProfilePage() {
                       type="text"
                       value={fullName}
                       onChange={(e) => { setFullName(e.target.value); setSaved(false); }}
-                      className="h-11 w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-3 text-sm text-on-surface outline-none transition-colors focus:border-primary"
+                      className="rounded-xl h-11 w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-3 text-sm text-on-surface outline-none transition-colors focus:border-primary"
                     />
                   </div>
                   <div>
@@ -335,7 +335,7 @@ export default function ProfilePage() {
                       type="email"
                       value={user.email}
                       disabled
-                      className="h-11 w-full cursor-not-allowed border border-outline-variant/40 bg-surface-container-highest/40 px-3 text-sm text-on-surface-variant outline-none"
+                      className="rounded-xl h-11 w-full cursor-not-allowed border border-outline-variant/40 bg-surface-container-highest/40 px-3 text-sm text-on-surface-variant outline-none"
                     />
                     <p className="mt-1 text-xs text-on-surface-variant/60">{t.emailLocked}</p>
                   </div>

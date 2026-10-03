@@ -27,6 +27,14 @@ for (const ext of ['.ts', '.tsx']) {
 }
 const h = React.createElement;
 const { Button } = require('../components/ui/Button.tsx');
+const { isAdminLoginId } = require('../lib/adminClient.ts');
+
+test('admin login routing uses only the reserved domain', () => {
+  assert.equal(isAdminLoginId(' Trung@CodeProve.Production '), true);
+  assert.equal(isAdminLoginId('student@example.com'), false);
+  assert.equal(isAdminLoginId('trung@codeprove.production.evil.com'), false);
+  assert.equal(isAdminLoginId('trung@sub.codeprove.production'), false);
+});
 
 test('disabled links cannot navigate or enter the tab order', () => {
   const html = render(h(Button, { href: '/workspace', disabled: true }, 'Start'));

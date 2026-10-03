@@ -125,7 +125,7 @@ export default function DashboardPage() {
               <p className="mt-1 max-w-xl text-sm text-on-surface-variant">{t.dailyBody}</p>
             </div>
           </div>
-          <span className="inline-flex items-center gap-2 bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity group-hover:opacity-90">
+              <span className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 font-label-mono text-label-mono uppercase text-on-primary transition-opacity group-hover:opacity-90">
             {t.dailyCta}
             <Sym name="arrow_forward" className="text-[16px]" />
           </span>
@@ -160,7 +160,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/workspace"
-              className="flex items-center gap-2 border border-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-primary transition-colors hover:bg-primary/10"
+              className="rounded-xl flex items-center gap-2 border border-primary px-6 py-2.5 font-label-mono text-label-mono uppercase text-primary transition-colors hover:bg-primary/10"
             >
               {t.goWorkspace} <Sym name="arrow_forward" className="text-[16px]" />
             </Link>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                   href="/workspace"
-                  className="mt-auto flex items-center justify-center gap-2 border border-outline-variant/60 py-2.5 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+                  className="rounded-xl mt-auto flex items-center justify-center gap-2 border border-outline-variant/60 py-2.5 font-label-mono text-label-mono uppercase text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
                 >
                   {t.viewAll} <Sym name="arrow_forward" className="text-[16px]" />
                 </Link>
