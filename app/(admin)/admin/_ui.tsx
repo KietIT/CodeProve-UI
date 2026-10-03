@@ -1,10 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import type { AdminUser } from "./_data";
-import { useAdminCopy } from "./_copy";
 
 export const card = "rounded-2xl border border-outline-variant/60 bg-surface-container-lowest/80 shadow-sm";
 export const field = "min-h-10 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none placeholder:text-on-surface-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -13,21 +11,6 @@ export const secondaryButton = "inline-flex min-h-10 items-center justify-center
 
 export function PageHeading({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {
   return <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p><h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm text-on-surface-variant">{description}</p></div>{action}</div>;
-}
-
-export function PreviewNotice() {
-  const { t } = useAdminCopy();
-  return <div role="note" className="mb-6 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-on-surface"><AlertCircle size={18} className="mt-0.5 shrink-0 text-warning" /><span><strong>{t.common.previewTitle}</strong> {t.common.previewBody}</span></div>;
-}
-
-const planTone: Record<AdminUser["plan"], string> = {
-  free: "bg-surface-container-high text-on-surface-variant",
-  plus: "bg-primary/15 text-primary",
-  pro: "bg-secondary/20 text-secondary",
-};
-
-export function PlanBadge({ plan }: { plan: AdminUser["plan"] }) {
-  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${planTone[plan]}`}>{plan}</span>;
 }
 
 export function EmptyState({ title, description }: { title: string; description: string }) {

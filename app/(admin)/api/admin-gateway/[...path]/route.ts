@@ -6,6 +6,8 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
   const segments = context.params.path;
   const route = segments.join("/");
   const allowed = /^(auth\/admin\/(login|me|change-password|logout)|admin\/(admins(\/\d+\/(status|reset-password))?|audit(?:\/me)?))$/.test(route)
+    || (request.method === "GET" && route === "admin/overview")
+    || (request.method === "GET" && /^admin\/users(?:\/\d+)?$/.test(route))
     || /^admin\/exercises(?:\/CP-\d{3}(?:\/draft)?)?$/.test(route)
     || /^admin\/exercises\/drafts(?:\/CP-\d{3}(?:\/(?:validate|submit|approve|reject|publish))?)?$/.test(route);
   if (!allowed) {
@@ -17,7 +19,11 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
     return NextResponse.json({ detail: "Untrusted request origin" }, { status: 403 });
   }
 
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+  const configuredApi = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (process.env.NODE_ENV === "production" && !configuredApi) {
+    return NextResponse.json({ detail: "Admin API URL is not configured" }, { status: 503 });
+  }
+  const apiBase = (configuredApi || "http://localhost:8000").replace(/\/$/, "");
   const destination = `${apiBase}/api/${route}${request.nextUrl.search}`;
   const headers = new Headers({ Origin: origin });
   const adminCookie = request.cookies.get("codeprove_admin_session")?.value;
