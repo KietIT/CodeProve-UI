@@ -6,6 +6,7 @@ import { adminRequest } from "../../_auth";
 import { useAdminCopy } from "../../_copy";
 import { BackLink, card, PageHeading } from "../../_ui";
 import { formatAdminDate, type Learner } from "../_api";
+import { LearnerBillingCard } from "../_billing";
 
 export default function AdminUserDetailPage({ params }: { params: { id: string } }) {
   const { locale, t } = useAdminCopy();
@@ -44,5 +45,6 @@ export default function AdminUserDetailPage({ params }: { params: { id: string }
       </section>
       <section className={`${card} p-6`}><h2 className="text-lg font-bold">{t.detail.progress}</h2><p className="mt-1 text-sm text-on-surface-variant">{t.detail.progressDescription}</p><div className="mt-6 grid gap-3 sm:grid-cols-3">{stats.map(({ label, value, icon: Icon }) => <div key={label} className="rounded-xl bg-surface-container-low p-4"><Icon size={19} className="text-primary" /><p className="mt-3 text-2xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-on-surface-variant">{label}</p></div>)}</div><div className="mt-6"><div className="flex justify-between text-xs"><span>{t.detail.completion}</span><span>{completion}%</span></div><div className="mt-2 h-2 rounded-full bg-surface-container-high"><div className="h-2 rounded-full bg-primary" style={{ width: `${completion}%` }} /></div></div></section>
     </div>
+    <LearnerBillingCard userId={user.id} />
   </div>;
 }

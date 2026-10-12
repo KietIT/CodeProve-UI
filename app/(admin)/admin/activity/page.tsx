@@ -34,6 +34,7 @@ const copy = {
       exercise_draft_created: "Tạo bài nháp", exercise_draft_updated: "Sửa bài nháp",
       exercise_submitted: "Gửi duyệt bài", exercise_approved: "Duyệt bài",
       exercise_rejected: "Trả lại bài nháp", exercise_published: "Xuất bản bài",
+      subscription_granted: "Cấp gói", subscription_revoked: "Thu hồi gói",
     },
   },
   en: {
@@ -51,6 +52,7 @@ const copy = {
       exercise_draft_created: "Created draft", exercise_draft_updated: "Edited draft",
       exercise_submitted: "Submitted for review", exercise_approved: "Approved exercise",
       exercise_rejected: "Returned draft", exercise_published: "Published exercise",
+      subscription_granted: "Gave a plan", subscription_revoked: "Ended a plan",
     },
   },
 } as const;
