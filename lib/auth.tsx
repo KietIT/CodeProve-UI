@@ -10,6 +10,7 @@ import {
   getToken,
   setToken,
 } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 import type { User } from "@/lib/types/auth";
 type AuthCtx = {
   user: User | null;
@@ -32,8 +33,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         setUser(await getMe());
-      } catch {
-        clearToken();
+      } catch (err) {
+        // Only a rejected token signs the student out. A network error or a restarting backend keeps the
+        // token and asks once more, so a short outage does not log everyone out.
+        if (err instanceof ApiError && err.status === 401) clearToken();
+        else {
+          await new Promise((r) => setTimeout(r, 1500));
+          try {
+            setUser(await getMe());
+          } catch (again) {
+            if (again instanceof ApiError && again.status === 401) clearToken();
+          }
+        }
       } finally {
         setLoading(false);
       }

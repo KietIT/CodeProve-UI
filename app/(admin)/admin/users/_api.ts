@@ -1,3 +1,5 @@
+import type { BillingOrder, Tier } from "@/lib/types/billing";
+
 export type Learner = {
   id: number;
   full_name: string;
@@ -8,6 +10,16 @@ export type Learner = {
   attempts: number;
   completed: number;
   average_score: number | null;
+  /** The plan running right now. */
+  tier: Tier;
+};
+
+/** `GET /admin/users/{id}/billing`, also returned after giving or ending a plan. */
+export type LearnerBilling = {
+  tier: Tier;
+  expires_at: string | null;
+  days_left: number;
+  orders: (BillingOrder & { provider_txn_id: number | null })[];
 };
 
 export type LearnerPage = {

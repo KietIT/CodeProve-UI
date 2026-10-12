@@ -89,20 +89,35 @@ function formatApiError(payload: unknown, status: number): string {
 }
 
 /** Codes the backend sends with a 429 when a cost limit (P3.6) is reached. */
-export type LimitCode = "ciel_attempt_limit" | "ciel_daily_limit" | "hypothesis_limit" | "rate_limited";
+export type LimitCode =
+  | "ciel_attempt_limit"
+  | "ciel_daily_limit"
+  | "hypothesis_limit"
+  | "rate_limited"
+  | "monthly_submit_limit";
 
 /** Object `detail` of a limit response; the messages are ready to show as-is. */
-export type LimitDetail = { code: LimitCode; message_vi: string; message_en: string };
+/** `tier` and `upgrade` come with the plan-based limits: `upgrade` is true when a higher plan would lift it. */
+export type LimitDetail = { code: LimitCode; message_vi: string; message_en: string; tier?: string; upgrade?: boolean };
 
-const LIMIT_CODES: readonly string[] = ["ciel_attempt_limit", "ciel_daily_limit", "hypothesis_limit", "rate_limited"];
+const LIMIT_CODES: readonly string[] = [
+  "ciel_attempt_limit",
+  "ciel_daily_limit",
+  "hypothesis_limit",
+  "rate_limited",
+  "monthly_submit_limit",
+];
 
 /** Reads `{code, message_vi, message_en}` from a raw `detail`, or `null` when it is not one. */
 export function readLimitDetail(detail: unknown): LimitDetail | null {
   if (!detail || typeof detail !== "object" || Array.isArray(detail)) return null;
-  const { code, message_vi, message_en } = detail as Record<string, unknown>;
+  const { code, message_vi, message_en, tier, upgrade } = detail as Record<string, unknown>;
   if (typeof code !== "string" || !LIMIT_CODES.includes(code)) return null;
   if (typeof message_vi !== "string" || typeof message_en !== "string") return null;
-  return { code: code as LimitCode, message_vi, message_en };
+  const out: LimitDetail = { code: code as LimitCode, message_vi, message_en };
+  if (typeof tier === "string") out.tier = tier;
+  if (typeof upgrade === "boolean") out.upgrade = upgrade;
+  return out;
 }
 
 /** The limit detail carried by a thrown error, or `null` for any other error. */

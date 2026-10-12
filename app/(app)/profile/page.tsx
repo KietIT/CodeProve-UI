@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sym } from "@/components/app/AppChrome";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { appContent } from "@/lib/appContent";
 import { usePrivacyConsent } from "@/lib/privacyConsent";
+import { BillingSection } from "@/components/billing/BillingSection";
+import { billingContent } from "@/lib/billingContent";
 
 // Max avatar size before base64 encoding (keeps the DB row small).
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
-type Section = "account" | "settings" | "privacy" | "integrations";
+type Section = "account" | "settings" | "billing" | "privacy" | "integrations";
 
 const copy = {
   vi: {
@@ -105,7 +107,17 @@ const INTEGRATIONS = [
   { id: "calendar", label: "Google Calendar", icon: "event", desc: { vi: "Lên lịch nhắc luyện tập", en: "Schedule practice reminders" } },
 ] as const;
 
+const SECTIONS: readonly Section[] = ["account", "settings", "billing", "privacy", "integrations"];
+
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const { locale, setLocale } = useI18n();
   const t = copy[locale];
   const { theme, toggleTheme } = useTheme();
@@ -113,6 +125,11 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const [section, setSection] = useState<Section>("account");
+  // `/profile?tab=billing` opens that tab directly (used by the account menu and the payment pages).
+  const tab = useSearchParams().get("tab");
+  useEffect(() => {
+    if (tab && (SECTIONS as readonly string[]).includes(tab)) setSection(tab as Section);
+  }, [tab]);
   const [fullName, setFullName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -206,6 +223,7 @@ export default function ProfilePage() {
   const navItems: { key: Section; icon: string; label: string }[] = [
     { key: "account", icon: "badge", label: t.nav.account },
     { key: "settings", icon: "settings", label: t.nav.settings },
+    { key: "billing", icon: "workspace_premium", label: billingContent[locale].profile.nav },
     { key: "privacy", icon: "shield_person", label: appContent[locale].privacy.profile.nav },
     { key: "integrations", icon: "extension", label: t.nav.integrations },
   ];
@@ -398,6 +416,8 @@ export default function ProfilePage() {
                   </SettingRow>
                 </div>
               )}
+
+              {section === "billing" && <BillingSection />}
 
               {section === "privacy" && <PrivacySection />}
 

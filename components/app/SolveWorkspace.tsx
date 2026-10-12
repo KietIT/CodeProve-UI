@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { billingContent } from "@/lib/billingContent";
 import { useRouter } from "next/navigation";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AppTopNav, Sym } from "@/components/app/AppChrome";
@@ -347,6 +348,8 @@ export function SolveWorkspace({
   const [explainQuestions, setExplainQuestions] = useState<string[] | null>(null);
   const [submitTests, setSubmitTests] = useState<SubmitSummary | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // true when the submit limit would be lifted by a higher plan (shows an upgrade link)
+  const [submitUpgrade, setSubmitUpgrade] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [fullscreenActive, setFullscreenActive] = useState(false);
@@ -980,6 +983,7 @@ export function SolveWorkspace({
     if (debugStep(debugState) === "locate") return;
     setSubmitting(true);
     setSubmitError(null);
+    setSubmitUpgrade(false);
     try {
       await performAutosave("submit", true);
       // The server evaluates the saved tests: send pending edits first.
@@ -998,7 +1002,12 @@ export function SolveWorkspace({
       setConsentNotice((cur) => (cur?.where === "submit" ? null : cur));
     } catch (err) {
       const consentMessage = consentMessageOf(err, locale);
+      const limit = limitErrorOf(err);
       if (consentMessage) setConsentNotice({ where: "submit", message: consentMessage });
+      else if (limit?.code === "monthly_submit_limit") {
+        setSubmitError(locale === "vi" ? limit.message_vi : limit.message_en);
+        setSubmitUpgrade(limit.upgrade === true);
+      }
       else setSubmitError(err instanceof Error ? err.message : "Submit failed. Please try again.");
     } finally {
       setSubmitting(false);
@@ -1276,6 +1285,11 @@ export function SolveWorkspace({
                   {submitNotice}
                 </span>
               )}
+              {submitUpgrade && submitError && (
+                <Link href="/pricing" className="font-label-mono text-label-mono text-sm uppercase text-primary underline">
+                  {billingContent[locale].limits.upgrade}
+                </Link>
+              )}
               <button
                 onClick={() => void handleSubmit()}
                 disabled={submitting || actionsLocked}
@@ -1478,6 +1492,7 @@ export function SolveWorkspace({
             notice={locating ? t.debug.cielHintOnly : undefined}
             remainingLine={cielRemainingLine}
             limitNotice={cielLimitNotice ?? (consentNotice?.where === "ciel" ? consentNotice.message : undefined)}
+            upgradeLabel={cielLimit?.upgrade ? billingContent[locale].limits.upgrade : undefined}
             blocked={cielBlocked}
             labels={{
               intro: t.cielIntro,

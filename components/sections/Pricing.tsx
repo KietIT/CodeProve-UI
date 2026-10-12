@@ -1,23 +1,59 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, Star } from "lucide-react";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
 import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
+import { getBillingMe, getPlans, startCheckout } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { billingContent } from "@/lib/billingContent";
+import { checkoutErrorMessage, ctaState, formatVnd, planCodeFor } from "@/lib/billing";
+import { rememberReturn } from "@/lib/authReturn";
 import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
+import type { PaidTier } from "@/lib/types/billing";
 
 type Tab = "personal" | "business";
 type Billing = "monthly" | "annual";
 
 export function Pricing({ standalone = false }: { standalone?: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const p = t.pricing;
+  const b = billingContent[locale].pricing;
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("personal");
-  // Pure UI state - billing period only changes which price string is shown,
-  // no data fetch and no navigation.
+  // The toggle picks which price string is shown and which plan code a paid button buys.
   const [billing, setBilling] = useState<Billing>("monthly");
+
+  // Real VND prices and the student's current plan come from the backend; the card texts stay in content.ts.
+  const plansQuery = useQuery({ queryKey: ["billing", "plans"], queryFn: getPlans, staleTime: 5 * 60_000 });
+  const meQuery = useQuery({ queryKey: ["billing", "me"], queryFn: getBillingMe, enabled: !!user });
+  const [paying, setPaying] = useState<PaidTier | null>(null);
+  const [payError, setPayError] = useState<{ tier: PaidTier; message: string } | null>(null);
+
+  async function buy(tier: PaidTier) {
+    // The session is still being restored: sending the student to sign up now would be wrong.
+    if (authLoading) return;
+    if (!user) {
+      rememberReturn("/pricing");
+      router.push("/signup");
+      return;
+    }
+    if (paying) return;
+    setPaying(tier);
+    setPayError(null);
+    try {
+      const { order_id } = await startCheckout(planCodeFor(tier, billing));
+      router.push(`/billing/pay?order=${order_id}`);
+    } catch (err) {
+      setPayError({ tier, message: checkoutErrorMessage(err, locale, b.failed) });
+      setPaying(null);
+    }
+  }
 
   return (
     <section
@@ -141,13 +177,50 @@ export function Pricing({ standalone = false }: { standalone?: boolean }) {
                     ))}
                   </ul>
 
-                  <Button
-                    href="/signup"
-                    variant={plan.featured ? "primary" : "secondary"}
-                    className="mt-7 w-full"
-                  >
-                    {plan.cta}
-                  </Button>
+                  {(() => {
+                    const variant = plan.featured ? "primary" : "secondary";
+                    if (plan.name !== "Plus" && plan.name !== "Pro") {
+                      return (
+                        <Button href={user ? "/dashboard" : "/signup"} variant={variant} className="mt-7 w-full">
+                          {plan.cta}
+                        </Button>
+                      );
+                    }
+                    const tier: PaidTier = plan.name === "Plus" ? "plus" : "pro";
+                    const state = ctaState(tier, user ? meQuery.data : null);
+                    const code = planCodeFor(tier, billing);
+                    const price = plansQuery.data?.find((x) => x.code === code);
+                    const busy = paying === tier;
+                    return (
+                      <>
+                        <Button
+                          type="button"
+                          onClick={() => void buy(tier)}
+                          disabled={state === "locked" || paying !== null}
+                          variant={variant}
+                          className="mt-7 w-full"
+                        >
+                          {busy ? b.redirecting : state === "renew" ? b.renew : plan.cta}
+                        </Button>
+                        {state === "locked" && (
+                          <p className="mt-2 text-center text-xs text-muted">{b.lockedNote}</p>
+                        )}
+                        {state === "renew" && (
+                          <p className="mt-2 text-center text-xs text-teal">{b.current}</p>
+                        )}
+                        {price && (
+                          <p className="mt-2 text-center text-xs text-muted">
+                            {b.charged(formatVnd(price.amount), price.days)}
+                          </p>
+                        )}
+                        {payError?.tier === tier && (
+                          <p role="alert" className="mt-2 text-center text-xs text-red-500">
+                            {payError.message}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </StaggerItem>
             ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Sym } from "@/components/app/AppChrome";
 import { PromptLog, type PromptLogLabels } from "@/components/workspace/PromptLog";
 import { CIEL_MESSAGE_MAX, nearCap } from "@/lib/cielQuota";
@@ -29,6 +30,8 @@ export type CielPanelProps = {
   remainingLine?: string;
   /** Limit or rate-limit message from the backend, in the current locale. */
   limitNotice?: string;
+  /** Link text shown after a limit notice when a higher plan would lift it. */
+  upgradeLabel?: string;
   /** True while sending is not allowed (limit reached or rate limited). The log stays visible. */
   blocked?: boolean;
 };
@@ -52,6 +55,7 @@ export function CielPanel({
   notice,
   remainingLine,
   limitNotice,
+  upgradeLabel,
   blocked = false,
 }: CielPanelProps) {
   const inputDisabled = sending || blocked;
@@ -82,7 +86,17 @@ export function CielPanel({
           {limitNotice && (
             <p role="status" className="mb-2 flex items-start gap-1.5 text-xs leading-snug text-error">
               <Sym name="block" className="mt-px text-[14px]" />
-              <span>{limitNotice}</span>
+              <span>
+                {limitNotice}
+                {upgradeLabel && (
+                  <>
+                    {" "}
+                    <Link href="/pricing" className="font-semibold text-primary underline">
+                      {upgradeLabel}
+                    </Link>
+                  </>
+                )}
+              </span>
             </p>
           )}
           <div className="relative">

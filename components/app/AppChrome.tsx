@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getBillingMe } from "@/lib/api";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -122,6 +124,9 @@ export function UserMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // The plan decides the menu's top button: Free is offered an upgrade, a paid plan gets a link to manage it.
+  const { data: billing } = useQuery({ queryKey: ["billing", "me"], queryFn: getBillingMe, enabled: !!authUser });
+  const paidTier = billing && billing.tier !== "free" ? billing.tier : null;
 
   // Real authenticated user (falls back to placeholders before /auth/me resolves).
   const user = {
@@ -134,6 +139,7 @@ export function UserMenu() {
   const tx = {
     vi: {
       upgrade: "Nâng cấp hồ sơ",
+      manage: "Quản lý gói",
       profile: "Hồ sơ người dùng",
       community: "Cộng đồng",
       help: "Trung tâm trợ giúp",
@@ -142,6 +148,7 @@ export function UserMenu() {
     },
     en: {
       upgrade: "Upgrade profile",
+      manage: "Manage plan",
       profile: "User Profile",
       community: "Community",
       help: "Help Center",
@@ -225,17 +232,17 @@ export function UserMenu() {
 
           {/* Upgrade CTA - goes to the pricing page (plans live there). */}
           <Link
-            href="/pricing"
+            href={paidTier ? "/profile?tab=billing" : "/pricing"}
             role="menuitem"
             onClick={() => setOpen(false)}
             className="mb-1 flex w-full items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary-container px-3 py-2.5 text-sm font-semibold text-on-primary transition-opacity hover:opacity-95"
           >
             <span className="flex items-center gap-2">
               <Sym name="workspace_premium" fill className="text-[19px]" />
-              {tx.upgrade}
+              {paidTier ? tx.manage : tx.upgrade}
             </span>
             <span className="rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-              PRO
+              {paidTier ? paidTier : "PRO"}
             </span>
           </Link>
 

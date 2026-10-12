@@ -7,7 +7,8 @@ async function proxy(request: NextRequest, context: { params: { path: string[] }
   const route = segments.join("/");
   const allowed = /^(auth\/admin\/(login|me|change-password|logout)|admin\/(admins(\/\d+\/(status|reset-password))?|audit(?:\/me)?))$/.test(route)
     || (request.method === "GET" && route === "admin/overview")
-    || (request.method === "GET" && /^admin\/users(?:\/\d+)?$/.test(route))
+    || (request.method === "GET" && /^admin\/users(?:\/\d+(?:\/billing)?)?$/.test(route))
+    || (request.method === "POST" && /^admin\/users\/\d+\/subscription(?:\/revoke)?$/.test(route))
     || /^admin\/exercises(?:\/CP-\d{3}(?:\/draft)?)?$/.test(route)
     || /^admin\/exercises\/drafts(?:\/CP-\d{3}(?:\/(?:validate|submit|approve|reject|publish))?)?$/.test(route);
   if (!allowed) {

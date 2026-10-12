@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { takeReturn } from "@/lib/authReturn";
 
 export default function AuthCallbackClient({
   token,
@@ -26,7 +27,7 @@ export default function AuthCallbackClient({
     let cancelled = false;
     loginWithToken(token)
       .then(() => {
-        if (!cancelled) router.replace("/dashboard");
+        if (!cancelled) router.replace(takeReturn());
       })
       .catch((err) => {
         if (!cancelled) {

@@ -10,6 +10,7 @@ import { ComingSoonBadge } from "@/components/ui/ComingSoonBadge";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { isComingSoon } from "@/lib/comingSoon";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 
 type NavItem = { label: string; href: string; desc?: string };
 type NavMenu = { label: string; items: NavItem[] };
@@ -69,6 +70,9 @@ const NAV = {
 
 export function MarketingNav() {
   const { t, locale } = useI18n();
+  // Signed in: the nav offers the way back into the app instead of login / signup.
+  const { user } = useAuth();
+  const openApp = locale === "vi" ? "Vào ứng dụng" : "Open app";
   const nav = NAV[locale];
   const pathname = usePathname();
 
@@ -190,15 +194,23 @@ export function MarketingNav() {
         <div className="hidden items-center gap-2 lg:flex">
           <LanguageToggle />
           <ThemeToggle />
-          <Link
-            href="/login"
-            className="cursor-pointer rounded-pill px-3 py-2 text-sm text-muted transition-colors duration-200 hover:text-content"
-          >
-            {t.nav.login}
-          </Link>
-          <Button href="/signup" size="sm">
-            {t.nav.signup}
-          </Button>
+          {user ? (
+            <Button href="/dashboard" size="sm">
+              {openApp}
+            </Button>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="cursor-pointer rounded-pill px-3 py-2 text-sm text-muted transition-colors duration-200 hover:text-content"
+              >
+                {t.nav.login}
+              </Link>
+              <Button href="/signup" size="sm">
+                {t.nav.signup}
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile trigger */}
@@ -260,12 +272,20 @@ export function MarketingNav() {
             <ThemeToggle />
           </div>
           <div className="mt-4 flex flex-col gap-2">
-            <Button href="/signup" className="w-full">
-              {t.nav.signup}
-            </Button>
-            <Button href="/login" variant="secondary" className="w-full">
-              {t.nav.login}
-            </Button>
+            {user ? (
+              <Button href="/dashboard" className="w-full">
+                {openApp}
+              </Button>
+            ) : (
+              <>
+                <Button href="/signup" className="w-full">
+                  {t.nav.signup}
+                </Button>
+                <Button href="/login" variant="secondary" className="w-full">
+                  {t.nav.login}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
