@@ -27,7 +27,7 @@ export const adminCopy = {
       noRecent: "Chưa có người dùng.", noPending: "Không có bài tập chờ duyệt.",
       workflow: "Quy trình quản lý bài tập", workflowBody: "Lưu nháp → kiểm tra → admin khác duyệt → xuất bản. Mọi thao tác được ghi vào nhật ký quản trị.",
       openExercises: "Mở thư viện bài tập →",
-      revenueMonth: "Doanh thu tháng này", revenueTotal: "tổng từ trước tới nay", paidOrders: "Đơn đã thanh toán",
+      revenueTotal: "Tổng doanh thu", revenueMonth: "trong tháng này", paidOrders: "Đơn đã thanh toán",
       paidOrdersMonth: "trong tháng này", paidLearners: "Học viên trả phí", onFree: "đang Free",
     },
     users: {
@@ -132,7 +132,7 @@ export const adminCopy = {
       noRecent: "No users yet.", noPending: "No exercises awaiting review.",
       workflow: "Exercise workflow", workflowBody: "Save draft → validate → another admin reviews → publish. Each action is recorded in the admin audit log.",
       openExercises: "Open exercise library →",
-      revenueMonth: "Revenue this month", revenueTotal: "all time", paidOrders: "Paid orders",
+      revenueTotal: "Total revenue", revenueMonth: "this month", paidOrders: "Paid orders",
       paidOrdersMonth: "this month", paidLearners: "Paying learners", onFree: "on Free",
     },
     users: {

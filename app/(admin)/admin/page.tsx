@@ -67,7 +67,7 @@ export default function AdminDashboard() {
 
   // Money comes from paid orders only; a plan given by hand shows in the learner counts but not in revenue.
   const money = [
-    { title: t.overview.revenueMonth, value: overview ? formatVnd(overview.revenue_this_month) : "—", detail: overview ? `${formatVnd(overview.revenue_total)} ${t.overview.revenueTotal}` : "—", icon: Banknote },
+    { title: t.overview.revenueTotal, value: overview ? formatVnd(overview.revenue_total) : "—", detail: overview ? `${formatVnd(overview.revenue_this_month)} ${t.overview.revenueMonth}` : "—", icon: Banknote },
     { title: t.overview.paidOrders, value: overview?.orders_paid_total ?? "—", detail: `${overview?.orders_paid_this_month ?? "—"} ${t.overview.paidOrdersMonth}`, icon: Receipt },
     { title: t.overview.paidLearners, value: overview ? overview.plan_counts.plus + overview.plan_counts.pro : "—", detail: overview ? `Plus ${overview.plan_counts.plus} · Pro ${overview.plan_counts.pro} · ${overview.plan_counts.free} ${t.overview.onFree}` : "—", icon: Crown },
   ];
