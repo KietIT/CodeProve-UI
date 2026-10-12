@@ -17,6 +17,7 @@ import {
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { HeroPoster } from "@/components/three/HeroPoster";
+import { takeReturn } from "@/lib/authReturn";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
@@ -238,7 +239,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
     try {
       if (mode === "signup") {
         await signup(name.trim(), email, password);
-        router.push("/dashboard");
+        router.push(takeReturn());
       } else if (adminEmail) {
         const account = await adminRequest<AdminAccount>("/auth/admin/login", {
           method: "POST", body: { email: email.trim().toLowerCase(), password },
@@ -248,7 +249,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
         router.replace(account.must_change_password ? "/admin/change-password" : "/admin");
       } else {
         await login(email, password);
-        router.push("/dashboard");
+        router.push(takeReturn());
       }
     } catch (err) {
       setServerError(err instanceof Error ? err.message : "Something went wrong");
