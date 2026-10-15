@@ -152,12 +152,12 @@ test('tokenizeInline reads bold, code and https links only', () => {
   assert.deepEqual(tokenizeInline('plain'), [{ kind: 'text', text: 'plain' }]);
 });
 
-test('the privacy page serves the approved 2026-10-2 policy in both locales', () => {
-  assert.equal(PRIVACY_POLICY_VERSION, '2026-10-2');
+test('the privacy page serves the approved 2026-10-3 policy in both locales', () => {
+  assert.equal(PRIVACY_POLICY_VERSION, '2026-10-3');
   assert.equal(content.vi.pages.privacy, privacyPolicy.vi);
   assert.equal(content.en.pages.privacy, privacyPolicy.en);
-  assert.equal(privacyPolicy.vi.updated, '**Cập nhật lần cuối:** 01/10/2026 · **Phiên bản:** 2026-10-2');
-  assert.equal(privacyPolicy.en.updated, '**Last updated:** 1 October 2026 · **Version:** 2026-10-2');
+  assert.equal(privacyPolicy.vi.updated, '**Cập nhật lần cuối:** 15/10/2026 · **Phiên bản:** 2026-10-3');
+  assert.equal(privacyPolicy.en.updated, '**Last updated:** 15 October 2026 · **Version:** 2026-10-3');
   for (const locale of ['vi', 'en']) {
     const doc = privacyPolicy[locale];
     const text = JSON.stringify(doc);
@@ -165,6 +165,12 @@ test('the privacy page serves the approved 2026-10-2 policy in both locales', ()
     assert.doesNotMatch(text, /NHÓM ĐIỀN|TEAM:|\[số\]|\[number\]|trinhkiet2005/);
     assert.ok(text.includes('**flux@codeprove.vn**'));
     assert.ok(text.includes('(https://developers.openai.com/api/docs/guides/your-data)'));
+    // 2026-10-3: Google Analytics and SePay, with the opt-out link.
+    assert.ok(text.includes('(https://tools.google.com/dlpage/gaoptout)'));
+    assert.equal(doc.sections[0].blocks[0].rows.length, 8, `${locale}: Payments and Website usage rows`);
+    const processors = doc.sections[2].blocks[0].rows.map((row) => row[0]);
+    assert.ok(processors.some((name) => name.startsWith('**Google Analytics**')));
+    assert.ok(processors.some((name) => name.startsWith('**SePay**')));
     assert.equal(doc.sections.length, 8);
   }
   assert.deepEqual(
@@ -192,13 +198,17 @@ test('LegalPage renders the version, date, tables and the OpenAI link, with no d
   const { I18nProvider } = require('../lib/i18n.tsx');
   const { LegalPage } = require('../components/sections/LegalPage.tsx');
   const html = render(h(I18nProvider, null, h(LegalPage, { doc: 'privacy' })));
-  assert.match(html, /01\/10\/2026/);
-  assert.match(html, /Phiên bản:<\/strong><span> 2026-10-2<\/span>/);
+  assert.match(html, /15\/10\/2026/);
+  assert.match(html, /Phiên bản:<\/strong><span> 2026-10-3<\/span>/);
   assert.match(html, /<strong[^>]*>flux@codeprove\.vn<\/strong>/);
   assert.match(html, /<code[^>]*>store=false<\/code>/);
   assert.match(
     html,
     /<a href="https:\/\/developers\.openai\.com\/api\/docs\/guides\/your-data" target="_blank" rel="noopener noreferrer"[^>]*>Điều khoản dữ liệu API của OpenAI<\/a>/,
+  );
+  assert.match(
+    html,
+    /<a href="https:\/\/tools\.google\.com\/dlpage\/gaoptout" target="_blank" rel="noopener noreferrer"[^>]*>tiện ích chặn Google Analytics<\/a>/,
   );
   assert.match(html, /<table/);
   assert.doesNotMatch(html, /<mark|BẢN NHÁP|NHÓM ĐIỀN|role="note"/);
