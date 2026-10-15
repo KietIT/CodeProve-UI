@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
@@ -22,8 +23,12 @@ const inter = Inter({
 // Display/body type is Inter (above). The old Geist CSS @import was removed:
 // it render-blocked every route and nothing used the font-geist classes.
 
+// GA4 loads only where NEXT_PUBLIC_GA_ID is set (Vercel Production), never locally.
+// Page views come from GA Enhanced measurement (history changes), so none are sent by hand.
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://code-prove.vercel.app"),
+  metadataBase: new URL("https://www.code-prove.io.vn"),
   title: {
     default: "CodeProve - Đánh giá năng lực lập trình cùng AI",
     template: "%s · CodeProve",
@@ -71,6 +76,7 @@ export default function RootLayout({
           </ThemeProvider>
         </QueryProvider>
       </body>
+      {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}
     </html>
   );
 }

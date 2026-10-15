@@ -6,13 +6,16 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { takeReturn } from "@/lib/authReturn";
+import { trackEvent } from "@/lib/analytics";
 
 export default function AuthCallbackClient({
   token,
   error,
+  newUser = false,
 }: {
   token?: string;
   error?: string;
+  newUser?: boolean;
 }) {
   const router = useRouter();
   const { loginWithToken } = useAuth();
@@ -27,7 +30,9 @@ export default function AuthCallbackClient({
     let cancelled = false;
     loginWithToken(token)
       .then(() => {
-        if (!cancelled) router.replace(takeReturn());
+        if (cancelled) return;
+        if (newUser) trackEvent("sign_up", { method: "google" });
+        router.replace(takeReturn());
       })
       .catch((err) => {
         if (!cancelled) {
@@ -37,7 +42,7 @@ export default function AuthCallbackClient({
     return () => {
       cancelled = true;
     };
-  }, [error, loginWithToken, router, token]);
+  }, [error, loginWithToken, newUser, router, token]);
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-4 text-on-surface">

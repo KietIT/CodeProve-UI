@@ -95,7 +95,7 @@ test('the monthly submit limit is a limit error and carries the upgrade hint', (
   assert.deepEqual(readLimitDetail(plain), plain);
 });
 
-test('billing API calls hit the right endpoints and send only the plan code', async () => {
+test('billing API calls hit the right endpoints and send only the plan code without GA', async () => {
   const plans = await withFetch(200, [], () => getPlans());
   assert.ok(plans.calls[0].url.endsWith('/api/billing/plans'));
   assert.equal(plans.calls[0].init.headers.Authorization, undefined, 'plans is public');
@@ -126,6 +126,86 @@ test('a checkout refusal surfaces as an ApiError with the backend detail', async
   assert.ok(error instanceof ApiError);
   assert.equal(error.status, 503);
   assert.deepEqual(error.detail, detail);
+});
+
+/** Runs `run` with a fake `window.gtag` (and the browser globals apiFetch reads) installed. */
+async function withGtag(gtag, run) {
+  const saved = { window: global.window, localStorage: global.localStorage, gaId: process.env.NEXT_PUBLIC_GA_ID };
+  global.window = { gtag };
+  global.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  process.env.NEXT_PUBLIC_GA_ID = 'G-TEST';
+  try {
+    return await run();
+  } finally {
+    for (const key of ['window', 'localStorage']) {
+      if (saved[key] === undefined) delete global[key];
+      else global[key] = saved[key];
+    }
+    if (saved.gaId === undefined) delete process.env.NEXT_PUBLIC_GA_ID;
+    else process.env.NEXT_PUBLIC_GA_ID = saved.gaId;
+  }
+}
+
+/** A gtag that answers `get` with the given values and records events. */
+function fakeGtag(values, events = []) {
+  return (command, target, field, callback) => {
+    if (command === 'event') events.push({ name: target, params: field });
+    if (command === 'get' && field in values) callback(values[field]);
+  };
+}
+
+test('checkout carries the GA client and session ids when gtag answers', async () => {
+  const seen = [];
+  const gtag = (command, target, field, callback) => {
+    seen.push([command, target, field]);
+    fakeGtag({ client_id: '123.456', session_id: '1760500000' })(command, target, field, callback);
+  };
+  const checkout = await withGtag(gtag, () => withFetch(200, { order_id: 1 }, () => startCheckout('pro_monthly')));
+  assert.deepEqual(JSON.parse(checkout.calls[0].init.body), {
+    plan_code: 'pro_monthly',
+    ga_client_id: '123.456',
+    ga_session_id: 1760500000,
+  });
+  assert.deepEqual(seen, [
+    ['get', 'G-TEST', 'client_id'],
+    ['get', 'G-TEST', 'session_id'],
+  ]);
+});
+
+test('getGaIds gives up after the timeout when gtag.js is blocked, and drops bad values', async () => {
+  const { getGaIds } = require('../lib/analytics.ts');
+  assert.deepEqual(await getGaIds('G-TEST'), {}, 'no window: nothing to read');
+  await withGtag(() => {}, async () => {
+    const started = Date.now();
+    assert.deepEqual(await getGaIds('G-TEST', 50), {});
+    assert.ok(Date.now() - started < 1000);
+    assert.deepEqual(await getGaIds(undefined, 50), {}, 'no GA id configured');
+  });
+  await withGtag(fakeGtag({ client_id: '', session_id: 'abc' }), async () => {
+    assert.deepEqual(await getGaIds('G-TEST', 50), {});
+  });
+  await withGtag(fakeGtag({ client_id: '1.2', session_id: 42 }), async () => {
+    assert.deepEqual(await getGaIds('G-TEST', 50), { ga_client_id: '1.2', ga_session_id: 42 });
+  });
+});
+
+test('trackEvent sends to gtag and is a no-op without it', async () => {
+  const { trackEvent } = require('../lib/analytics.ts');
+  assert.doesNotThrow(() => trackEvent('sign_up', { method: 'email' }));
+  const events = [];
+  await withGtag(fakeGtag({}, events), async () => {
+    trackEvent('sign_up', { method: 'google' });
+    trackEvent('challenge_complete', { level: 'junior' });
+  });
+  assert.deepEqual(events, [
+    { name: 'sign_up', params: { method: 'google' } },
+    { name: 'challenge_complete', params: { level: 'junior' } },
+  ]);
+  await withGtag(() => {
+    throw new Error('blocked');
+  }, async () => {
+    assert.doesNotThrow(() => trackEvent('sign_up', { method: 'email' }));
+  });
 });
 
 test('every locale has the same payment copy keys', () => {

@@ -58,6 +58,7 @@ import { useStudentTests } from "@/hooks/useStudentTests";
 import { useSessionStore } from "@/lib/stores/useSessionStore";
 import { useVisualizerStore } from "@/lib/stores/useVisualizerStore";
 import { createTelemetry } from "@/lib/telemetry";
+import { trackEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n";
 import {
   CIEL_MESSAGE_MAX,
@@ -995,6 +996,7 @@ export function SolveWorkspace({
         /* telemetry flush is best-effort; ignore failures */
       }
       const { questions, tests } = await submitAttempt(id, locale);
+      trackEvent("challenge_complete", { level: levelConfig.slug });
       resumeActiveRef.current = false;
       clearResume(sessionStore(), code);
       setSubmitTests(tests ?? null);
@@ -1014,7 +1016,7 @@ export function SolveWorkspace({
     }
     // Invoke optional external callback (used in tests / storybook).
     onSubmit?.();
-  }, [onSubmit, performAutosave, flushStudentTests, locale, t.noActiveAttempt, debugState, code]);
+  }, [onSubmit, performAutosave, flushStudentTests, locale, t.noActiveAttempt, debugState, code, levelConfig.slug]);
 
   // ── Debug locate step ───────────────────────────────────────────────────────
   // After a 409 (another tab located, or the attempt moved on) the server state

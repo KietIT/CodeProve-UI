@@ -18,6 +18,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { HeroPoster } from "@/components/three/HeroPoster";
 import { takeReturn } from "@/lib/authReturn";
+import { trackEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
@@ -239,6 +240,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
     try {
       if (mode === "signup") {
         await signup(name.trim(), email, password);
+        trackEvent("sign_up", { method: "email" });
         router.push(takeReturn());
       } else if (adminEmail) {
         const account = await adminRequest<AdminAccount>("/auth/admin/login", {
