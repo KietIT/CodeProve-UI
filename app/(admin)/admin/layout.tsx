@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BookOpen, ChevronDown, History, LayoutDashboard, LockKeyhole, LogOut, Menu, ShieldCheck, Users, X } from "lucide-react";
+import { BookOpen, ChevronDown, CreditCard, History, LayoutDashboard, LockKeyhole, LogOut, Menu, ShieldCheck, Users, X } from "lucide-react";
 import { useAdminAuth } from "./_auth";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useAdminCopy } from "./_copy";
@@ -22,6 +22,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const navigation = [
     { href: "/admin", label: t.common.overview, icon: LayoutDashboard },
     { href: "/admin/users", label: t.common.users, icon: Users },
+    { href: "/admin/payments", label: t.common.payments, icon: CreditCard },
     { href: "/admin/exercises", label: t.common.exercises, icon: BookOpen },
     { href: "/admin/activity", label: t.common.activity, icon: History },
     ...(role === "super_admin" ? [{ href: "/admin/admins", label: t.common.adminManagement, icon: ShieldCheck }] : []),
@@ -40,7 +41,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (!allowed) return <main className="grid min-h-screen place-items-center bg-background px-5 text-center text-on-surface"><div><LockKeyhole className="mx-auto mb-4 text-primary" size={32} /><h1 className="text-2xl font-bold">{t.common.deniedTitle}</h1><p className="mt-2 text-on-surface-variant">{t.common.deniedBody}</p><Link href="/dashboard" className="mt-5 inline-block font-semibold text-primary hover:underline">{t.common.backToStudent}</Link></div></main>;
   if (pathname.startsWith("/admin/admins") && role !== "super_admin") return <main className="grid min-h-screen place-items-center bg-background text-on-surface">{t.common.deniedTitle}</main>;
 
-  const title = pathname === "/admin" ? t.common.overview : pathname.startsWith("/admin/admins") ? t.common.adminManagement : pathname.startsWith("/admin/users") ? t.common.users : pathname.startsWith("/admin/exercises") ? t.common.exercises : pathname.startsWith("/admin/activity") ? t.common.activity : t.common.account;
+  const title = pathname === "/admin" ? t.common.overview : pathname.startsWith("/admin/admins") ? t.common.adminManagement : pathname.startsWith("/admin/users") ? t.common.users : pathname.startsWith("/admin/payments") ? t.common.payments : pathname.startsWith("/admin/exercises") ? t.common.exercises : pathname.startsWith("/admin/activity") ? t.common.activity : t.common.account;
   const hideContent = mustChangePassword && pathname !== "/admin/change-password";
   const signOut = async () => { try { await logout(); } catch { /* Session may already have expired. */ } finally { router.replace("/login"); } };
 
