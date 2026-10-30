@@ -10,10 +10,24 @@ import { formatDateTime, type Payment, type PaymentPage, type PaymentSummary } f
 import { AreaTrend, CountBars, PlanBars, StatusDonut } from "./_charts";
 
 const pageSize = 10;
+// The history is fetched in one go (the API caps a request at 100) and paged here. A transfer is ours only when it
+// matched an order and so has a learner; older backends also returned unrelated money, so it is filtered here too.
+const fetchLimit = 100;
+const isCodeProve = (item: Payment) => item.order_id != null && Boolean(item.user_name);
 const ranges = [7, 30, 90];
 
-function StatusBadge({ status, labels }: { status: string; labels: Record<string, string> }) {
-  return <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">{labels[status] ?? status}</span>;
+// One tone per order status: green once paid, amber while it still needs something, grey when it ended unpaid.
+const statusTones: Record<string, string> = {
+  paid: "bg-primary/15 text-primary",
+  pending: "bg-warning/15 text-warning",
+  paid_unapplied: "bg-warning/15 text-warning",
+  failed: "bg-error/15 text-error",
+};
+
+function StatusBadge({ status, labels }: { status: string | null; labels: Record<string, string> }) {
+  if (!status) return <span className="text-on-surface-variant">—</span>;
+  const tone = statusTones[status] ?? "bg-surface-container-high text-on-surface-variant";
+  return <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold leading-none ${tone}`}><span className="h-1.5 w-1.5 rounded-full bg-current" />{labels[status] ?? status}</span>;
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -36,12 +50,9 @@ function PaymentDetail({ payment, onClose }: { payment: Payment; onClose: () => 
       <div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-bold">{p.detailTitle}</h2><p className="mt-1 text-3xl font-bold tabular-nums text-primary">{payment.amount === null ? "—" : formatVnd(payment.amount)}</p></div><button type="button" aria-label={p.close} onClick={onClose} className="rounded-lg p-2 hover:bg-surface-container"><X size={20} /></button></div>
       <dl className="mt-4 divide-y divide-outline-variant/50 border-t border-outline-variant/50">
         <Field label={p.receivedAt}><span className="tabular-nums">{formatDateTime(payment.received_at, locale)}</span></Field>
-        <Field label={p.bankTime}><span className="tabular-nums">{payment.transaction_date ?? "—"}</span></Field>
         <Field label={p.payer}>{payment.user_name}<span className="block text-xs font-normal text-on-surface-variant">{payment.user_email}</span></Field>
         <Field label={p.content}><span className="font-mono text-[13px]">{payment.transfer_content ?? "—"}</span></Field>
-        <Field label={p.account}><span className="tabular-nums">{payment.account_number ?? "—"}</span></Field>
         <Field label={p.bank}>{payment.bank ?? "—"}</Field>
-        <Field label={p.reference}><span className="font-mono text-[13px]">{payment.reference_code ?? "—"}</span></Field>
         <Field label={p.txnId}><span className="tabular-nums">{payment.provider_txn_id ?? "—"}</span></Field>
         <Field label={p.orderCode}>#{payment.order_id} · {payment.plan_code.replace("_", " · ")} · <StatusBadge status={payment.order_status} labels={statuses} /></Field>
       </dl>
@@ -57,7 +68,7 @@ function History() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [result, setResult] = useState<PaymentPage | null>(null);
+  const [all, setAll] = useState<Payment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Payment | null>(null);
@@ -70,16 +81,17 @@ function History() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    const params = new URLSearchParams({ limit: String(pageSize), offset: String((page - 1) * pageSize) });
+    const params = new URLSearchParams({ limit: String(fetchLimit), offset: "0" });
     if (query) params.set("search", query);
     adminRequest<PaymentPage>(`/admin/payments?${params}`).then((data) => {
-      if (active) { setResult(data); setError(""); setLoading(false); }
+      if (active) { setAll(data.items.filter(isCodeProve)); setError(""); setLoading(false); }
     }).catch((cause: unknown) => {
-      if (active) { setResult(null); setError(cause instanceof Error ? cause.message : p.loadError); setLoading(false); }
+      if (active) { setAll(null); setError(cause instanceof Error ? cause.message : p.loadError); setLoading(false); }
     });
     return () => { active = false; };
-  }, [query, page, p.loadError]);
+  }, [query, p.loadError]);
 
+  const result = all && { total: all.length, items: all.slice((page - 1) * pageSize, page * pageSize) };
   const pages = Math.max(1, Math.ceil((result?.total ?? 0) / pageSize));
   const row = (item: Payment) => <tr key={item.id} tabIndex={0} onClick={() => setSelected(item)} onKeyDown={(event) => { if (event.key === "Enter") setSelected(item); }} className="cursor-pointer hover:bg-surface-container-low/60 focus-visible:bg-surface-container-low/60 focus-visible:outline-none">
     <td className="whitespace-nowrap px-5 py-4 tabular-nums text-on-surface-variant">{formatDateTime(item.received_at, locale)}</td>
@@ -139,7 +151,7 @@ function Charts() {
   const none = <p className="py-12 text-center text-sm text-on-surface-variant">{p.noData}</p>;
   const stats = data ? [
     { title: p.revenue, value: formatVnd(data.revenue), detail: p.days(data.days) },
-    { title: p.paidOrders, value: String(data.paid_orders), detail: `${p.transfers}: ${data.transfers_received}` },
+    { title: p.paidOrders, value: String(data.paid_orders), detail: p.days(data.days) },
     { title: p.average, value: formatVnd(data.average_order), detail: p.revenueByDay.toLowerCase() },
   ] : [];
   const rangePicker = <div role="group" className="inline-flex rounded-xl bg-surface-container p-1">{ranges.map((range) => <button key={range} type="button" aria-pressed={days === range} onClick={() => setDays(range)} className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${days === range ? "bg-surface-container-lowest text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}>{p.days(range)}</button>)}</div>;

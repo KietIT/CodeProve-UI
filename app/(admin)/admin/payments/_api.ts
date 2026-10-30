@@ -5,10 +5,6 @@ export type Payment = {
   bank: string | null;
   transfer_content: string | null;
   provider_txn_id: number | null;
-  /** The account that received the money, the bank's own reference, and the bank's time (Vietnam time). */
-  account_number: string | null;
-  reference_code: string | null;
-  transaction_date: string | null;
   order_id: number;
   order_status: string;
   plan_code: string;
