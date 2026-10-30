@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BarChart3, ReceiptText, Search } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { BarChart3, ChevronRight, ReceiptText, Search, X } from "lucide-react";
 import { formatVnd } from "@/lib/billing";
 import { adminRequest } from "../_auth";
 import { useAdminCopy } from "../_copy";
@@ -11,6 +11,44 @@ import { AreaTrend, CountBars, PlanBars, StatusDonut } from "./_charts";
 
 const pageSize = 10;
 const ranges = [7, 30, 90];
+
+function StatusBadge({ status, labels }: { status: string; labels: Record<string, string> }) {
+  return <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">{labels[status] ?? status}</span>;
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="grid gap-1 py-3.5 sm:grid-cols-[190px_1fr] sm:gap-4"><dt className="text-sm text-on-surface-variant">{label}</dt><dd className="min-w-0 break-words text-sm font-medium">{children}</dd></div>;
+}
+
+/** One transfer in full, as a dialog: when, who, the receiving account and the content the payer wrote. */
+function PaymentDetail({ payment, onClose }: { payment: Payment; onClose: () => void }) {
+  const { locale, t } = useAdminCopy();
+  const p = t.payments;
+  const statuses: Record<string, string> = p.statuses;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return <div className="fixed inset-0 z-[60] grid place-items-center p-4">
+    <button type="button" aria-label={p.close} onClick={onClose} className="absolute inset-0 rounded-none bg-black/60" />
+    <div role="dialog" aria-modal="true" aria-label={p.detailTitle} className="relative max-h-full w-full max-w-xl overflow-y-auto rounded-2xl border border-outline-variant bg-surface-container-lowest p-6 shadow-2xl">
+      <div className="flex items-start justify-between gap-4"><div><h2 className="text-lg font-bold">{p.detailTitle}</h2><p className="mt-1 text-3xl font-bold tabular-nums text-primary">{payment.amount === null ? "—" : formatVnd(payment.amount)}</p></div><button type="button" aria-label={p.close} onClick={onClose} className="rounded-lg p-2 hover:bg-surface-container"><X size={20} /></button></div>
+      <dl className="mt-4 divide-y divide-outline-variant/50 border-t border-outline-variant/50">
+        <Field label={p.receivedAt}><span className="tabular-nums">{formatDateTime(payment.received_at, locale)}</span></Field>
+        <Field label={p.bankTime}><span className="tabular-nums">{payment.transaction_date ?? "—"}</span></Field>
+        <Field label={p.payer}>{payment.user_name}<span className="block text-xs font-normal text-on-surface-variant">{payment.user_email}</span></Field>
+        <Field label={p.content}><span className="font-mono text-[13px]">{payment.transfer_content ?? "—"}</span></Field>
+        <Field label={p.account}><span className="tabular-nums">{payment.account_number ?? "—"}</span></Field>
+        <Field label={p.bank}>{payment.bank ?? "—"}</Field>
+        <Field label={p.reference}><span className="font-mono text-[13px]">{payment.reference_code ?? "—"}</span></Field>
+        <Field label={p.txnId}><span className="tabular-nums">{payment.provider_txn_id ?? "—"}</span></Field>
+        <Field label={p.orderCode}>#{payment.order_id} · {payment.plan_code.replace("_", " · ")} · <StatusBadge status={payment.order_status} labels={statuses} /></Field>
+      </dl>
+      <p className="mt-4 text-xs text-on-surface-variant">{p.payerNote}</p>
+    </div>
+  </div>;
+}
 
 function History() {
   const { locale, t } = useAdminCopy();
@@ -22,6 +60,7 @@ function History() {
   const [result, setResult] = useState<PaymentPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selected, setSelected] = useState<Payment | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { setPage(1); setQuery(search.trim()); }, 300);
@@ -42,14 +81,15 @@ function History() {
   }, [query, page, p.loadError]);
 
   const pages = Math.max(1, Math.ceil((result?.total ?? 0) / pageSize));
-  const row = (item: Payment) => <tr key={item.id} className="hover:bg-surface-container-low/60">
+  const row = (item: Payment) => <tr key={item.id} tabIndex={0} onClick={() => setSelected(item)} onKeyDown={(event) => { if (event.key === "Enter") setSelected(item); }} className="cursor-pointer hover:bg-surface-container-low/60 focus-visible:bg-surface-container-low/60 focus-visible:outline-none">
     <td className="whitespace-nowrap px-5 py-4 tabular-nums text-on-surface-variant">{formatDateTime(item.received_at, locale)}</td>
-    <td className="px-5 py-4">{item.user_name ? <div><p className="font-semibold">{item.user_name}</p><p className="text-xs text-on-surface-variant">{item.user_email}</p></div> : <span className="text-on-surface-variant">{p.unmatched}</span>}</td>
+    <td className="px-5 py-4"><p className="font-semibold">{item.user_name}</p><p className="text-xs text-on-surface-variant">{item.user_email}</p></td>
     <td className="whitespace-nowrap px-5 py-4 font-semibold tabular-nums">{item.amount === null ? "—" : formatVnd(item.amount)}</td>
     <td className="whitespace-nowrap px-5 py-4">{item.plan_code ? item.plan_code.replace("_", " · ") : "—"}</td>
-    <td className="px-5 py-4">{item.order_status ? <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">{statuses[item.order_status] ?? item.order_status}</span> : "—"}</td>
+    <td className="px-5 py-4"><StatusBadge status={item.order_status} labels={statuses} /></td>
     <td className="px-5 py-4 text-on-surface-variant">{item.bank ?? "—"}</td>
-    <td className="max-w-[280px] truncate px-5 py-4 text-xs text-on-surface-variant" title={item.transfer_content ?? ""}>{item.transfer_content ?? "—"}</td>
+    <td className="max-w-[240px] truncate px-5 py-4 text-xs text-on-surface-variant" title={item.transfer_content ?? ""}>{item.transfer_content ?? "—"}</td>
+    <td className="whitespace-nowrap px-5 py-4"><span className="inline-flex items-center gap-1 font-semibold text-primary">{p.view}<ChevronRight size={15} /></span></td>
   </tr>;
 
   return <div>
@@ -61,13 +101,14 @@ function History() {
       {error ? <div role="alert" className="p-5 text-sm text-error">{p.loadError}: {error}</div>
         : loading ? <div className="p-5 text-sm text-on-surface-variant">{t.loading}</div>
         : !result?.items.length ? <EmptyState title={p.empty} description={p.emptyHelp} />
-        : <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-surface-container-low/80 text-xs uppercase tracking-wide text-on-surface-variant"><tr>{[p.time, p.learner, p.amount, p.plan, p.status, p.bank, p.content].map((label) => <th key={label} scope="col" className="px-5 py-3 font-semibold">{label}</th>)}</tr></thead><tbody className="divide-y divide-outline-variant/50">{result.items.map(row)}</tbody></table></div>}
+        : <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-surface-container-low/80 text-xs uppercase tracking-wide text-on-surface-variant"><tr>{[p.time, p.learner, p.amount, p.plan, p.status, p.bank, p.content, ""].map((label, index) => <th key={index} scope="col" className="px-5 py-3 font-semibold">{label}</th>)}</tr></thead><tbody className="divide-y divide-outline-variant/50">{result.items.map(row)}</tbody></table></div>}
     </div>
+    {selected && <PaymentDetail payment={selected} onClose={() => setSelected(null)} />}
     <div className="mt-4 flex items-center justify-between gap-3"><p className="text-xs text-on-surface-variant">{t.common.page} {page}/{pages}</p><div className="flex gap-2"><button type="button" disabled={loading || page <= 1} onClick={() => setPage(page - 1)} className={secondaryButton}>{t.common.previous}</button><button type="button" disabled={loading || page >= pages} onClick={() => setPage(page + 1)} className={secondaryButton}>{t.common.next}</button></div></div>
   </div>;
 }
 
-function Section({ title, description, action, children }: { title: string; description?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, description, action, children }: { title: string; description?: string; action?: ReactNode; children: React.ReactNode }) {
   return <section><div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-base font-semibold">{title}</h2>{description && <p className="mt-0.5 text-sm text-on-surface-variant">{description}</p>}</div>{action}</div>{children}</section>;
 }
 
@@ -100,13 +141,12 @@ function Charts() {
     { title: p.revenue, value: formatVnd(data.revenue), detail: p.days(data.days) },
     { title: p.paidOrders, value: String(data.paid_orders), detail: `${p.transfers}: ${data.transfers_received}` },
     { title: p.average, value: formatVnd(data.average_order), detail: p.revenueByDay.toLowerCase() },
-    { title: p.attention, value: String(data.needs_attention), detail: p.attentionHelp },
   ] : [];
   const rangePicker = <div role="group" className="inline-flex rounded-xl bg-surface-container p-1">{ranges.map((range) => <button key={range} type="button" aria-pressed={days === range} onClick={() => setDays(range)} className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${days === range ? "bg-surface-container-lowest text-on-surface shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}>{p.days(range)}</button>)}</div>;
 
   return <div className="space-y-10">
     {!data ? <div className="py-16 text-center text-sm text-on-surface-variant">{t.loading}</div> : <>
-      <dl className="grid gap-px overflow-hidden rounded-2xl border border-outline-variant/60 bg-outline-variant/50 sm:grid-cols-2 xl:grid-cols-4">
+      <dl className="grid gap-px overflow-hidden rounded-2xl border border-outline-variant/60 bg-outline-variant/50 sm:grid-cols-3">
         {stats.map((stat) => <div key={stat.title} className="bg-background p-5"><dt className="text-sm font-medium text-on-surface-variant">{stat.title}</dt><dd className="mt-2 text-2xl font-bold tabular-nums">{stat.value}</dd><p className="mt-1 text-xs text-on-surface-variant">{stat.detail}</p></div>)}
       </dl>
       <Section title={p.revenueByDay} description={p.days(data.days)} action={rangePicker}>

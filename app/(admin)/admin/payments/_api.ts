@@ -5,12 +5,16 @@ export type Payment = {
   bank: string | null;
   transfer_content: string | null;
   provider_txn_id: number | null;
-  order_id: number | null;
-  order_status: string | null;
-  plan_code: string | null;
-  user_id: number | null;
-  user_name: string | null;
-  user_email: string | null;
+  /** The account that received the money, the bank's own reference, and the bank's time (Vietnam time). */
+  account_number: string | null;
+  reference_code: string | null;
+  transaction_date: string | null;
+  order_id: number;
+  order_status: string;
+  plan_code: string;
+  user_id: number;
+  user_name: string;
+  user_email: string;
 };
 
 export type PaymentPage = { items: Payment[]; total: number; limit: number; offset: number };
@@ -21,7 +25,6 @@ export type PaymentSummary = {
   paid_orders: number;
   average_order: number;
   transfers_received: number;
-  needs_attention: number;
   by_day: { date: string; revenue: number; orders: number }[];
   by_plan: { plan_code: string; revenue: number; orders: number }[];
   by_status: { status: string; orders: number }[];
