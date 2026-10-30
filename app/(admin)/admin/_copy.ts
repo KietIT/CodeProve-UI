@@ -6,7 +6,7 @@ export const adminCopy = {
   vi: {
     common: {
       activity: "Lịch sử hoạt động",
-      overview: "Tổng quan", users: "Người dùng", exercises: "Bài tập", adminManagement: "Quản lý admin", account: "Tài khoản",
+      overview: "Tổng quan", payments: "Thanh toán", users: "Người dùng", exercises: "Bài tập", adminManagement: "Quản lý admin", account: "Tài khoản",
       navigation: "Điều hướng", changePassword: "Đổi mật khẩu", signOut: "Đăng xuất",
       loadingAuth: "Đang xác thực...", deniedTitle: "Không có quyền truy cập",
       deniedBody: "Khu vực này chỉ dành cho tài khoản admin.", backToStudent: "Về trang người học",
@@ -53,6 +53,18 @@ export const adminCopy = {
       grantConfirm: (tier: string, days: number) => `Cấp gói ${tier} trong ${days} ngày cho học viên này? Gói đang chạy (nếu có) sẽ bị thay thế.`,
       revokeConfirm: "Kết thúc gói đang chạy của học viên này ngay bây giờ?",
       orders: "Đơn hàng", noOrders: "Chưa có đơn hàng nào.", plan: "Gói", amount: "Số tiền", created: "Ngày tạo", status: "Trạng thái",
+    },
+    payments: {
+      eyebrow: "Doanh thu", title: "Thanh toán", description: "Xem ai đã chuyển khoản, vào lúc nào, và theo dõi doanh thu qua biểu đồ.",
+      tabHistory: "Lịch sử giao dịch", tabCharts: "Tổng quan", search: "Tìm học viên", searchPlaceholder: "Tên hoặc email",
+      time: "Thời gian", learner: "Người chuyển", amount: "Số tiền", plan: "Gói", bank: "Ngân hàng", content: "Nội dung chuyển khoản",
+      order: "Đơn", status: "Trạng thái đơn", unmatched: "Không khớp đơn nào", empty: "Chưa có giao dịch nào", emptyHelp: "Giao dịch xuất hiện khi SePay gửi webhook.",
+      loadError: "Không tải được dữ liệu thanh toán", range: "Khoảng thời gian", days: (n: number) => `${n} ngày`,
+      revenue: "Doanh thu", paidOrders: "Đơn đã thanh toán", average: "Giá trị trung bình / đơn", transfers: "Giao dịch nhận được",
+      attention: "Cần xử lý", attentionHelp: "Giao dịch không khớp đơn, sai số tiền hoặc gói bị trùng",
+      revenueByDay: "Doanh thu theo ngày", ordersByDay: "Số đơn theo ngày", byPlan: "Doanh thu theo gói", byStatus: "Đơn theo trạng thái",
+      noData: "Chưa có dữ liệu trong khoảng này.", orders: "đơn",
+      statuses: { pending: "Chờ thanh toán", paid: "Đã thanh toán", paid_unapplied: "Cần xử lý", cancelled: "Đã hủy", expired: "Hết hạn", refunded: "Đã hoàn tiền", failed: "Thất bại" },
     },
     exercises: {
       eyebrow: "Nội dung học tập", title: "Bài tập", description: "Theo dõi trạng thái nội dung, xem test case và chuẩn bị bản sửa cho quy trình duyệt.",
@@ -111,7 +123,7 @@ export const adminCopy = {
   en: {
     common: {
       activity: "Activity history",
-      overview: "Overview", users: "Users", exercises: "Exercises", adminManagement: "Manage admins", account: "Account",
+      overview: "Overview", payments: "Payments", users: "Users", exercises: "Exercises", adminManagement: "Manage admins", account: "Account",
       navigation: "Navigation", changePassword: "Change password", signOut: "Sign out",
       loadingAuth: "Checking your account...", deniedTitle: "Access denied",
       deniedBody: "This area is for admin accounts only.", backToStudent: "Back to learner area",
@@ -158,6 +170,18 @@ export const adminCopy = {
       grantConfirm: (tier: string, days: number) => `Give this learner ${tier} for ${days} days? A running plan, if any, is replaced.`,
       revokeConfirm: "End this learner's running plan now?",
       orders: "Orders", noOrders: "No orders yet.", plan: "Plan", amount: "Amount", created: "Created", status: "Status",
+    },
+    payments: {
+      eyebrow: "Revenue", title: "Payments", description: "See who paid by bank transfer and when, and follow revenue in charts.",
+      tabHistory: "Transaction history", tabCharts: "Overview", search: "Find a learner", searchPlaceholder: "Name or email",
+      time: "Time", learner: "Payer", amount: "Amount", plan: "Plan", bank: "Bank", content: "Transfer content",
+      order: "Order", status: "Order status", unmatched: "Matches no order", empty: "No transactions yet", emptyHelp: "Transactions appear when SePay sends a webhook.",
+      loadError: "Could not load payment data", range: "Period", days: (n: number) => `${n} days`,
+      revenue: "Revenue", paidOrders: "Paid orders", average: "Average per order", transfers: "Transfers received",
+      attention: "Needs attention", attentionHelp: "Transfers matching no order, a wrong amount, or a duplicate plan",
+      revenueByDay: "Revenue by day", ordersByDay: "Orders by day", byPlan: "Revenue by plan", byStatus: "Orders by status",
+      noData: "No data in this period yet.", orders: "orders",
+      statuses: { pending: "Pending", paid: "Paid", paid_unapplied: "Needs attention", cancelled: "Cancelled", expired: "Expired", refunded: "Refunded", failed: "Failed" },
     },
     exercises: {
       eyebrow: "Learning content", title: "Exercises", description: "Track content status, inspect test cases and prepare changes for review.",
