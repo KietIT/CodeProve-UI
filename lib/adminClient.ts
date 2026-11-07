@@ -2,14 +2,27 @@ export type AdminAccount = {
   id: number;
   full_name: string;
   email: string;
-  role: "admin" | "super_admin";
+  role: "admin" | "super_admin" | "payment_viewer";
   is_active: boolean;
   must_change_password: boolean;
   last_login_at: string | null;
 };
 
 export function isAdminLoginId(email: string): boolean {
-  return email.trim().toLowerCase().endsWith("@codeprove.production");
+  const normalized = email.trim().toLowerCase();
+  return normalized.endsWith("@codeprove.production") || normalized === "lecture@codeprove.vn";
+}
+
+export function staffHome(account: Pick<AdminAccount, "role" | "must_change_password">): string {
+  if (account.must_change_password) return "/admin/change-password";
+  return account.role === "payment_viewer" ? "/admin/payments" : "/admin";
+}
+
+export function canViewStaffPage(account: AdminAccount, pathname: string): boolean {
+  if (account.role === "payment_viewer") {
+    return pathname === "/admin/payments" || pathname === "/admin/change-password";
+  }
+  return !pathname.startsWith("/admin/admins") || account.role === "super_admin";
 }
 
 /** The text of a failed admin request: a plain `detail`, validation issues, or a coded error's own message. */

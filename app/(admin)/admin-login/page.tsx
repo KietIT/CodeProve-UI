@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { useAdminAuth } from "../admin/_auth";
+import { staffHome } from "@/lib/adminClient";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useAdminCopy } from "../admin/_copy";
 import { card, field, primaryButton } from "../admin/_ui";
@@ -27,7 +28,7 @@ export default function AdminLoginPage() {
     try {
       const admin = await login(email.trim(), password);
       setPassword("");
-      router.replace(admin.must_change_password ? "/admin/change-password" : "/admin");
+      router.replace(staffHome(admin));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.login.failed);
     } finally { setSubmitting(false); }

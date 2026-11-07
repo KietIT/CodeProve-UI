@@ -22,7 +22,7 @@ import { trackEvent } from "@/lib/analytics";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
-import { adminRequest, isAdminLoginId, type AdminAccount } from "@/lib/adminClient";
+import { adminRequest, isAdminLoginId, staffHome, type AdminAccount } from "@/lib/adminClient";
 import { appContent } from "@/lib/appContent";
 
 type Mode = "login" | "signup";
@@ -248,7 +248,7 @@ export function AuthPanel({ mode }: { mode: Mode }) {
         });
         logout();
         setPassword("");
-        router.replace(account.must_change_password ? "/admin/change-password" : "/admin");
+        router.replace(staffHome(account));
       } else {
         await login(email, password);
         router.push(takeReturn());
