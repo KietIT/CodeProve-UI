@@ -1,5 +1,13 @@
 # Admin UI
 
+The lecturer account `lecture@codeprove.vn` uses the `payment_viewer` role and signs
+in at `/login` or `/admin-login`. It opens `/admin/payments` directly, with payment
+history, transaction detail dialogs, and summary charts. Its shell shows only
+payments and sign-out; other admin pages are not mounted and redirect to payments.
+The backend independently denies all other admin resources. Provision it after
+migrations using `python -m scripts.bootstrap_payment_viewer` on the backend host;
+the password is prompted, not stored in source. Existing accounts are left intact.
+
 Routes: `/login`, `/admin-login` (legacy direct entry), `/admin`, `/admin/admins` (super admin only), `/admin/activity`, `/admin/users`, `/admin/users/[id]`, `/admin/payments`, `/admin/exercises`, `/admin/exercises/new`, `/admin/exercises/[code]`, `/admin/change-password`.
 
 Admin sign-in uses `POST /api/auth/admin/login` and a separate HttpOnly cookie session; the admin UI never stores a token in localStorage. Browser requests pass through the same-origin `/api/admin-gateway` route, which forwards only admin endpoints to `NEXT_PUBLIC_API_URL`. Set that variable to the current backend HTTPS origin in the Vercel Production environment and redeploy; production requests fail with 503 if it is missing. Use a stable backend hostname rather than an expiring quick tunnel. `GET /api/auth/admin/me` returns the role and `must_change_password`. Both `admin` and `super_admin` must change a temporary password before entering admin pages. The backend enforces this on every admin API. Google login and public signup are unavailable for admin IDs.

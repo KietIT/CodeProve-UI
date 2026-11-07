@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, ChevronDown, CreditCard, History, LayoutDashboard, LockKeyhole, LogOut, Menu, ShieldCheck, Users, X } from "lucide-react";
 import { useAdminAuth } from "./_auth";
+import { canViewStaffPage, staffHome } from "@/lib/adminClient";
 import { LanguageToggle, ThemeToggle } from "@/components/ui/Toggles";
 import { useAdminCopy } from "./_copy";
 
@@ -18,7 +19,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const role = user?.role;
   const mustChangePassword = user?.must_change_password === true;
-  const allowed = role === "admin" || role === "super_admin";
+  const paymentOnly = role === "payment_viewer";
+  const allowed = role === "admin" || role === "super_admin" || paymentOnly;
   const navigation = [
     { href: "/admin", label: t.common.overview, icon: LayoutDashboard },
     { href: "/admin/users", label: t.common.users, icon: Users },
@@ -34,16 +36,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (allowed && mustChangePassword && pathname !== "/admin/change-password") router.replace("/admin/change-password");
   }, [allowed, mustChangePassword, pathname, router]);
+  useEffect(() => {
+    if (user && paymentOnly && !canViewStaffPage(user, pathname)) router.replace(staffHome(user));
+  }, [user, paymentOnly, pathname, router]);
   useEffect(() => { setMobileOpen(false); setAccountOpen(false); }, [pathname]);
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-background text-on-surface-variant">{t.common.loadingAuth}</main>;
   if (!user) return <main className="min-h-screen bg-background" />;
+  // Never mount another admin page (or its data requests) for a payment viewer.
+  if (paymentOnly && !canViewStaffPage(user, pathname)) return <main className="min-h-screen bg-background" />;
   if (!allowed) return <main className="grid min-h-screen place-items-center bg-background px-5 text-center text-on-surface"><div><LockKeyhole className="mx-auto mb-4 text-primary" size={32} /><h1 className="text-2xl font-bold">{t.common.deniedTitle}</h1><p className="mt-2 text-on-surface-variant">{t.common.deniedBody}</p><Link href="/dashboard" className="mt-5 inline-block font-semibold text-primary hover:underline">{t.common.backToStudent}</Link></div></main>;
   if (pathname.startsWith("/admin/admins") && role !== "super_admin") return <main className="grid min-h-screen place-items-center bg-background text-on-surface">{t.common.deniedTitle}</main>;
 
   const title = pathname === "/admin" ? t.common.overview : pathname.startsWith("/admin/admins") ? t.common.adminManagement : pathname.startsWith("/admin/users") ? t.common.users : pathname.startsWith("/admin/payments") ? t.common.payments : pathname.startsWith("/admin/exercises") ? t.common.exercises : pathname.startsWith("/admin/activity") ? t.common.activity : t.common.account;
   const hideContent = mustChangePassword && pathname !== "/admin/change-password";
   const signOut = async () => { try { await logout(); } catch { /* Session may already have expired. */ } finally { router.replace("/login"); } };
+
+  if (paymentOnly) return <div className="min-h-screen bg-background text-on-surface">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-outline-variant/60 bg-background/90 px-4 py-3 backdrop-blur-lg sm:px-7">
+      <Link href="/admin/payments" className="flex items-center gap-2 font-semibold"><CreditCard size={20} className="text-primary" />CodeProve · {t.common.payments}</Link>
+      <div className="flex items-center gap-2"><LanguageToggle /><ThemeToggle /><span className="hidden text-sm sm:inline">{user.full_name}</span><button type="button" onClick={signOut} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-surface-container"><LogOut size={16} />{t.common.signOut}</button></div>
+    </header>
+    <main className="mx-auto w-full max-w-[1500px] px-4 py-7 sm:px-7 sm:py-9">{hideContent ? <div className="rounded-xl border border-warning/40 bg-warning/10 p-5">{t.common.changeRequired}</div> : children}</main>
+  </div>;
 
   return <div className="min-h-screen bg-background text-on-surface lg:flex">
     {mobileOpen && <button type="button" aria-label={t.common.closeMenu} onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 rounded-none bg-black/55 lg:hidden" />}

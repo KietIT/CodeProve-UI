@@ -4,12 +4,13 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
 import { useAdminAuth } from "../_auth";
+import { staffHome } from "@/lib/adminClient";
 import { useAdminCopy } from "../_copy";
 import { card, field, PageHeading, primaryButton } from "../_ui";
 
 export default function AdminChangePasswordPage() {
   const { t } = useAdminCopy();
-  const { changePassword } = useAdminAuth();
+  const { admin, changePassword } = useAdminAuth();
   const router = useRouter();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -29,7 +30,7 @@ export default function AdminChangePasswordPage() {
     try {
       await changePassword(current, next);
       setCurrent(""); setNext(""); setConfirm("");
-      router.replace("/admin");
+      router.replace(admin ? staffHome({ ...admin, must_change_password: false }) : "/login");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.password.connection);
     } finally { setSubmitting(false); }
