@@ -291,10 +291,10 @@ export const content = {
         },
         {
           name: "Plus",
-          price: "99.000đ",
+          price: "49.000đ",
           period: "/tháng",
-          priceAnnual: "82.500đ",
-          annualNote: "thanh toán 990.000đ/năm",
+          priceAnnual: "40.800đ",
+          annualNote: "thanh toán 490.000đ/năm",
           featured: true,
           features: [
             "Mọi tính năng gói Free",
@@ -307,10 +307,10 @@ export const content = {
         },
         {
           name: "Pro",
-          price: "199.000đ",
+          price: "99.000đ",
           period: "/tháng",
-          priceAnnual: "165.800đ",
-          annualNote: "thanh toán 1.990.000đ/năm",
+          priceAnnual: "82.500đ",
+          annualNote: "thanh toán 990.000đ/năm",
           featured: false,
           features: [
             "Mọi tính năng gói Plus",
@@ -773,10 +773,10 @@ export const content = {
         },
         {
           name: "Plus",
-          price: "$3.99",
+          price: "$1.99",
           period: "/month",
-          priceAnnual: "$3.32",
-          annualNote: "billed $39.90/year",
+          priceAnnual: "$1.66",
+          annualNote: "billed $19.90/year",
           featured: true,
           features: [
             "Everything in Free",
@@ -789,10 +789,10 @@ export const content = {
         },
         {
           name: "Pro",
-          price: "$7.99",
+          price: "$3.99",
           period: "/month",
-          priceAnnual: "$6.66",
-          annualNote: "billed $79.90/year",
+          priceAnnual: "$3.32",
+          annualNote: "billed $39.90/year",
           featured: false,
           features: [
             "Everything in Plus",
