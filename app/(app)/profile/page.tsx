@@ -11,6 +11,8 @@ import { appContent } from "@/lib/appContent";
 import { usePrivacyConsent } from "@/lib/privacyConsent";
 import { BillingSection } from "@/components/billing/BillingSection";
 import { billingContent } from "@/lib/billingContent";
+import { authErrorOf } from "@/lib/authErrors";
+import { normalizeVnPhone } from "@/lib/phone";
 
 // Max avatar size before base64 encoding (keeps the DB row small).
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
@@ -28,6 +30,13 @@ const copy = {
     email: "Email",
     userId: "Mã người dùng",
     emailLocked: "Email không thể thay đổi.",
+    phone: "Số điện thoại",
+    phonePlaceholder: "0912 345 678",
+    phoneHint: "Dùng số này để đăng nhập thay cho email.",
+    phoneAddHint: "Thêm số điện thoại để có thể đăng nhập bằng số này.",
+    phoneError: "Vui lòng nhập số điện thoại di động Việt Nam hợp lệ (10 số, ví dụ 0912 345 678).",
+    phoneRequired: "Không thể xoá số điện thoại, bạn chỉ có thể đổi sang số khác.",
+    phoneTaken: "Số điện thoại này đã được dùng cho tài khoản khác.",
     save: "Lưu thay đổi",
     saving: "Đang lưu…",
     saved: "Đã lưu thay đổi.",
@@ -68,6 +77,13 @@ const copy = {
     email: "Email",
     userId: "User ID",
     emailLocked: "Email cannot be changed.",
+    phone: "Phone number",
+    phonePlaceholder: "0912 345 678",
+    phoneHint: "You can log in with this number instead of your email.",
+    phoneAddHint: "Add a phone number to be able to log in with it.",
+    phoneError: "Please enter a valid Vietnamese mobile number (10 digits, e.g. 0912 345 678).",
+    phoneRequired: "A phone number cannot be removed, only changed to another one.",
+    phoneTaken: "This phone number is already used by another account.",
     save: "Save changes",
     saving: "Saving…",
     saved: "Changes saved.",
@@ -131,6 +147,7 @@ function ProfileContent() {
     if (tab && (SECTIONS as readonly string[]).includes(tab)) setSection(tab as Section);
   }, [tab]);
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -145,7 +162,10 @@ function ProfileContent() {
   const [connected, setConnected] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (user) setFullName(user.full_name);
+    if (user) {
+      setFullName(user.full_name);
+      setPhone(user.phone ?? "");
+    }
   }, [user]);
 
   async function handleSubmit(e: FormEvent) {
@@ -156,12 +176,29 @@ function ProfileContent() {
       setError(t.nameError);
       return;
     }
+    // The backend reads a missing phone as "unchanged", so an emptied field cannot remove it.
+    const phoneInput = phone.trim();
+    if (!phoneInput && user?.phone) {
+      setError(t.phoneRequired);
+      return;
+    }
+    const canonicalPhone = phoneInput ? normalizeVnPhone(phoneInput) : null;
+    if (phoneInput && !canonicalPhone) {
+      setError(t.phoneError);
+      return;
+    }
     setSaving(true);
     try {
-      await updateProfile({ full_name: fullName.trim() });
+      await updateProfile({
+        full_name: fullName.trim(),
+        ...(canonicalPhone && canonicalPhone !== user?.phone ? { phone: canonicalPhone } : {}),
+      });
       setSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      const code = authErrorOf(err);
+      if (code === "phone_taken") setError(t.phoneTaken);
+      else if (code === "invalid_phone") setError(t.phoneError);
+      else setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -218,7 +255,8 @@ function ProfileContent() {
     router.push("/login");
   }
 
-  const dirty = !!user && fullName.trim() !== user.full_name;
+  const phoneChanged = !!user && (normalizeVnPhone(phone) ?? phone.trim()) !== (user.phone ?? "");
+  const dirty = !!user && (fullName.trim() !== user.full_name || phoneChanged);
 
   const navItems: { key: Section; icon: string; label: string }[] = [
     { key: "account", icon: "badge", label: t.nav.account },
@@ -356,6 +394,20 @@ function ProfileContent() {
                       className="rounded-xl h-11 w-full cursor-not-allowed border border-outline-variant/40 bg-surface-container-highest/40 px-3 text-sm text-on-surface-variant outline-none"
                     />
                     <p className="mt-1 text-xs text-on-surface-variant/60">{t.emailLocked}</p>
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-on-surface">{t.phone}</label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={phone}
+                      onChange={(e) => { setPhone(e.target.value); setSaved(false); }}
+                      placeholder={t.phonePlaceholder}
+                      className="rounded-xl h-11 w-full border border-outline-variant/60 bg-surface-container-lowest/50 px-3 text-sm text-on-surface outline-none transition-colors focus:border-primary"
+                    />
+                    <p className="mt-1 text-xs text-on-surface-variant/60">{user.phone ? t.phoneHint : t.phoneAddHint}</p>
                   </div>
                   <div className="font-label-mono text-label-mono text-on-surface-variant/70">{t.userId}: #{user.id}</div>
                   {error && <p className="text-sm text-error">{error}</p>}

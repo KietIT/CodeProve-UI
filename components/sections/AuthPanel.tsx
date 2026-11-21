@@ -12,6 +12,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  Phone,
   User,
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -24,6 +25,8 @@ import { useAuth } from "@/lib/auth";
 import { API_BASE } from "@/lib/api";
 import { adminRequest, isAdminLoginId, staffHome, type AdminAccount } from "@/lib/adminClient";
 import { appContent } from "@/lib/appContent";
+import { authErrorField, authErrorOf, type AuthErrorCode } from "@/lib/authErrors";
+import { isEmail, normalizeLoginId, normalizeVnPhone } from "@/lib/phone";
 
 type Mode = "login" | "signup";
 
@@ -62,6 +65,10 @@ const copy = {
       namePlaceholder: "Nguyễn Văn A",
       email: "Email",
       emailPlaceholder: "ban@truong.edu.vn",
+      loginId: "Email hoặc số điện thoại",
+      loginIdPlaceholder: "ban@truong.edu.vn hoặc 0912 345 678",
+      phone: "Số điện thoại",
+      phonePlaceholder: "0912 345 678",
       password: "Mật khẩu",
       passwordPlaceholder: "Tối thiểu 8 ký tự",
       confirmPassword: "Xác nhận mật khẩu",
@@ -83,9 +90,14 @@ const copy = {
     },
     errors: {
       email: "Vui lòng nhập email hợp lệ.",
+      loginId: "Vui lòng nhập email hoặc số điện thoại hợp lệ.",
+      phone: "Vui lòng nhập số điện thoại di động Việt Nam hợp lệ (10 số, ví dụ 0912 345 678).",
       password: "Mật khẩu cần tối thiểu 8 ký tự.",
       confirm: "Mật khẩu xác nhận không khớp.",
       name: "Vui lòng nhập họ tên.",
+      emailTaken: "Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.",
+      phoneTaken: "Số điện thoại này đã được đăng ký. Hãy đăng nhập hoặc dùng số khác.",
+      invalidLogin: "Email/số điện thoại hoặc mật khẩu không đúng.",
     },
     terms: "Bằng việc tiếp tục, bạn đồng ý với",
     termsLink: "Điều khoản",
@@ -125,6 +137,10 @@ const copy = {
       namePlaceholder: "Jane Doe",
       email: "Email",
       emailPlaceholder: "you@school.edu",
+      loginId: "Email or phone number",
+      loginIdPlaceholder: "you@school.edu or 0912 345 678",
+      phone: "Phone number",
+      phonePlaceholder: "0912 345 678",
       password: "Password",
       passwordPlaceholder: "At least 8 characters",
       confirmPassword: "Confirm password",
@@ -146,9 +162,14 @@ const copy = {
     },
     errors: {
       email: "Please enter a valid email.",
+      loginId: "Please enter a valid email or phone number.",
+      phone: "Please enter a valid Vietnamese mobile number (10 digits, e.g. 0912 345 678).",
       password: "Password must be at least 8 characters.",
       confirm: "Passwords do not match.",
       name: "Please enter your name.",
+      emailTaken: "This email is already registered. Log in or use another email.",
+      phoneTaken: "This phone number is already registered. Log in or use another number.",
+      invalidLogin: "Incorrect email/phone number or password.",
     },
     terms: "By continuing, you agree to our",
     termsLink: "Terms",
@@ -158,7 +179,14 @@ const copy = {
   },
 } as const;
 
-const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Which `copy.errors` entry explains each known backend auth error. */
+const authErrorCopy = {
+  email_taken: "emailTaken",
+  phone_taken: "phoneTaken",
+  invalid_login: "invalidLogin",
+  invalid_phone: "phone",
+  invalid_identifier: "loginId",
+} as const satisfies Record<AuthErrorCode, keyof (typeof copy)["vi"]["errors"]>;
 
 function GoogleIcon({ className = "" }: { className?: string }) {
   return (
@@ -192,7 +220,9 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   const m = c[mode];
 
   const [name, setName] = useState("");
+  // Signup: the email. Login: the login ID, an email or a phone number.
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -224,7 +254,12 @@ export function AuthPanel({ mode }: { mode: Mode }) {
   function validate() {
     const next: Record<string, string> = {};
     if (mode === "signup" && name.trim().length < 2) next.name = c.errors.name;
-    if (!emailRe.test(email)) next.email = c.errors.email;
+    if (mode === "signup" || adminEmail) {
+      if (!isEmail(email)) next.email = c.errors.email;
+    } else if (!normalizeLoginId(email)) {
+      next.email = c.errors.loginId;
+    }
+    if (mode === "signup" && !normalizeVnPhone(phone)) next.phone = c.errors.phone;
     if (password.length < 8) next.password = c.errors.password;
     if (mode === "signup" && confirmPassword !== password) next.confirm = c.errors.confirm;
     setErrors(next);
@@ -239,7 +274,13 @@ export function AuthPanel({ mode }: { mode: Mode }) {
     setSubmitting(true);
     try {
       if (mode === "signup") {
-        await signup(name.trim(), email, password);
+        await signup({
+          full_name: name.trim(),
+          email: email.trim(),
+          // validate() guarantees a valid number here.
+          phone: normalizeVnPhone(phone) ?? phone,
+          password,
+        });
         trackEvent("sign_up", { method: "email" });
         router.push(takeReturn());
       } else if (adminEmail) {
@@ -250,11 +291,19 @@ export function AuthPanel({ mode }: { mode: Mode }) {
         setPassword("");
         router.replace(staffHome(account));
       } else {
-        await login(email, password);
+        await login(normalizeLoginId(email) ?? email.trim(), password);
         router.push(takeReturn());
       }
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Something went wrong");
+      const code = authErrorOf(err);
+      if (code === null) {
+        setServerError(err instanceof Error ? err.message : "Something went wrong");
+      } else {
+        const message = c.errors[authErrorCopy[code]];
+        const field = authErrorField[code];
+        if (field) setErrors((prev) => ({ ...prev, [field]: message }));
+        else setServerError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -385,22 +434,63 @@ export function AuthPanel({ mode }: { mode: Mode }) {
                 </Field>
               )}
 
-              <Field
-                id="email"
-                label={c.fields.email}
-                icon={<Mail className="h-4 w-4" />}
-                error={errors.email}
-              >
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={c.fields.emailPlaceholder}
-                  className={inputCls}
-                />
-              </Field>
+              {mode === "signup" ? (
+                <>
+                  <Field
+                    id="email"
+                    label={c.fields.email}
+                    icon={<Mail className="h-4 w-4" />}
+                    error={errors.email}
+                  >
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={c.fields.emailPlaceholder}
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field
+                    id="phone"
+                    label={c.fields.phone}
+                    icon={<Phone className="h-4 w-4" />}
+                    error={errors.phone}
+                  >
+                    <input
+                      id="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder={c.fields.phonePlaceholder}
+                      className={inputCls}
+                    />
+                  </Field>
+                </>
+              ) : (
+                <Field
+                  id="identifier"
+                  label={c.fields.loginId}
+                  icon={<Mail className="h-4 w-4" />}
+                  error={errors.email}
+                >
+                  <input
+                    id="identifier"
+                    type="text"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={c.fields.loginIdPlaceholder}
+                    className={inputCls}
+                  />
+                </Field>
+              )}
               {adminEmail && <p role="status" className="rounded-xl bg-teal/10 px-3 py-2 text-xs text-teal">{c.admin.notice}</p>}
 
               <Field

@@ -117,9 +117,11 @@ test('apiFetch tells the consent listeners about a 403 privacy_consent_required,
 });
 
 test('signup sends accept_privacy: true', async () => {
-  const { seen } = await withFetch(200, { user: { id: 1 }, access_token: 't' }, () => signup('An', 'an@x.vn', 'secret123'));
+  const { seen } = await withFetch(200, { user: { id: 1 }, access_token: 't' }, () =>
+    signup({ full_name: 'An', email: 'an@x.vn', phone: '0912345678', password: 'secret123' }),
+  );
   assert.match(seen.url, /\/api\/auth\/signup$/);
-  assert.deepEqual(seen.body, { full_name: 'An', email: 'an@x.vn', password: 'secret123', accept_privacy: true });
+  assert.deepEqual(seen.body, { full_name: 'An', email: 'an@x.vn', phone: '0912345678', password: 'secret123', accept_privacy: true });
 });
 
 test('privacy endpoints use the backend contract', async () => {

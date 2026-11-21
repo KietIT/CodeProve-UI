@@ -3,6 +3,8 @@ export type User = {
   id: number;
   full_name: string;
   email: string;
+  /** Canonical `0xxxxxxxxx`; `null` for accounts created before phones were required and for Google sign-ins. */
+  phone: string | null;
   avatar?: string | null;
 };
 
