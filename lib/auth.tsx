@@ -9,16 +9,19 @@ import {
   clearToken,
   getToken,
   setToken,
+  type SignupInput,
+  type UpdateMeInput,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { User } from "@/lib/types/auth";
 type AuthCtx = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (full_name: string, email: string, password: string) => Promise<void>;
+  /** `identifier` is an email or a phone number. */
+  login: (identifier: string, password: string) => Promise<void>;
+  signup: (input: SignupInput) => Promise<void>;
   loginWithToken: (token: string) => Promise<void>;
-  updateProfile: (data: { full_name?: string; avatar?: string | null }) => Promise<void>;
+  updateProfile: (data: UpdateMeInput) => Promise<void>;
   logout: () => void;
 };
 
@@ -51,19 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  async function login(email: string, password: string) {
-    const out = await apiLogin(email, password);
+  async function login(identifier: string, password: string) {
+    const out = await apiLogin(identifier, password);
     setToken(out.access_token); setUser(out.user);
   }
-  async function signup(full_name: string, email: string, password: string) {
-    const out = await apiSignup(full_name, email, password);
+  async function signup(input: SignupInput) {
+    const out = await apiSignup(input);
     setToken(out.access_token); setUser(out.user);
   }
   const loginWithToken = useCallback(async (token: string) => {
     setToken(token);
     setUser(await getMe());
   }, []);
-  async function updateProfile(data: { full_name?: string; avatar?: string | null }) {
+  async function updateProfile(data: UpdateMeInput) {
     const updated = await updateMe(data);
     setUser(updated);
   }
